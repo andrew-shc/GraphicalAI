@@ -1,5 +1,5 @@
 # Hexacone
-[![Build status](https://travis-ci.org/AndrewShen31/travis-lab.svg?master)](https://travis-ci.org/AndrewShen31)
+[![Build Status](https://travis-ci.org/AndrewShen31/Hexacone.svg?branch=master)](https://travis-ci.org/AndrewShen31/Hexacone)
 This is a graphical software for educational and academic purposes to 
 help people learn Artificial Intelligence, Machine Learning, etc.
 

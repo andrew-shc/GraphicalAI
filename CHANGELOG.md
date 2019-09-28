@@ -1,3 +1,7 @@
+## Indev 2.1b [Sep 27, 2019]
+* Minor change to README
+* Testing Travis #2
+
 ## Indev 2.1a [Sep 27, 2019]
 * Minor change to README
 * Testing Travis
