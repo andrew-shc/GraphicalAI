@@ -1,14 +1,6 @@
-#### Indev 2.1c [Sep 27, 2019]
+## Indev 2.1(a, b, c, d) [Sep 27, 2019]
 * Minor change to README
-* Testing Travis #3 (Last One)
-
-#### Indev 2.1b [Sep 27, 2019]
-* Minor change to README
-* Testing Travis #2
-
-#### Indev 2.1a [Sep 27, 2019]
-* Minor change to README
-* Testing Travis
+* Testing Travis #1-4
 
 ## Indev 2.0 [Sep 27, 2019]
 * Added the basic framework for the backend (AI part)
