@@ -4,6 +4,7 @@ import ctypes; ctypes.windll.user32.SetProcessDPIAware(); del ctypes
 from src.manager import Manager
 from src.functions import *
 from src.prologue import *
+from src.model_config.nodes import *
 
 p.init()
 
@@ -17,6 +18,8 @@ surface = p.display.set_mode( (1000, 1000), )
 APP_DIR = "C:/Users/Andrew Shen/Desktop/ProjectEmerald/src/test1"
 
 def callCompiler(): pass
+def saveProject(obj):
+	pass
 
 
 OBJ = Manager()
@@ -39,12 +42,9 @@ while app_loop:
 			app_loop = False
 		elif e.type == KEYDOWN:
 			if e.key == K_ESCAPE: app_loop = False
-			elif e.key == K_a: OBJ.create( node( surface, [10, 10], 0, ), )
-			elif e.key == K_s: OBJ.create( node( surface, [10, 10], 0, ), )
-			elif e.key == K_d: OBJ.create( node( surface, [10, 10], 0, ), )
-			elif e.key == K_m: OBJ.create( node( surface, [10, 10], 0, ), )
-			elif e.key == K_i: OBJ.create( node( surface, [10, 10], 0, mode=["FILE", "NODE", ], ), )
-			elif e.key == K_o: OBJ.create( node( surface, [10, 10], 0, mode=["NODE", "FILE", ], ), )
+			elif e.key == K_s: OBJ.create( node( surface, [10, 10], SVCNode, ), )
+			elif e.key == K_i: OBJ.create( node( surface, [10, 10], InputNode, ), )
+			elif e.key == K_o: OBJ.create( node( surface, [10, 10], OutputNode, ), )
 
 	# print(OBJ.UPDATE_LIST)
 

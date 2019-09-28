@@ -1,3 +1,10 @@
+## Indev 2.0 [Sep 27, 2019]
+* Added the basic framework for the backend (AI part)
+* Minor Changes to the frontend (GUI)
+* Organized Code
+* Added Travis-CI to the project
+    * Learning how CI works!
+
 ## Indev 1.1 [Sep 25, 2019]
 * Added CHANGELOG for tracking updates
 * Added more stuff into README
