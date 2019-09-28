@@ -1,5 +1,5 @@
 # Hexacone
-[![Build status](https://travis-ci.org/AndrewShen31/travis-lab.svg?master)](https://travis-ci.org/USERNAME)
+[![Build status](https://travis-ci.org/AndrewShen31/travis-lab.svg?master)](https://travis-ci.org/AndrewShen31)
 This is a graphical software for educational and academic purposes to 
 help people learn Artificial Intelligence, Machine Learning, etc.
 
@@ -25,4 +25,4 @@ in PyTorch, Tensorflow, etc.
 
 ### FAQ
 
-### Support
+### Questions/Comments/Concern

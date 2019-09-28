@@ -1,3 +1,7 @@
+## Indev 2.1a [Sep 27, 2019]
+* Minor change to README
+* Testing Travis
+
 ## Indev 2.0 [Sep 27, 2019]
 * Added the basic framework for the backend (AI part)
 * Minor Changes to the frontend (GUI)
