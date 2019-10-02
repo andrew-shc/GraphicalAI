@@ -1,3 +1,9 @@
+## Indev 3.0 [Sep 29, 2019] (TGR1a)
+* __The Great Refactor #1__ starts
+    * added the code to setup for change of codebase
+    * original code still running
+
+
 ## Indev 2.1(a, b, c, d) [Sep 27, 2019]
 * Minor change to README
 * Testing Travis #1-4

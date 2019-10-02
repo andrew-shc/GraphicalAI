@@ -1,6 +1,5 @@
-#
-#
-#
+from src.model_config.graphic import *
+
 
 # TODO: Abolish Mini-Node Render
 def node( surf, pos, func, mn_node_size=(200, 100), ):

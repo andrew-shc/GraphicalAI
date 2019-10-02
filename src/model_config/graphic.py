@@ -17,3 +17,6 @@ class DropDownMenu:
 class CheckBox:
 	pass
 
+
+class FileAutoRead:
+	pass
