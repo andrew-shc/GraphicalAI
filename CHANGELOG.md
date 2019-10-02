@@ -1,4 +1,4 @@
-## Indev 3.0 [Sep 29, 2019] (TGR1a)
+## Indev 3.0 [Oct 1, 2019] (TGR1a)
 * __The Great Refactor #1__ starts
     * added the code to setup for change of codebase
     * original code still running
