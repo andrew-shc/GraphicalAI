@@ -1,3 +1,7 @@
+## Indev 4.0 [Oct 9, 2019]
+* redirected the main code to the new codebase
+* smooth clicking on nodes
+
 ## Indev 3.0 [Oct 1, 2019] (TGR1a)
 * __The Great Refactor #1__ starts
     * added the code to setup for change of codebase

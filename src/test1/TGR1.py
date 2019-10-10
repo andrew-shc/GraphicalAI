@@ -125,3 +125,7 @@ container = [
 # entity's unique id: 8-bit:"[CID 8b][INDEX 16b]"
 # e.g. \x02\x01\xF5
 # max of 255 types of components; max of 65536 component data per component container
+
+"""
+ent = [pos, size, color, font, text, font]
+"""

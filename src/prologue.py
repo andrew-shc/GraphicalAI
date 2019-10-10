@@ -41,3 +41,7 @@ def button( surf, pos, size, txt, func, font="arial", font_size=24 ):  # standar
 		},
 		"function" :func,  # run that specific event function
 	}
+
+
+def _node( world ):
+	pass
