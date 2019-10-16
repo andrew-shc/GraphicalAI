@@ -27,3 +27,9 @@ in PyTorch, Tensorflow, etc.
 ### FAQ
 
 ### Questions/Comments/Concern
+
+
+## Developer
+[CHANGELOG](CHANGELOG.md)  
+[TODO](CHANGELOG.md)  
+Feature Request

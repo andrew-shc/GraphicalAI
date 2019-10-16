@@ -1,5 +1,7 @@
 ### Suggestions Welcome!
 All suggestion must come from the "issue" tracker and tagged as "suggestion".
+If your suggestions gets approved, you'll see your issue tag on the
+TODO list!
 
 ### Releasing Bug Information
 Bugs go through the issue tracker. This is still under heavy-development,
@@ -21,3 +23,5 @@ What things have you attempted?
 Things can try. __(At your own risk!)__
 * Force close the software
 * Re-install the software
+
+## TODO

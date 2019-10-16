@@ -1,3 +1,10 @@
+## Indev 5.0 [Oct 15, 2019]
+* finish redirecting code
+* code cleanup
+    * 50 lines of mess is cleaned up in `main.py`
+    * removed old codebase
+* documenting documentation for users
+
 ## Indev 4.0 [Oct 9, 2019]
 * redirected the main code to the new codebase
 * smooth clicking on nodes
@@ -6,7 +13,6 @@
 * __The Great Refactor #1__ starts
     * added the code to setup for change of codebase
     * original code still running
-
 
 ## Indev 2.1(a, b, c, d) [Sep 27, 2019]
 * Minor change to README

@@ -1,15 +1,16 @@
 import pygame as p
 from src.debugger import *
-
+import src.prefab as prfb
 
 # ====== SUBROUTINE =====
 
 # returns entity with the only requested components
-def _entity_only( self, req ): return self.entity_data( self.entity( req ), _strict=req )
+def _entity_only( self, req ):
+	return self.entity_pp_cmpnt( self.entity_data( self.entity( self.ENTITIES, req ), ), req, strict=True )
 
 # boilerplate code
 def _entity_req( self, req ):
-	ind = self.entity( req )
+	ind = self.entity( self.ENTITIES, req )
 	dat = self.entity_data( ind )
 	return dat, ind
 
@@ -18,7 +19,7 @@ def _entity_req( self, req ):
 
 def label( self, glbl ):
 	req = ["pos", "size", "text", "font", "font_size", "font_color", "font_align", "text_align"]
-	e_main = self.entity_data( self.entity( req ) )
+	e_main, e_ind = _entity_req( self, req )
 	for dt in e_main:
 		font = p.font.SysFont( dt["font"], dt["font_size"] )
 		label = font.render( dt["text"], True, (0, 0, 0) )
@@ -37,21 +38,20 @@ def label( self, glbl ):
 
 def rect( self, glbl ):
 	req = ["pos", "size", "color", ]
-	e_main = self.entity_data( self.entity( req ) )
+	e_main, e_ind = _entity_req( self, req )
 	for dt in e_main:
 		p.draw.rect(glbl["surf"], dt["color"], [dt["pos"][0], dt["pos"][1], dt["size"][0], dt["size"][1]])
 
 def click( self, glbl ):
 	req = ["pos", "size", "clicked", ]
-	e_main = self.entity_data( self.entity( req ) )
+	e_main, e_ind = _entity_req( self, req )
 
 	clicked = False
-	e_click = self.entity_data( self.ENTITIES, ["clicked"] ) # check if any other entity has clicked
+	e_click = _entity_only( self, ["clicked"] ) # check if any other entity has clicked
 	for c in e_click:
-		if c:
-			clicked = True
+		if c["clicked"]: clicked = True
 
-	for eid, dt in zip(reversed(self.entity(req)), reversed(e_main)):
+	for eid, dt in zip(reversed(self.entity( self.ENTITIES, req)), reversed(e_main)):
 		if dt["pos"][0] < glbl["event"]["mPos"][0] < dt["pos"][0]+dt["size"][0] and not clicked and \
 				dt["pos"][1] < glbl["event"]["mPos"][1] < dt["pos"][1]+dt["size"][1] and glbl["event"]["mTrgOn"]:  # main
 			dt["clicked"] = True
@@ -61,8 +61,8 @@ def click( self, glbl ):
 
 def move( self, glbl ):
 	req = ["pos", "clicked", "movable", "placement_ofs"]
-	e_main = self.entity_data( self.entity( req ) )
-	for eid, dt in zip(reversed(self.entity(req)), reversed(e_main)):
+	e_main, e_ind = _entity_req( self, req )
+	for eid, dt in zip(reversed(self.entity( self.ENTITIES, req)), reversed(e_main)):
 		if dt["movable"]:
 			if dt["clicked"] and dt["placement_ofs"] == [None, None]: # first clicked
 				dt["placement_ofs"] = [dt["pos"][0]-glbl["event"]["mPos"][0], dt["pos"][1]-glbl["event"]["mPos"][1]]
@@ -73,32 +73,73 @@ def move( self, glbl ):
 		self.entity_save( eid, dt )
 
 def move_child( self, glbl ):
-	req = ["pos", "movable", "child"]
+	req = ["pos", "movable", "child", "placement_ofs"]
 	e_main, e_ind = _entity_req( self, req )
 	for eid, dt in zip( reversed( e_ind ), reversed( e_main ) ):
 		if dt["movable"] and dt["placement_ofs"] != [None, None]:
 			e_child, e_indc = _entity_req( self, ["obj_id", "pos"] )
 			for eidc, dtc in zip( reversed( e_indc ), reversed( e_child ) ):
-				if dtc["obj_id"] == dt["child"]:  # this child entity is part of the master entity
+				if dtc["obj_id"] == dt["child"] and dt["clicked"]:  # this child entity is part of the master entity
 					vector = [(glbl["event"]["mPos"][0]+dt["placement_ofs"][0])-dt["pos"][0],
 					           (glbl["event"]["mPos"][1]+dt["placement_ofs"][1])-dt["pos"][1]]
 					dtc["pos"][0] += vector[0]
 					dtc["pos"][1] += vector[1]
 					self.entity_save( eidc, dtc )
 
+# render isolated wire (wire connected to the mouse)
+def connectorWireIso( self, glbl ):
+	req = ["pos", "size", "clicked", "connectee" ]
+	e_main, e_ind = _entity_req( self, req )
+	for dt in e_main:
+		if dt["clicked"]:
+			p.draw.line(glbl["surf"], (255, 150, 0), dt["pos"], glbl["event"]["mPos"], 3)
+
+# render connected wire (wire connected to the connected node)
+def connectorWireMrg( self, glbl ):
+	req = [ "pos", "size", "connectee" ]
+	e_main, e_ind = _entity_req( self, req )
+	for dt in e_main:
+		for cncte in dt["connectee"]:
+			edt = self.entity_data( [self.ENTITIES[ self.TAG.index( cncte ) ]] )  # get entity data
+			p.draw.line(glbl["surf"], (255, 0, 0), dt["pos"], edt[0]["pos"], 3)
+
+# connects each nodes
+def connectNode( self, glbl ):
+	req = ["pos", "size", "clicked", "connectee", "connect_en", "connect_tg" ]
+	e_main, e_ind = _entity_req( self, req )
+
+	connector, connectee, cmpct_id = None, None, None
+	for eid, dt in zip( reversed( e_ind ), reversed( e_main ) ):
+		if dt["clicked"]:  # get the entity connector
+			connector = (eid, dt)
+
+		if dt["pos"][0] < glbl["event"]["mPos"][0] < dt["pos"][0]+dt["size"][0] and \
+				dt["pos"][1] < glbl["event"]["mPos"][1] < dt["pos"][1]+dt["size"][1] and glbl["event"]["mTrgOff"]:
+			connectee = (eid, dt)
+			cmpct_id = self.TAG[ self.ENTITIES.index( eid ) ] # compact entity id for connector
+
+	if None not in [connector, connectee, cmpct_id]:  # check if all three variables are none meaning there are datas
+		if connectee[1]["connect_tg"] in connector[1]["connect_en"]:
+			connector[1]["connectee"].append(cmpct_id)
+			self.entity_save( connector[0], connector[1])
+
+
 # special systems -- for specific purposes
 
 def gen_fields( self, glbl ):
-	req = ["obj_id", "pos", "field", ]
-	e_main = self.entity_data( self.entity( req ) )
+	req = ["obj_id", "pos", "field", "child" ]
+	e_main, e_ind = _entity_req( self, req )
 	for dt in e_main:
-		e_child = _entity_only( self, ["fld_nm", ] )
-		e_missing = []  # fields that are missing
-		print(e_child)
-		print(dt["field"].keys())
+		# TODO
+		# ent = self.entity_equal( self.entity( self.ENTITIES, "fld_nm" ), obj_id=dt["child"] )  # get entity fields that has the same obj_id as the child's
+		e_missing = []  # field names that are missing
+
+		entc_req = self.entity_pp_strip( self.entity_data(self.ENTITIES, req=["obj_id", "fld_nm"]), strict=False, obj_id=dt["child"] )
+		entc_name = self.entity_pp_extc( entc_req, "fld_nm")
+
 
 		for f in dt["field"]:
-			if f not in e_child:
+			if f not in entc_name:
 				e_missing.append(f)
 
 		nd_pd = glbl["fld_sty"]["nd_pad"]
@@ -107,50 +148,15 @@ def gen_fields( self, glbl ):
 		ind_i, ind_o = 0, 0
 		for f in e_missing:  # creating a new entity
 			if dt["field"][f] == glbl["node_typ"]["inp"]:
-				self.create(obj_id=dt["child"], pos=[dt["pos"][0]+nd_pd,
-				                                     dt["pos"][1]+ind_i*(nd_sz+nd_pd)+nd_pd+dt["size"][1]/4+nd_pd],
-				            size=[nd_sz, nd_sz], color=(0, 0, 0), fld_nm=f, fld_typ=dt["field"][f], fld_dt=None, clicked=False)
-				self.create( obj_id=dt["child"], pos=[dt["pos"][0]+nd_sz+nd_pd*2, dt["pos"][1]+dt["size"][1]/4+nd_pd+nd_pd],
-				              size=[dt["size"][0]/2-nd_pd*2, nd_sz], font="mono", font_size=12,
-				              font_color=(0, 0, 0),
-				              font_align={"x":"left", "y":"center"}, text=f,
-				              text_align=True )  # input node text
+				prfb.BoxInpField( self, dt["child"], dt["pos"], dt["size"], nd_pd, nd_sz, ind_i,
+				                  dt["field"][f], f, [prfb.NdEn.BoxOut] )  # going for reciprocal b/c inp cnnct to out
 				ind_i += 1
 			elif dt["field"][f] == glbl["node_typ"]["out"]:
-				self.create(obj_id=dt["child"], pos=[dt["pos"][0]+dt["size"][0]-nd_pd-nd_sz,
-				                                     dt["pos"][1]+ind_o*(nd_sz+nd_pd)+nd_pd+dt["size"][1]/4+nd_pd],
-				            size=[nd_sz, nd_sz], color=(0, 0, 0), fld_nm=f, fld_typ=dt["field"][f], fld_dt=None, clicked=False)
-				self.create( obj_id=dt["child"], pos=[dt["pos"][0]+dt["size"][0]/2+nd_pd,
-				                                      dt["pos"][1]+dt["size"][1]/4+nd_pd+nd_pd],
-				             size=[dt["size"][0]/2-nd_sz-nd_pd*2-nd_pd*2, nd_sz], font="mono", font_size=12,
-				             font_color=(0, 0, 0),
-				             font_align={"x":"right", "y":"center"}, text=f,
-				             text_align=True )  # output node text
+				prfb.BoxOutField( self, dt["child"], dt["pos"], dt["size"], nd_pd, nd_sz, ind_o,
+				                  dt["field"][f], f, [prfb.NdEn.BoxInp] )
 				ind_o += 1
 			elif dt["field"][f] == glbl["node_typ"]["user"]:  # user defined node, uses custom entities
 				ind_u = max( ind_i, ind_o )+1
 				self.create(obj_id=dt["child"], pos=[dt["pos"][0], dt["pos"][1]+ind_u*(nd_sz+nd_pd)+nd_pd+dt["size"][1]/4+nd_pd],
 				            size=[dt["size"][0], 25], color=(0, 0, 0), fld_nm=f, fld_typ=dt["field"][f], fld_dt=None )
 
-# match the nodes
-def match_node( self, glbl ):
-	req = ["pos", "rect", "clicked", "fld_dt"]
-	e_main = self.entity_data( self.entity( req ) )
-	selected_node = []  # ID of the node
-	typ = None  # type of the selected node
-	for eid, dt in zip( self.entity( req ), e_main ):
-		if dt["clicked"]:
-			selected_node = dt
-
-	for eid, dt in zip( self.entity( req ), e_main ):
-		if dt["pos"][0] < glbl["event"]["mPos"][0] < dt["pos"][0]+dt["size"][0] and \
-				dt["pos"][1] < glbl["event"]["mPos"][1] < dt["pos"][1]+dt["size"][1] and glbl["event"]["mTrgOff"]:
-			pass # selected_node["fld_dt"][]
-
-# render isolated wire (wire connected to the mouse)
-def render_iso_wire( self, glbl ):
-	req = ["pos", "rect", "clicked", "fld_dt" ]
-	e_main = self.entity_data( self.entity( req ) )
-	for dt in e_main:
-		if dt["clicked"]:
-			p.draw.line(glbl["surf"], (255, 150, 0), dt["pos"], glbl["event"]["mPos"], 3)

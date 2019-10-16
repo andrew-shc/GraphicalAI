@@ -1,41 +1,10 @@
 import src.functions as func
 from src.debugger import *
 
-class Manager:
-	UNIQ_ID = 0
-
-	OBJECTS = {}  # {id:state, id:state, id:state}
-	FUNCTION = 0
-
-	def __init__(self):
-		self.UNIQ_ID = 0
-		self.FUNCTION = func.REG_FUNCTIONS
-
-	def create( self, state, ):  # (initial state w/ dictionary or map)
-		if type(state) == dict:
-			self.OBJECTS[self.UNIQ_ID] = state
-			self.UNIQ_ID += 1
-			print( "\033[1;31m DEBUG: ID <\033[0m", id, "\033[1;31m> has been created \033[0m", )
-		else:
-			print( "\033[1;31m ERROR: <\033[0m", state, "\033[1;31m> has to be dictionary! \033[0m", )
-			return 1
-		return 0
-
-	def remove( self, id ):  # (id: remove state by id)
-		print( "\033[1;31m DEBUG: ID <\033[0m", id, "\033[1;31m> is deleted \033[0m", )
-		del self.OBJECTS[ id ]
-
-	def execute( self, event ):  # executes function
-		#for key in self.OBJECTS:
-		#	print("\033[1;31m#\033[0m", key, "", self.OBJECTS[key],"", end="")
-		#print()
-		for f in self.FUNCTION:
-			f( event=event, obj=self.OBJECTS )
-
-
 # Manages all components and system (and entities)
 class World:
 	"""
+	Tag -> Compact Entity ID with the value at the same index as at the Entities
 	Entities -> Refers to component for data and requirements
 	Component -> All the registered components
 	Container -> All the data organized by components
@@ -50,7 +19,9 @@ class World:
 	EID ~ List of Entity ID
 	ENTITIES ~ List of Entities Data
 	"""
+	UNIQ_ID = 0  # compact ID
 
+	TAG = []  # [EID, EID, EID, ...]
 	ENTITIES = []   # [ENTITY, ENTITY, ENTITY, ...]
 	COMPONENT = []  # components registered; for key and index for container
 	CONTAINER = []  # [[data, data, ...], [data, ...], ...]; to store data; 2d data array
@@ -97,6 +68,7 @@ class World:
 		if dead:
 			self.DESTROYING.append(ID)
 		self.ENTITIES.append(ID)  # the index
+		self.TAG.append(self.allocate_id(self.TAG))  # append compact index
 
 		info( "Entity Created", ID)
 
@@ -129,14 +101,25 @@ class World:
 				else:
 					error(f"System <{s.__name__}> tried to access missing component <{e}>")
 
+	@staticmethod
+	def allocate_id( lst ):
+		""" to allocate an id that is open for anew entity
+		:return: index allocated to be open
+		"""
+
+		for ind, i in enumerate( sorted( lst ) ):
+			if ind != i: return ind
+		return len( lst )
+
 	# ==== feature methods ====
 
 	def organize( self ):
 		""" organize the container by components (hierachy) """
 		pass
 
-	def entity( self, cmpn ):
+	def entity( self, eid, cmpn ):
 		""" get entity by list of required components
+		:param eid: List of entity ID to be used on
 		:param cmpn: List of requested component
 		:return: Returns list of matched entity
 		"""
@@ -148,7 +131,7 @@ class World:
 		# translates requested string components to translated required id
 		ID_KEY = [d for d in map( lambda c: 0 if c not in cmpn else 1, self.COMPONENT)]
 		MATCHED = []  # entity passed the requirement
-		for entity in self.ENTITIES:
+		for entity in eid:
 			REQUESTED = True
 			for id, c in zip( ID_KEY, entity ):
 				if id == 1 and c == -1:
@@ -158,75 +141,118 @@ class World:
 				MATCHED.append( entity )  # appends entity ID
 		return MATCHED
 
-	def entity_data( self, eid, _strict=() ):
+	def entity_data( self, eid, req=None ):
 		""" translates list of entity id into actual usable data
-		:param eid: Entity ID to be processed into usable data for systems
-		:param _strict =False: (), returns the matched entity data;
-							   List<Components>, returns the matched entity data with the only required component
-									**NOTE**: Single component inputted would yield single data/variable
+		:param eid: list of Entity ID to be processed into usable data for systems
+		:param req: entities that has the components listed in req; mainly to save performance
+		:param _strict =False:
 		:return: Returns processed Entities
 		"""
 
 		combined = []
-		if _strict is ():
-			for id in eid:
-				DATA = {}
-				for ind, c in enumerate( id ):
-					if c != -1: DATA[self.COMPONENT[ind]] = self.CONTAINER[ind][c]
-				combined.append( DATA )
-		elif _strict is not ():
-			for s in _strict:
-				if s not in self.COMPONENT:
-					error( f"System <{caller_name()}> used unregistered component <{s}> that is invalid!" )
-			if len(_strict) == 1:  # _strict has single component
-				for e in eid:
-					ind = self.COMPONENT.index(_strict[0])
-					combined.append( self.CONTAINER[ind][e[ind]] )
-			else:
-				for id in eid:
-					data = {}
-					append = True
-					for ind, c in enumerate( id ):
-						if self.COMPONENT[ind] in _strict:  # the component that is active is strict in-bound
-							if c != -1:  # not nullptr; there are data
-								data[self.COMPONENT[ind]] = self.CONTAINER[ind][c]
-							else:  # nullptr; missed the requirement
-								append = False
-								break
-					if append: combined.append( data )
+		if req is not None:
+			for idf in eid:  # each entity in entity list
+				passed = True
+				data = {}
+				for ind, c in enumerate(idf):  # each component ID in full entity ID
+					if c == -1 and self.COMPONENT[ind] in req:
+						passed = False
+						break
+					elif c != -1:
+						data[self.COMPONENT[ind]] = self.CONTAINER[ind][c]
+				if passed: combined.append(data)
 		else:
-			error( "Method World.entity_data(self, _strict=False) received a wrong type for parameter _strict" )
-
+			for idf in eid:  # each entity in entity list
+				data = {}
+				for ind, c in enumerate(idf):  # each component ID in full entity ID
+					if c != -1: data[self.COMPONENT[ind]] = self.CONTAINER[ind][c]
+				combined.append(data)
 		return combined
 
-	def entity_equal( self, _strict=False, **kwargs, ):
-		""" get entities with the same component and the same value of the respective component
-		:param eid: Entities to be processed
-		:param _strict =False: False, gets entities that has the component and the value of the respective component
-									 equals to the listed component
-								True, gets entities that ONLY has the component and the same exact value respectively
-		:return: List of required entities that has the same exact value of the component's value
+	def entity_pp_cmpnt( self, ent, lst, strict=False ):
+		""" Entity Post-Processing: Process by components
+
+		:param ent: list of entity data to post-process on
+		:param lst: list of required components to modify the entity data
+		:param strict: False, returns matched entities
+						True, returns matched entities with only the requested components
+		:return: post processed entity data
 		"""
 
-		for k in kwargs:
-			if k not in self.COMPONENT:
-				error(f"World.entity_equal accessing unregistered component <{k}>")
-
-		ent_req = self.entity( kwargs.keys() )  # requested entity
-		ent_eq = []  # entities matched
-		for eid in ent_req:
-			matched = True
-			for ind, cid in enumerate(eid):
-				for k in kwargs:
-					if k == self.COMPONENT[ind]:  # if component <k> in kwargs == component <k> in entity
-						if kwargs[k] != self.CONTAINER[ind][cid]:  # the value DOES NOT equals to each other
-							matched = False
-			if matched:
-				ent_eq.append( eid )
-		if _strict is False:  # not strict; returns the full entity id
-			return self.entity_data( ent_eq )
+		RESULT = []
+		if not strict:
+			for e in ent:
+				REQ = True
+				for c in lst:
+					if c not in list( e ):
+						REQ = False
+				if REQ: RESULT.append( e )
 		else:
-			return self.entity_data( ent_eq, _strict=list(kwargs) )
+			for e in ent:
+				DATA = {}
+				REQ = True
+				for c in lst:
+					if c not in list( e ):
+						REQ = False
+					else:
+						DATA[c] = e[c]
+				if REQ: RESULT.append( DATA )
+		return RESULT
+
+	def entity_pp_strip( self, ent, strict, **kwargs ):
+		""" Entity Post-Processing: Process by component's value
+
+		:param ent: list of entity data to post-process on
+		:param strict: False, returns matched entities
+						True, returns matched entities with only the requested components
+						*NOTE: (just returns same as kwargs; only useful for counting and related)
+		:param kwargs: key as the component name required and value to process entity that have the same value
+		:return:
+		"""
+		RESULT = []
+		if not strict:
+			for e in ent:
+				REQ = True
+				for c in kwargs:
+					if c in list( e ):
+						if kwargs[c] != e[c]:
+							REQ = False
+					else:
+						REQ = False
+				if REQ: RESULT.append( e )
+		else:
+			for e in ent:
+				DATA = {}
+				REQ = True
+				for c in kwargs:
+					if c in list( e ):
+						if kwargs[c] != e[c]:
+							REQ = False
+						else:
+							DATA[c] = e[c]
+					else:
+						REQ = False
+				if REQ: RESULT.append( DATA )
+		return RESULT
+
+	def entity_pp_extc( self, ent, cmpnt ):
+		""" Entity Post-Processing: Extract single component from a list of entities
+
+		:param cmpnt: single component to extract
+		:return: list of component from entities
+		"""
+		extrctd = []
+
+		if cmpnt not in self.COMPONENT:
+			raise ValueError(f"Component {cmpnt} is not registered in the World instance {self}")
+
+		for e in ent:
+			if cmpnt not in list(e):
+				raise ValueError(f"Entity {e} does not contain component {cmpnt}")
+			else:
+				extrctd.append(e[cmpnt])
+		return extrctd
+
 
 	def entity_save( self, eid, ent_dt ):
 		""" to save the data from entity dictionary into the container
