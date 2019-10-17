@@ -1,8 +1,6 @@
 from pygame.locals import *
 import ctypes; ctypes.windll.user32.SetProcessDPIAware(); del ctypes
 
-from src.model_config.nodes import *
-
 from src.debugger import *
 from src.manager import World
 from src.systems import *
@@ -53,6 +51,7 @@ def update_glbl():
 
 	return dat
 
+# run doc build:  sphinx-build ./source ../ref
 """ 
 NAME STYLE: ALL COMPONENTS/SYSTEM SHOULD ONLY HAVE (English Alphabets and underscore), [A-Z][a-z]_
 field: ["FIELD NAME": [FIELD_TYPE]]
@@ -80,13 +79,9 @@ info("Software Graphic Object Initialized")
 app_loop = True
 while app_loop:
 	surface.fill( (255, 255, 255) )
-
 	event = p.event.get()
-	mpx, mpy = p.mouse.get_pos()
-	mps = p.mouse.get_pressed()
 
 	for e in event:
-		#print(e)
 		if e.type == QUIT:
 			app_loop = False
 		elif e.type == KEYDOWN:

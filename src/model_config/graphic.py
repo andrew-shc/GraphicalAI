@@ -1,8 +1,5 @@
 """
-Node Notes
-==========
-
-This is where each graphics comes in play for each of the nodes
+This is where each graphics parts and features comes in play for each of the box
 """
 
 

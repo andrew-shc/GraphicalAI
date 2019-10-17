@@ -1,3 +1,11 @@
+## Indev 5.1 [Oct 16, 2019] (TGR1b)
+* __The Great Refactor #1__ ends
+* cleaning-up refactor artifacts
+* refactor polishing
+    * remove, now, useless files and directory
+    * bug: input field can connect to the output field of the same box
+* sphinx was overkill
+
 ## Indev 5.0 [Oct 15, 2019]
 * finish redirecting code
 * code cleanup

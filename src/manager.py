@@ -1,9 +1,13 @@
-import src.functions as func
 from src.debugger import *
 
-# Manages all components and system (and entities)
+
 class World:
 	"""
+	Manages all components and system (and entities)
+
+	ATTRIBUTES
+	----------
+
 	Tag -> Compact Entity ID with the value at the same index as at the Entities
 	Entities -> Refers to component for data and requirements
 	Component -> All the registered components
@@ -19,6 +23,7 @@ class World:
 	EID ~ List of Entity ID
 	ENTITIES ~ List of Entities Data
 	"""
+
 	UNIQ_ID = 0  # compact ID
 
 	TAG = []  # [EID, EID, EID, ...]

@@ -105,7 +105,7 @@ def connectorWireMrg( self, glbl ):
 
 # connects each nodes
 def connectNode( self, glbl ):
-	req = ["pos", "size", "clicked", "connectee", "connect_en", "connect_tg" ]
+	req = ["obj_id", "pos", "size", "clicked", "connectee", "connect_en", "connect_tg" ]
 	e_main, e_ind = _entity_req( self, req )
 
 	connector, connectee, cmpct_id = None, None, None
@@ -118,8 +118,9 @@ def connectNode( self, glbl ):
 			connectee = (eid, dt)
 			cmpct_id = self.TAG[ self.ENTITIES.index( eid ) ] # compact entity id for connector
 
-	if None not in [connector, connectee, cmpct_id]:  # check if all three variables are none meaning there are datas
-		if connectee[1]["connect_tg"] in connector[1]["connect_en"]:
+	if None not in [connector, connectee, cmpct_id]:  # check if all three variables are not none meaning there are datas
+		if connectee[1]["connect_tg"] in connector[1]["connect_en"] and \
+				connectee[1]["obj_id"] != connector[1]["obj_id"]:  # connect nodes together; check if they're not same obj_id
 			connector[1]["connectee"].append(cmpct_id)
 			self.entity_save( connector[0], connector[1])
 
