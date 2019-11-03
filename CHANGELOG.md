@@ -1,3 +1,6 @@
+## Indev 6.0 [Nov 3, 2019]
+* Added input text field
+
 ## Indev 5.1 [Oct 16, 2019] (TGR1b)
 * __The Great Refactor #1__ ends
 * cleaning-up refactor artifacts

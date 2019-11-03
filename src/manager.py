@@ -75,7 +75,7 @@ class World:
 		self.ENTITIES.append(ID)  # the index
 		self.TAG.append(self.allocate_id(self.TAG))  # append compact index
 
-		info( "Entity Created", ID)
+		info( "Entity Created:", self.allocate_id(self.TAG))
 
 	def destroy( self, eid ):
 		""" destroy the entity through ID
@@ -91,20 +91,14 @@ class World:
 
 		info( "Dead Entity Flushed" )
 
-	def execute( self, func, ):
+	def execute( self, prop, ):
 		""" executes all the function; the function manages the entities
-		:param func: function to be executed for updating the self.GLOBAL variable
+		:param prop: dictionary to be updated on self.GLOBAL global dictionary
 		"""
 
-		self.GLOBAL = func()
+		self.GLOBAL = prop
 		for s in self.SYSTEM:
-			try:
-				s(self, self.GLOBAL)
-			except KeyError as e:
-				if e not in self.COMPONENT:
-					error( f"System <{s.__name__}> tried to access unregistered component <{e}>" )
-				else:
-					error(f"System <{s.__name__}> tried to access missing component <{e}>")
+			s(self, self.GLOBAL)
 
 	@staticmethod
 	def allocate_id( lst ):
