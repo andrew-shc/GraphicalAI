@@ -1,105 +1,51 @@
+"""
+The main process of execution in the program
+
+Save Skeleton: Saves the empty models in place
+Save Model: Saves all the parametized settings in each of model
+
+Execute Skeleton: Executes all the user input and other input output
+Execute ML: Automatically changes each settings of the model
+
+"""
+
+from src. model_config import types as typ
+
 APP_DIR = "C:/Users/Andrew Shen/Desktop/ProjectEmerald/src2/test1"
 PROJECT_FILE = "/project_test_4.dat"
 
-token = {}
-with open(APP_DIR+PROJECT_FILE, "r") as fbj:
-	fdt = fbj.readlines()
-	rd_line = 0
+# saves the skeleton
+def saveSkel(self):
+    print("\n\n\n")
+    # initialize specific entities
+    fld = self.entity(self.ENTITIES, ["obj_id","fld_nm","fld_typ"])
+    mdl = self.entity(self.ENTITIES, ["obj_id","field"])
 
-	for ln in fdt:
-		line = ln.strip("\n")
-		sepr = line[3:].split("$")
-		token[line[1]] = {}
-		token[line[1]]["type"] = line[0]
-		token[line[1]]["val"] = 0
-		token[line[1]]["status"] = "NONE"  # NONE|GO|IN|IDLE; node's input status
-		if line[0] == "n":  # node
-			token[line[1]]["expr"] = sepr[0]
-			token[line[1]]["output"] = {}
-			token[line[1]]["input"] = {}
-			out = sepr[1][:-1].split( "," )  # [:-1] to remove trailing comma
-			for w in out:
-				key = w.split( ":" )
-				token[line[1]]["output"][key[0]] = float( key[1] )
-			inp = sepr[2][:-1].split( "," )  # [:-1] to remove trailing comma
-			for w in inp:
-				key = w.split( ":" )
-				token[line[1]]["input"][key[0]] = float( key[1] )
-		elif line[0] == "i":  # input
-			token[line[1]]["fname"] = sepr[0]
-			token[line[1]]["output"] = {}
-			out = sepr[1][:-1].split( "," )  # [:-1] to remove trailing comma
-			for w in out:
-				key = w.split( ":" )
-				token[line[1]]["output"][key[0]] = float(key[1])
+    # inject %short_id% into each entities for easier locating the entities
+    inj = []
+    for fdt, fid in zip(self.entity_data(fld), fld):
+        fdt["%short_id%"] = self.short_id(fid)
+        inj.append(fdt)
 
-			with open(APP_DIR+"/"+sepr[0], "r") as fbj:
-				inpdt = fbj.readlines()
+    # modelization: grouping fields into models
+    grp = []
+    for m in self.entity_data(mdl):
+        ent = []
+        # get the model's fields
+        for f in inj:
+            if m["child"] == f["obj_id"]:
+                if f["fld_typ"] == typ.Constant:
+                    ent.append(self.entity_pp_cmpnt([f], ["obj_id", "fld_nm", "fld_typ"], strict=True))
+                else:
+                    ent.append(self.entity_pp_cmpnt([f], ["obj_id", "fld_nm", "fld_typ", "connectee"], strict=True))
 
-				token[line[1]]["val"] = inpdt[rd_line].strip("\n")
-				token[line[1]]["status"] = "GO"
-				rd_line += 1
-		elif line[0] == "o":  # output
-			token[line[1]]["fname"] = sepr[0]
-			token[line[1]]["input"] = {}
-			inp = sepr[1][:-1].split( "," )  # [:-1] to remove trailing comma
-			for w in inp:
-				key = w.split( ":" )
-				token[line[1]]["input"][key[0]] = float( key[1] )
-		elif line[0] == "b":  # bias (offset)
-			pass
-
-t = {"INP":"i", "OUT":"o", "NODE":"n", "BIAS":"b"}
-def exec( obj ):
-	for k in obj:
-		print(k, ":", obj[k])
-
-	run = True
-	active_obj = []  # active object
-
-	# for ind in obj:
-	# 	if obj[ind]["type"] == t["INP"]:
-	# 		for indext in obj[ind]["output"]:
-	# 			active_obj.append(indext) if indext not in active_obj else 0
-
-	# for i in active_obj:
-	# 	for out in obj[i]["output"]:
-	# 		obj[out]["val"] = 1
-	# 	rd_ln += 1
-
-	while run:
-		for a in active_obj:
-			if obj[a]["type"] == t["OUT"]:
-				run = False
-
-		for actv in active_obj:
-			for idin in obj[actv]["output"]:
-				calc = True
-				for idext in obj[idin]["input"]:  # going through all the ids of input
-					if obj[idext]["status"] != "GO":
-						calc = False
-					else:
-						obj[idin]["status"] = "IN"  # one of the input has status set to GO
-				if calc:  # if all input's node are status: GO
-					for idext in obj[idin]["input"]:  # summation function
-						obj[idin]["val"] += obj[idext]["val"]*obj[idext]["output"][idin]  # value*weight
-					# activation function
-					obj[idin]["status"] = "GO"
-					active_obj.append( idin )
-					for idin in active_obj:  # remove dead object in active_obj list
-						dead = True  # if it is dead object
-						for idext in obj[idin]["output"]:
-							if obj[idext]["status"] != "GO":
-								dead = False
-						if dead:
-							active_obj.remove( idin )
+        # translate each mem addr into meaningful string data of the field
+        field_data = []
+        for ind, field in enumerate(m["field"]):
+            field_data.append((field[0], field[1].typ if type(field[1]) != typ.Constant else field[1].exe, str(field[1])))
+        grp.append((field_data, ent))
 
 
+    for i in grp:
+        print(i)
 
-		# for k in obj:
-		# 	print( k, obj[k] )
-
-		print(active_obj)
-
-
-exec( token )

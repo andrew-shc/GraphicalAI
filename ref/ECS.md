@@ -39,7 +39,11 @@ A string of character for displaying text or other manipulative operation
 **`movable`** *`bool`*
 Describes the object if it is movable
 
-**`function`** *`None`*
+**`function`** *`<callable function>`*
+To be called later in use
+
+**`param`** *`[any, ...]`*
+Parameters for the function component
 
 **`field`** *`{str:cls_typ,...}`*  
 Each field name as `str` has a type value `cls_typ` to signify which
@@ -61,8 +65,10 @@ Each master entity with `child` component has only one `child`
 The uint is got form the compact entity ID incrementing upward.
 
 **`connect_en`** *`[any, ...]`*  
+A list of tags that are allowed to be connected (whitelist)
 
 **`connect_tg`** *`any`*  
+Connector's tag for identification
 
 **`length`** *`uint`*  
 
@@ -73,6 +79,9 @@ Cursor's position
 
 **`at`** *`bool`*  
 Describe if the user is at the location
+
+**`trigger`** *`str`*  
+Describe the type of trigger you want: onclick, offclick, hover
 
 ## System
 Systems should have the same character set as component but all System

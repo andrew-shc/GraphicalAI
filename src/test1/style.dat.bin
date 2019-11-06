@@ -1,0 +1,37 @@
+--- Selected Chained Model (scm.dat) ---
+V_2
+23 f9d7 input_val:i str [4.5.12.34] out:i str [5.3] stuff:c textInput [defualt=Who is this?\x00another=stuff\x00]
+// object id, node uniq type id, input parameters, output parameters
+[SHORT_ID] [MODEL TYPE TAG] <[NAME]:[TYPE] [DATA_TYPE] [NODE_CONNEC]> <[NAME]:Constant [CLASS TYPE] [DATA...]>
+[SHORT_ID] [MODEL TYPE TAG] <[NAME]:[TYPE] [DATA_TYPE] [NODE_CONNEC]> <[NAME]:Constant [CLASS TYPE] [DATA...]>
+[SHORT_ID] [MODEL TYPE TAG] <[NAME]:[TYPE] [DATA_TYPE] [NODE_CONNEC]> <[NAME]:Constant [CLASS TYPE] [DATA...]>
+[SHORT_ID] [MODEL TYPE TAG] <[NAME]:[TYPE] [DATA_TYPE] [NODE_CONNEC]> <[NAME]:Constant [CLASS TYPE] [DATA...]>
+[SHORT_ID] [MODEL TYPE TAG] <[NAME]:[TYPE] [DATA_TYPE] [NODE_CONNEC]> <[NAME]:Constant [CLASS TYPE] [DATA...]>
+[SHORT_ID] [MODEL TYPE TAG] <[NAME]:[TYPE] [DATA_TYPE] [NODE_CONNEC]> <[NAME]:Constant [CLASS TYPE] [DATA...]>
+[SHORT_ID] [MODEL TYPE TAG] <[NAME]:[TYPE] [DATA_TYPE] [NODE_CONNEC]> <[NAME]:Constant [CLASS TYPE] [DATA...]>
+[SHORT_ID] [MODEL TYPE TAG] <[NAME]:[TYPE] [DATA_TYPE] [NODE_CONNEC]> <[NAME]:Constant [CLASS TYPE] [DATA...]>
+[SHORT_ID] [MODEL TYPE TAG] <[NAME]:[TYPE] [DATA_TYPE] [NODE_CONNEC]> <[NAME]:Constant [CLASS TYPE] [DATA...]>
+
+--- Parametized (Compacted Selected Chained) Model (pm.dat) ---
+OBJ_ID [PARAMETERS] [<TAG:[NODE_CONNEC]>, <TAG:[NODE_CONNEC]>, ...]
+OBJ_ID [PARAMETERS] [<TAG:[NODE_CONNEC]>, <TAG:[NODE_CONNEC]>, ...]
+OBJ_ID [PARAMETERS] [<TAG:[NODE_CONNEC]>, <TAG:[NODE_CONNEC]>, ...]
+OBJ_ID [PARAMETERS] [<TAG:[NODE_CONNEC]>, <TAG:[NODE_CONNEC]>, ...]
+OBJ_ID [PARAMETERS] [<TAG:[NODE_CONNEC]>, <TAG:[NODE_CONNEC]>, ...]
+OBJ_ID [PARAMETERS] [<TAG:[NODE_CONNEC]>, <TAG:[NODE_CONNEC]>, ...]
+OBJ_ID [PARAMETERS] [<TAG:[NODE_CONNEC]>, <TAG:[NODE_CONNEC]>, ...]
+
+--- Dataset Manifest File (dataset.meta.yaml) ---
+
+- input:
+    - loc:
+    - type:
+- output:
+    - loc:
+    - type:
+- exec:
+    - epoch: 30
+
+--- Dataset Data Input (dataset###.yaml) ---
+
+--- Model Generated Output (result.csv/result.yaml) ---

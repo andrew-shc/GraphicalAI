@@ -1,3 +1,7 @@
+## Indev 7.0 [Nov 5, 2019]
+* Added Models
+* Working on execution process
+
 ## Indev 6.0 [Nov 3, 2019]
 * Added input text field
 
