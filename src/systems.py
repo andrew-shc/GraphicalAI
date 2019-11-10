@@ -95,7 +95,6 @@ def moveChild(self, glbl):
             e_child, e_indc = _entity_req(self, ["obj_id", "pos"])
             for eidc, dtc in zip(reversed(e_indc), reversed(e_child)):
                 if dtc["obj_id"] == dt["child"] and dt["clicked"]:  # this child entity is part of the master entity
-                    p.draw.rect(glbl["surf"], (255,0,0), (dtc["pos"][0], dtc["pos"][1], 10, 10))
                     vector = [(glbl["event"]["mPos"][0]+dt["placement_ofs"][0])-dt["pos"][0],
                               (glbl["event"]["mPos"][1]+dt["placement_ofs"][1])-dt["pos"][1]]
                     dtc["pos"][0] += vector[0]
@@ -169,8 +168,10 @@ def shwCursor(self, glbl):  # TODO
 
             if glbl["chrc"]["raw"] == p.K_RIGHT and dt["cursor"] < len(dt["text"]):
                 dt["cursor"] += 1
+                glbl["cursor"]["blink"] = True
             elif glbl["chrc"]["raw"] == p.K_LEFT and dt["cursor"] > 0:
                 dt["cursor"] -= 1
+                glbl["cursor"]["blink"] = True
 
             gcur = glbl["cursor"]
 
@@ -196,15 +197,12 @@ def editText(self, glbl):  # TODO
                 dt["cursor"] += 1
             if glbl["chrc"]["unicode"] == chr(p.K_BACKSPACE) and dt["cursor"] > 0:
                 l = list(dt["text"])
-                del l[dt["cursor"]]
+                del l[dt["cursor"]-1]
                 dt["text"] = "".join(l)
                 dt["cursor"] -= 1
             self.entity_save(eid, dt)
 
-def DEBUG(self):
-    print("at",
-          self.entity_pp_strip(self.entity_data(self.entity(self.ENTITIES, ["obj_id", "pos", "rect", "font"])), False,
-                               font="arial"))
+
 # when user click ONCE on the object, this will always be true unless the user click away the object's dimension
 def at(self, glbl):
     req = ["pos", "rect", "at", ]
@@ -221,6 +219,7 @@ def at(self, glbl):
             if glbl["event"]["mTrgOn"]:  # cursor on clicked
                 dt["at"] = True
                 glbl["cursor"]["txt_inp"] = True
+                glbl["cursor"]["blink"] = True
                 self.entity_save(eid, dt)
                 break
 
@@ -272,4 +271,3 @@ def genFields(self, glbl):
                 rect = dt["rect"]
                 f[1].exe.create(self, dt["child"], [pos[0]+nd_pd, pos[1]+ind_u*(nd_sz+nd_pd)+nd_pd+rect[1]/4+nd_pd],
                                 [rect[0], 20], f[0], f[1])
-                a = self.entity_pp_cmpnt(self.entity_data(self.entity(self.ENTITIES, ["obj_id", "pos", "rect", "font"])), ["obj_id", "pos", "rect", "font"], strict=True)

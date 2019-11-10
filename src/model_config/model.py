@@ -17,12 +17,13 @@ class OperationModel:
     """
 
     title = "Operation"
+    mid = 0x0000
 
     def __init__(self, pos, rect, font_size):
         self.field = [
             ("inp_val", typ.Input(int)),
             ("out_val", typ.Output(int)),
-            ("%OPERAND", typ.Constant(go.TextField("Operand:", font_size=font_size))),
+            ("&OPERAND", typ.Constant(go.TextField("Operand:", font_size=font_size))),
         ]
         self.pos = pos
         self.rect = rect
@@ -34,46 +35,56 @@ class OperationModel:
         :param child:
         :return:
         """
-        prfb.box(world, child, master, self.pos, self.rect, self.title, self.field)
+        prfb.box(world, child, master, self.mid, self.pos, self.rect, self.title, self.field)
 
-    def execute(self, inp, const, out):
+    @staticmethod
+    def execute(inp, const):
         print("MODEL OPERATION")
-        return out
+        print(inp)
+        print(const)
+        return {"out_val": "MODEL OP?"}
 
 # retrieves the data from the file
 class FileReceiver:
     title = "File Receiver"
+    mid = 0x0001
 
     def __init__(self, pos, rect, font_size):
         self.field = [
             ("out_val", typ.Output(int)),
-            ("%OPERAND", typ.Constant(go.TextField("File:", font_size=font_size))),
+            ("&OPERAND", typ.Constant(go.TextField("File Name:", font_size=font_size))),
         ]
         self.pos = pos
         self.rect = rect
 
     def create(self, world, master, child):
-        prfb.box(world, master, child, self.pos, self.rect, self.title, self.field)
+        prfb.box(world, master, child, self.mid, self.pos, self.rect, self.title, self.field)
 
-    def execute(self, inp, const, out):
+    @staticmethod
+    def execute(inp, const):
         print("MODEL FILE RECEIVER")
-        return out
+        print(inp)
+        print(const)
+        return {"out_val": "FILE RCV?"}
 
 # saves the data into file
 class FileSaver:
-    title = "File Receiver"
+    title = "File Saver"
+    mid = 0x0002
 
     def __init__(self, pos, rect, font_size):
         self.field = [
-            ("out_val", typ.Output(int)),
-            ("%OPERAND", typ.Constant(go.TextField("File:", font_size=font_size))),
+            ("inp_val", typ.Input(int)),
+            ("&OPERAND", typ.Constant(go.TextField("File Name:", font_size=font_size))),
         ]
         self.pos = pos
         self.rect = rect
 
     def create(self, world, master, child):
-        prfb.box(world, master, child, self.pos, self.rect, self.title, self.field)
+        prfb.box(world, master, child, self.mid, self.pos, self.rect, self.title, self.field)
 
-    def execute(self, inp, const, out):
+    @staticmethod
+    def execute(inp, const):
         print("MODEL FILE OUTPUTTER")
-        return out
+        print(inp)
+        return {}

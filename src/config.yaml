@@ -11,3 +11,6 @@ cursor:
   ofsy: -15  # offset-y of the cursor (relative)
   limit: 15  # cursor counter limit; updates per frame
   cooldown: 30  # frames before to start the continuous press
+file_cfg:
+  skeleton: skeleton.dat.bin
+  parameterize: param.dat.bin

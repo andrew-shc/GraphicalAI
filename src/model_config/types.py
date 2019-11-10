@@ -13,8 +13,13 @@ class Input:
         """
         self.typ = typ
 
+    # to read by the people
     def __str__(self):
-        return "input"
+        return "input type"
+
+    # to be read by the executor
+    def __repr__(self):
+        return "i"
 
 class Output:
     def __init__(self, typ):
@@ -23,8 +28,13 @@ class Output:
         """
         self.typ = typ
 
+    # to read by the people
     def __str__(self):
-        return "output"
+        return "output type"
+
+    # to be read by the executor
+    def __repr__(self):
+        return "o"
 
 class Constant:
     def __init__(self, exe):
@@ -33,8 +43,13 @@ class Constant:
         """
         self.exe = exe
 
+    # to read by the people
     def __str__(self):
-        return "constant"
+        return "constant type"
+
+    # to be read by the executor
+    def __repr__(self):
+        return "c"
 
 
 # any type
@@ -90,7 +105,3 @@ class Integer(Number):
     def __str__(self):
         pass
 
-
-# a = Number("woah")
-
-print("12345"[2:])

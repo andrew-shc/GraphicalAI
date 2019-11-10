@@ -76,6 +76,7 @@ class World:
         self.TAG.append(self.allocate_id(self.TAG))  # append compact index
 
         info("Entity Created:", self.allocate_id(self.TAG))
+        return (self.allocate_id(self.TAG), ID, kwargs)
 
     def destroy(self, eid):
         """ destroy the entity through ID

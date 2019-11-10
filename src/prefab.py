@@ -15,7 +15,7 @@ def button(world, obj_id, pos, rect, text, function, param, font="arial", font_s
                  font_color=font_color, font_align={"x": "center", "y": "center"}, text=text, text_align=True,
                  param=param, clicked=False)
 
-def box(world, obj_id, master_id, pos, rect, text, field):
+def box(world, obj_id, master_id, mid, pos, rect, text, field):
     # world.create(obj_id=obj_id, pos=pos.copy(), rect=[rect[0], rect[1]], color=(150, 200, 255))  # user input area
     world.create(obj_id=obj_id, pos=pos.copy(), rect=[rect[0], rect[1]], color=(150, 200, 255))  # output area
     world.create(obj_id=obj_id, pos=pos.copy(), rect=[rect[0]/2, rect[1]], color=(170, 220, 255))  # input area
@@ -27,7 +27,7 @@ def box(world, obj_id, master_id, pos, rect, text, field):
 
     # master controller entity for the box
     world.create(obj_id=master_id, child=obj_id, pos=pos.copy(), rect=rect, clicked=False, movable=True,
-                 placement_ofs=[None, None], field=field)
+                 placement_ofs=[None, None], field=field, mid=mid)
 
 
 def boxField(world, obj_id, pos, rect, ptxt, stxt, typ, name, x_align, cnct_en, tag):

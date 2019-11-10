@@ -18,7 +18,7 @@ fps = 60
 clock = p.time.Clock()
 
 width, height = 1920, 1080
-surface = p.display.set_mode((width, height), p.FULLSCREEN)
+surface = p.display.set_mode((width, height), p.RESIZABLE)
 # surface = p.display.set_mode( (1000, 1000), )
 
 APP_DIR = "C:/Users/Andrew Shen/Desktop/ProjectEmerald/src/test1"
@@ -76,7 +76,7 @@ fld_dt: [ [eid, ... ], [eid, .... ] ]  # first list, input; second list, output
 """
 components = ["obj_id", "pos", "rect", "color", "font", "font_size", "font_color", "font_align", "text", "text_align",
               "clicked", "movable", "function", "param", "field", "fld_nm", "fld_typ", "fld_dt", "placement_ofs",
-              "child", "connectee", "connect_en", "connect_tg", "length", "width", "cursor",  "at", "trigger",
+              "child", "connectee", "connect_en", "connect_tg", "length", "width", "cursor", "at", "trigger", "mid", "cid"
               ]  # [..., "file_data", "vector"]
 
 systems = [rect, label, shwCursor, genFields, moveChild, move, connectorWireIso, connectorWireMrg, connectNode, click,
@@ -85,11 +85,12 @@ world = World(components, systems)  # initialize world manager class
 
 oid_cc = 1
 
-prfb.button(world, oid_cc, [10, 10], [200,50], "Save Skeleton", saveSkel, [world], backg=(200, 200, 200))
+prfb.button(world, oid_cc, [10, 10], [200,50], "Save Project", saveSkel, [world], backg=(200, 200, 200))
 
 oid_cc += 1
 info("Software Graphic Object Initialized")
 
+fullscreen = False
 app_loop = True
 while app_loop:
     surface.fill((255, 255, 255))
@@ -135,23 +136,26 @@ while app_loop:
             if e.key == K_ESCAPE:
                 app_loop = False
             elif e.key == K_s and not dat["cursor"]["txt_inp"]:
-                # prfb.Box(world, oid_cc, oid_cc+1, [500, 500], [200, 100], "S",
-                #          {"input": prfb.inPut, "output": prfb.outPut, "user defined": prfb.userDef})
                 mdl.OperationModel([500, 500], [200, 100], 12).create( world, oid_cc, oid_cc+1)
 
                 oid_cc += 2
             elif e.key == K_i and not dat["cursor"]["txt_inp"]:
-                # prfb.Box(world, oid_cc, oid_cc+1, [500, 500], [200, 100], "I",
-                #          {"input": prfb.inPut, "output": prfb.outPut, "user defined": prfb.userDef})
-                mdl.OperationModel([500, 500], [200, 100], 12).create( world, oid_cc, oid_cc+1)
+                mdl.FileReceiver([500, 500], [200, 100], 12).create( world, oid_cc, oid_cc+1)
 
                 oid_cc += 2
             elif e.key == K_o and not dat["cursor"]["txt_inp"]:
-                # prfb.Box(world, oid_cc, oid_cc+1, [500, 500], [200, 100], "O",
-                #          {"input": prfb.inPut, "output": prfb.outPut, "user defined": prfb.userDef})
-                mdl.OperationModel([500, 500], [200, 100], 12).create( world, oid_cc, oid_cc+1)
+                mdl.FileSaver([500, 500], [200, 100], 12).create( world, oid_cc, oid_cc+1)
 
                 oid_cc += 2
+            elif e.key == K_F11:
+                if fullscreen:
+                    surface = p.display.set_mode((width, height), p.RESIZABLE)
+                    fullscreen = False
+                else:
+                    surface = p.display.set_mode((width, height), p.FULLSCREEN)
+                    fullscreen = True
+                print(fullscreen)
+
         elif e.type == KEYUP:
             dat["chrc"]["off"] = e.key
             dat["chrc"]["raw"] = ""

@@ -7,3 +7,5 @@ model = linear_model.LinearRegression().fit([i for i in zip(x, y)], y)
 
 r = model.predict([[4, 3]])
 print(r)
+
+print(model)
