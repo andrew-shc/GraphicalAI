@@ -29,7 +29,7 @@ class TextField:
     # to be read by the executor
     def __repr__(self):
         val = self.world.entity_data([self.ent])
-        return f"str\x01{val[0]['text']}\x00"
+        return f"{val[0]['text']}"
 
     def create(self, world, oid, pos, rect, fld_nm, fld_typ):
         font = p.font.SysFont("mono", self.font_size)

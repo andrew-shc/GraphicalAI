@@ -12,5 +12,15 @@ cursor:
   limit: 15  # cursor counter limit; updates per frame
   cooldown: 30  # frames before to start the continuous press
 file_cfg:
+  project: project.yaml
+  settings: settings.yaml
   skeleton: skeleton.dat.bin
   parameterize: param.dat.bin
+  delimeter:
+    inp: "\x01"
+    out: "\x02"
+    cns: "\x03"
+    spc: "\x00"
+    spr: "\x04"
+file_index:
+  MySampleProject: 'C:/Users/Andrew Shen/Desktop/ProjectEmerald'

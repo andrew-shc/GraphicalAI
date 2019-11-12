@@ -1,6 +1,7 @@
 from pygame.locals import *
 import ctypes; ctypes.windll.user32.SetProcessDPIAware(); del ctypes
 import yaml
+import os, errno
 
 from src.model_config import model as mdl
 from src.model_config import types as typ
@@ -63,6 +64,32 @@ def processConfig(path):
     dat["cursor"]["cooldown"] = int(cfg["cursor"]["cooldown"])
     return dat
 
+def autoCreate(filename, fdt, ):
+    if not os.path.exists(os.path.dirname(filename)):
+        try:
+            os.makedirs(os.path.dirname(filename))
+        except OSError as exc:  # Guard against race condition
+            if exc.errno != errno.EEXIST:
+                raise
+
+    with open(filename, "w") as f:
+        yaml.dump(fdt, f, default_flow_style=False)
+
+def initProject(project_dir, project_name):
+    cfg = yaml.safe_load(open("config.yaml", "r").read())
+    root_dir = project_dir+project_name+"/"
+
+    prj = {
+        "workspace": [],
+        "meta": "None",
+    }
+
+    sttng = {
+        "root directory": root_dir
+    }
+
+    autoCreate(root_dir+cfg["file_cfg"]["project"], prj)
+    autoCreate(root_dir+cfg["file_cfg"]["settings"], sttng)
 
 event = []
 bufferRaw = ""
@@ -83,9 +110,20 @@ systems = [rect, label, shwCursor, genFields, moveChild, move, connectorWireIso,
            at, editText, clickEvent]
 world = World(components, systems)  # initialize world manager class
 
+project = "MySampleProject"
+# initialization
+cfg = yaml.safe_load(open("config.yaml", "r").read())
+root = cfg["file_index"][project]+"/"+project+"/"
+print(cfg["file_index"])
+for prj in cfg["file_index"]:
+    initProject(cfg["file_index"][prj]+"/", prj)
+
+
 oid_cc = 1
 
-prfb.button(world, oid_cc, [10, 10], [200,50], "Save Project", saveSkel, [world], backg=(200, 200, 200))
+prfb.button(world, oid_cc, [10, 10], [200,50], "Save Project", saveSkel, [world, root], backg=(200, 200, 200))
+prfb.button(world, oid_cc, [220, 10], [200,50], "Run Project", lambda x: execSkel(*loadSkel(x)), [root],
+            backg=(200, 200, 200))
 
 oid_cc += 1
 info("Software Graphic Object Initialized")

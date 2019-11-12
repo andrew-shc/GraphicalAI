@@ -9,16 +9,53 @@ Execute ML: Automatically changes each settings of the model
 
 """
 
-import re
-
 from src.model_config import types as typ
+import yaml
 
-APP_DIR = "C:/Users/Andrew Shen/Desktop/ProjectEmerald/src2/test1"
-PROJECT_FILE = "/project_test_4.dat"
+
+# number encode to different base
+def enc(num, base=128):
+    if num == 0: return [0]
+    place = 1
+    val = []
+    after_zero = False
+    while num%(base**place)//base**(place-1) != 0 or not after_zero or len(val) == 0:
+        val.insert(0, num%(base**place)//base**(place-1))
+        if val[0] != 0:
+            after_zero = True
+        place += 1
+    return val
+
+def dec(num, base=128):
+    val = 0
+    for digit, n in enumerate(reversed(num)):
+        val += n*base**(digit)
+    return val
+
+# binary string format
+def binf(*args):
+    dat = b""
+    for s in args:
+        if type(s) == bytes or type(s) == bytearray:
+            dat += s
+        else:
+            if type(s) != str: buf = str(s)
+            else: buf = s
+            try:
+                dat += buf.encode("ascii")
+            except UnicodeEncodeError:
+                dat += buf.encode("utf-16")
+    return dat
+
+def bin_trans(s, trns):
+    dt = s
+    for k in trns: dt=dt.replace(k, trns[k])
+    return dt
 
 # saves the skeleton
-def saveSkel(self):
-    print("\n\n\n")
+def saveSkel(self, path):
+    cfg = yaml.safe_load(open("config.yaml", "r").read())
+    char = cfg["file_cfg"]["delimeter"]
     # initialize specific entities
     fld = self.entity(self.ENTITIES, ["obj_id","fld_nm","fld_typ"])
     mdl = self.entity(self.ENTITIES, ["obj_id","field","mid"])
@@ -26,7 +63,7 @@ def saveSkel(self):
     # inject %short_id% into each entities for easier locating the entities
     inj = []
     for fdt, fid in zip(self.entity_data(fld), fld):
-        fdt["%short_id%"] = self.short_id(fid)
+        fdt["%short_id%"] = bytearray([128+i for i in enc(self.short_id(fid))])
         inj.append(fdt)
 
     # modelization: grouping fields into models
@@ -57,38 +94,46 @@ def saveSkel(self):
     # formatting into file data
     file_data = []
     for m, f in grp:
-        s = f"{m[0]} {m[1]} "
+        s = binf(m[0],char["spc"],m[1],char["spc"])
         for intf in f:
-            field_id_bind[intf['%short_id%']] = intf['fld_nm']
+            field_id_bind[bytes(intf['%short_id%'])] = binf(intf['fld_nm'])
             if repr(intf["fld_typ"]) == "i":
-                s += f"${intf['%short_id%']}:{intf['%fld_data_typ%']}{intf['connectee']}$ "
+                s += binf(char['inp'],intf["%short_id%"],":",intf['%fld_data_typ%'],intf['connectee'],char['inp'],char['spc'])
             elif repr(intf["fld_typ"]) == "o":
-                s += f"%{intf['%short_id%']}:{intf['%fld_data_typ%']}{intf['connectee']}% "
+                s += binf(char['out'],intf["%short_id%"],":",intf['%fld_data_typ%'],intf['connectee'],char['out'],char['spc'])
             elif repr(intf["fld_typ"]) == "c":
-                s += f"@{intf['%short_id%']}:{intf['cid'].go_id} {repr(intf['cid'])}@ "
-            # print(intf["fld_nm"], intf["fld_typ"])
+                s += binf(char['cns'],intf["%short_id%"],":",intf['cid'].go_id,char['spc'],repr(intf['cid']),char['cns'],char['spc'])
+        file_data.append(s+b"\n")
 
-        file_data.append(s+"\n")
-
-    file_data.append("~\n")
+    file_data.append(b"~\n")
     for i in field_id_bind:
-        file_data.append(f"{i} {field_id_bind[i]}\n")
+        file_data.append(binf(i,char['spc'],field_id_bind[i],"\n"))
 
-    with open("skeleton.dat.bin", "w") as fbj:
+    with open(path+"skeleton.dat.bin", "wb") as fbj:
         fbj.writelines(file_data)
 
 
-def loadSkel():
-    fdt = []
-    with open("skeleton.dat.bin", "r") as fbj:
-        raw = fbj.readlines()
+def loadSkel(path):
+    cfg = yaml.safe_load(open("config.yaml", "r").read())
+    char = cfg["file_cfg"]["delimeter"]
+    char["spc"] = binf(char["spc"])
+    char["inp"] = binf(char["inp"])
+    char["out"] = binf(char["out"])
+    char["cns"] = binf(char["cns"])
 
-    fdt = raw[:raw.index("~\n")]
-    tbl = raw[raw.index("~\n")+1:]
+    try:
+        with open(path+"skeleton.dat.bin", "rb") as fbj:
+            raw = fbj.readlines()
+    except FileNotFoundError:
+        print("ERROR: FILE NOT FOUND")
+
+    fdt = raw[:raw.index(b"~\n")]
+    tbl = raw[raw.index(b"~\n")+1:]
 
     short_id_bind = {}
     for l in tbl:
-        short_id_bind[l.split(" ")[0]] = l.split(" ")[1].strip("\n")
+        byt = l.split(char["spc"])[0]
+        short_id_bind[dec([int(i)-128 for i in byt])] = char["spc"].join(l.split(char["spc"])[1:]).strip(b"\n").decode("ASCII")
 
     frmt = []
 
@@ -96,15 +141,16 @@ def loadSkel():
     for f in fdt:
         manp = []
         nested = False
-        buf = ""
+        buf = b""
         for c in f:
-            if (c == " " or c == "\n") and not nested:
+            c = bytes(bytearray([c]))
+            if (c == char["spc"] or c == b"\n") and not nested:
                 manp.append(buf)
-                buf = ""
-            elif c in ["@", "$", "%"] and nested:
+                buf = b""
+            elif c in [char["inp"], char["out"], char["cns"]] and nested:
                 nested = False
                 buf += c
-            elif c in ["@", "$", "%"]:
+            elif c in [char["inp"], char["out"], char["cns"]]:
                 nested = True
                 buf += c
             else:
@@ -114,36 +160,47 @@ def loadSkel():
     pyd = []
     # transfer data into python data
     for l in frmt:
+        if b"" in l: l.remove(b"")
         obj = {}
         obj["model"] = int(l[1])
         obj["field"] = {}
-
         for fld in l[2:]:  # TODO: Problems when there is \n or not
-            dat = fld.translate({ord(i): None for i in '@$%'}).split(":")
+            dat = bin_trans(fld, {char["inp"]: b"", char["out"]: b"", char["cns"]: b""}).split(b":")
+            dat[0] = dec([int(i)-128 for i in dat[0]])
+
             obj["field"][dat[0]] = {}
             obj["field"][dat[0]]["value"] = None
-
-            if fld[0] == "@":
-                obj["field"][dat[0]]["go"] = int(dat[1].split(" ")[0])
-                obj["field"][dat[0]]["data"] = dat[1].split(" ")[1]
+            # print(fld[0:1], fld)
+            if fld[0:1] == char["cns"]:
+                obj["field"][dat[0]]["go"] = int(dat[1].split(char["spc"])[0])
+                obj["field"][dat[0]]["data"] = dat[1].split(char["spc"])[1].decode("ASCII")
                 obj["field"][dat[0]]["node"] = "c"
-            elif fld[0] == "$":
-                obj["field"][dat[0]]["type"] = dat[1][:dat[1].index("[")]
-                cnc = dat[1][dat[1].index("["):]
-                obj["field"][dat[0]]["connect"] = [int(i) for i in cnc[1:-1].split(", ") if i != ""]
+            elif fld[0:1] == char["inp"]:
+                obj["field"][dat[0]]["type"] = dat[1][:dat[1].index(b"[")].decode("ASCII")
+                cnc = dat[1][dat[1].index(b"["):]
+                obj["field"][dat[0]]["connect"] = [int(i) for i in cnc[1:-1].split(b", ") if i != b""]
                 obj["field"][dat[0]]["node"] = "i"
-            elif fld[0] == "%":
-                obj["field"][dat[0]]["type"] = dat[1][:dat[1].index("[")]
-                cnc = dat[1][dat[1].index("["):]
-                obj["field"][dat[0]]["connect"] = [int(i) for i in cnc[1:-1].split(", ") if i != ""]
+            elif fld[0:1] == char["out"]:
+                obj["field"][dat[0]]["type"] = dat[1][:dat[1].index(b"[")].decode("ASCII")
+                cnc = dat[1][dat[1].index(b"["):]
+                obj["field"][dat[0]]["connect"] = [int(i) for i in cnc[1:-1].split(b", ") if i != b""]
                 obj["field"][dat[0]]["node"] = "o"
         pyd.append(obj)
+
     return pyd, short_id_bind
 
 def execSkel(dat, id_bind):
     # this retrieves the user-defined class information from that file
     get_class = lambda c: [i for i in c.__dict__ if i[0:2] != "__" and i[0] == i[0].upper()]
     # bind = lambda d, k, v : {k:v for o in d}
+
+    import os
+
+    inst = {
+        "root dir": "C:/users/andrew shen/desktop/projectemerald/MySampleProject/"
+    }
+
+    del os
 
     from src.model_config import model
     from src.model_config import graphic_object
@@ -172,13 +229,20 @@ def execSkel(dat, id_bind):
                     for i in mdl["field"] if mdl["field"][i]["node"] == "c"}
             cnst = {id_bind[i]:cnst[i] for i in cnst}
 
-            out = bind_cls[mdl["model"]].execute(inp={}, const=cnst)
-            out = {local_bind_go[i]:out[i] for i in out}
+            out = bind_cls[mdl["model"]].execute(inp={}, const=cnst, inst=inst)
+            try:
+                out = {local_bind_go[i]: out[i] for i in out}
+            except KeyError as e:
+                print(f"ERROR: The model <{bind_cls[mdl['model']].__name__}> returned an invalid field, {e} ")
+                return False
+            except TypeError:
+                print(f"ERROR: The model <{bind_cls[mdl['model']].__name__}> did not returned a dictionary")
+                print(f"This is used for binding the executed value for the other models")
+                return False
 
             # binding the output value to the output fields
             for f in out:
                 mdl["field"][f]["value"] = out[f]
-
             # posting the output value
             for f in mdl["field"]:
                 if mdl["field"][f]["node"] == "o":
@@ -186,11 +250,13 @@ def execSkel(dat, id_bind):
                         # find the model
                         for m in dat:
                             if fid in list(m["field"]):
-                                m["field"][fid]["value"] = m["field"][f]["value"]
+                                m["field"][fid]["value"] = mdl["field"][f]["value"]
 
     stack = []
+    running = dat
     while True:
-        for mdl in dat:
+        for mdl in running:
+            MODEL_SKIP = False
             l = [True if mdl["field"][i]["node"] == "i" else False for i in mdl["field"]]
             go_run = True
             # retrieving the input value
@@ -213,29 +279,55 @@ def execSkel(dat, id_bind):
                                             good = False
                         else:  # has no connectors
                             good = False
-                            stack.append(f)
+                            stack.append(mdl)
                     else:  # input has value
                         if mdl["field"][f]["connect"] != []: # has connectors
                             good = True
-                        else:  # has no connectors (impossible)
-                            good = False  # sets to False even if the input is set manually to prevent confusion
+                        else:  # has no connectors
+                            good = True  # a value can still be set by other fields even when it does not have connector
                     if good is False and id_in:
                         go_run = False
                 else: # if the input type is not input
                     pass
             if go_run and any(l):  # And model must have input
-                # TODO: input the code to execute the function
-                local_bind_go = {id_bind[i]: i for i in list(mdl["field"])}
+                bind_fild_out = {id_bind[i]: i for i in list(mdl["field"]) if mdl["field"][i]["node"] == "o"}
                 cnst = {i: mdl["field"][i]["data"]
                         for i in mdl["field"] if mdl["field"][i]["node"] == "c"}
                 cnst = {id_bind[i]: cnst[i] for i in cnst}
+
+                inp = {}
+                for i in mdl["field"]:  # backflow input design
+                    if mdl["field"][i]["node"] == "i":
+                        if mdl["field"][i]["value"] is None and mdl["field"][i]["connect"] != []:
+                            fid = mdl["field"][i]["connect"][0]  # TODO: Might want to merge multiple input
+                            for m in dat:
+                                for f in m["field"]:
+                                    if f == fid:
+                                        if m["field"][fid]["value"] is not None:  # check if that model has been ran
+                                            mdl["field"][i]["value"] = m["field"][fid]["value"]
+                                        else:  # input backflow failed; will be added to the stack fow later execution
+                                            stack.append(mdl)
+                                            MODEL_SKIP = True
+                                            break
+                        else:
+                            inp[i] = mdl["field"][i]["value"]
+
+                if MODEL_SKIP: break
 
                 inp = {i: mdl["field"][i]["value"]
                         for i in mdl["field"] if mdl["field"][i]["node"] == "i"}
                 inp = {id_bind[i]: inp[i] for i in inp}
 
-                out = bind_cls[mdl["model"]].execute(inp=inp, const=cnst)
-                out = {local_bind_go[i]: out[i] for i in out}
+                out = bind_cls[mdl["model"]].execute(inp=inp, const=cnst, inst=inst)
+                try:
+                    out = {bind_fild_out[i]: out[i] for i in out}
+                except KeyError as e:
+                    print(f"ERROR: The model <{bind_cls[mdl['model']].__name__}> returned an invalid field, {e} ")
+                    return False
+                except TypeError:
+                    print(f"ERROR: The model <{bind_cls[mdl['model']].__name__}> did not returned a dictionary")
+                    print(f"This is used for binding the executed value for the other models")
+                    return False
 
                 # binding the output value to the output fields
                 for f in out:
@@ -248,16 +340,25 @@ def execSkel(dat, id_bind):
                             # find the model
                             for m in dat:
                                 if fid in list(m["field"]):
-                                    m["field"][fid]["value"] = m["field"][f]["value"]
+                                    print(mdl)
+                                    print(m)
+                                    m["field"][fid]["value"] = mdl["field"][f]["value"]
+                                    print(m)
+            else:  # the node is not input
+                pass
+
+            if MODEL_SKIP: continue
         print(stack)
         if stack == []:  # emulating do-while loop
             break
-        dat = stack
+        running = stack
         stack = []
+    return True
 
 
-dt, idb = loadSkel()
-execSkel(dt, idb)
+if __name__ == '__main__':
+    dt, idb = loadSkel("C:/users/andrew shen/desktop/projectemerald/MySampleProject/")
+    execSkel(dt, idb)
 
 """
 cool reference

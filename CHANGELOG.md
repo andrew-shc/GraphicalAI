@@ -1,3 +1,10 @@
+## Indev 8.1 [Nov 10, 2019] (MVP)
+* Working models
+* New project listed in the config.yaml automatically gets initialized
+* Polished the execution process
+    * Added input backflow
+    * Other small changes...
+
 ## Indev 8.0 [Nov 8, 2019]
 * Execution process working
 
