@@ -22,7 +22,8 @@ model = svm.SVC()
 print(model)
 # learning algorithm
 model.fit(input_data, output_data)
-print(model.decision_function_shape)
+print(model)
 # predicts
 r = model.predict([[1, 1, 14, 3, 5]])
-print(r)
+print("\n".join(r))
+print("\n".join(["hihihi","dwesaf","Dwadwsa"]))

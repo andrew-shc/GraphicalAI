@@ -4,12 +4,13 @@ import yaml
 import os, errno
 
 from src.model_config import model as mdl
-from src.model_config import types as typ
+from src.model_config import node_types as typ
 from src.debugger import *
 from src.manager import World
 from src.systems import *
 from src.executor import *
 import src.prefab as prfb
+import src.model_config.graphic_object as go
 
 info("Main Application Initialized")
 
@@ -91,23 +92,63 @@ def initProject(project_dir, project_name):
     autoCreate(root_dir+cfg["file_cfg"]["project"], prj)
     autoCreate(root_dir+cfg["file_cfg"]["settings"], sttng)
 
+
+def selectModel(oid_cc, ent_self, pos, rect, oid):
+    get_class = lambda c: [i for i in c.__dict__ if i[0:2] != "__" and i[0] == i[0].upper()]
+    class_nm = [eval(f"mdl.{c}.title") for c in get_class(mdl)]
+    print(class_nm)
+    txt = world.entity_data([ent_self])[0]["text"].lower()
+
+    req = world.entity_pp_strip(world.entity_data( world.ENTITIES, req=["obj_id"] ), False, obj_id=oid)
+    for edt in req:
+        for edt_int, eid in zip(world.entity_data(world.ENTITIES), world.ENTITIES):
+            if edt == edt_int:  # destroying entities from the previous selections
+                world.destroy(eid)
+    print(world.DESTROYING)
+    world.flush()
+
+    select_height = 20
+    ind = 1
+    for c in class_nm:
+        print(txt, c, txt in c)
+
+        if txt == c.lower():
+            if txt == mdl.OperationModel.title.lower():
+                mdl.OperationModel([500, 500],[200, 100],12).create(world,oid_cc,oid_cc+1)
+            elif txt == mdl.FileSaver.title.lower():
+                mdl.FileSaver([500, 500],[200, 100],12).create(world,oid_cc,oid_cc+1)
+            elif txt == mdl.FileReceiver.title.lower():
+                mdl.FileReceiver([500, 500],[200, 100],12).create(world,oid_cc,oid_cc+1)
+            elif txt == mdl.ModelTrain.title.lower():
+                mdl.ModelTrain([500, 500],[200, 100],12).create(world,oid_cc,oid_cc+1)
+            elif txt == mdl.SVCModel.title.lower():
+                mdl.SVCModel([500, 500],[200, 100],12).create(world,oid_cc,oid_cc+1)
+            oid_cc += 2
+        elif txt in c.lower():  # if True -> gets added to the list
+            # the title of the text field
+            world.create(obj_id=oid, pos=[pos[0], select_height*ind+pos[1]], rect=[rect[0], rect[1]+select_height], font="arial",
+                         font_size=14, font_color=(0, 0, 0), font_align={"x": "center", "y": "center"},
+                         text=c, text_align=True)
+            ind += 1
+
+    print("SELECT MODEL")
+    return oid_cc
+
 event = []
 bufferRaw = ""
 bufferUnic = ""
 beginCounter = False  # begin counting the cooldown
+model_chsn = ""  # model chosen by the user
+txtfld_id = None  # text field id for the model_chsn
 dat = processConfig("config.yaml")
 
-""" 
-field: ["FIELD NAME": [FIELD_TYPE]]
-fld_dt: [ [eid, ... ], [eid, .... ] ]  # first list, input; second list, output
-"""
 components = ["obj_id", "pos", "rect", "color", "font", "font_size", "font_color", "font_align", "text", "text_align",
-              "clicked", "movable", "function", "param", "field", "fld_nm", "fld_typ", "fld_dt", "placement_ofs",
-              "child", "connectee", "connect_en", "connect_tg", "length", "width", "cursor", "at", "trigger", "mid", "cid"
-              ]  # [..., "file_data", "vector"]
+              "clicked", "movable", "function", "param", "fld_dt", "placement_ofs",
+              "child", "connectee", "connect_en", "connect_tg", "length", "width", "cursor", "at", "trigger", "model",
+              "listen"]  # [..., "file_data", "vector"]
 
 systems = [rect, label, shwCursor, genFields, moveChild, move, connectorWireIso, connectorWireMrg, connectNode, click,
-           at, editText, clickEvent]
+           at, editText, clickEvent, inputText]
 world = World(components, systems)  # initialize world manager class
 
 project = "MySampleProject"
@@ -118,15 +159,26 @@ print(cfg["file_index"])
 for prj in cfg["file_index"]:
     initProject(cfg["file_index"][prj]+"/", prj)
 
-
 oid_cc = 1
 
-prfb.button(world, oid_cc, [10, 10], [200,50], "Save Project", saveSkel, [world, root], backg=(200, 200, 200))
-prfb.button(world, oid_cc, [220, 10], [200,50], "Run Project", lambda x: execSkel(*loadSkel(x)), [root],
+# pre-load objects
+prfb.button(world, oid_cc, [220, 10], [200,50], "Save Project", saveSkel, [world, root], backg=(200, 200, 200))
+prfb.button(world, oid_cc, [430, 10], [200,50], "Run Project", lambda x: execSkel(*loadSkel(x)), [root],
             backg=(200, 200, 200))
-
 oid_cc += 1
+
+world.create(obj_id=oid_cc, pos=[10, 5], rect=[200, 20], font="arial", font_size=20,  # the title of the text field
+                 font_color=(0,0,0), font_align={"x": "center", "y": "center"}, text="Input Model", text_align=True)
+
+prfb.triggerTextField(world, oid_cc, [10, 30], [200, 25], 18, "", K_RETURN, selectModel, backg=(230, 210, 200))  # text field
+oid_cc += 2
+
+# val = world.ENTITIES[world.TAG[txtfld_id]]
+
+
 info("Software Graphic Object Initialized")
+
+dat["oid-cc"] = oid_cc
 
 fullscreen = False
 app_loop = True
@@ -212,6 +264,7 @@ while app_loop:
         elif e.type == MOUSEBUTTONUP:
             dat["event"]["mTrgOff"] = True
 
+    # print(world.entity_data([val])[0]["text"])
     world.execute(dat)
 
     p.display.flip()

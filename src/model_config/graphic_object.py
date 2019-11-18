@@ -2,6 +2,10 @@
 This is where all the custom defined graphic object be used in each *model*
 
 All defined graphic object must have an __repr__() method and a entity with obj_id binded with fld_nm and fld_typ
+
+NOTE: Graphic Object can also be used in the main program
+    as the design philophsy for the model.py is a subset of the main program but will still add field data potentially
+    confusing the program
 """
 import pygame as p
 
@@ -26,19 +30,19 @@ class TextField:
     def __str__(self):
         return f"Current Input Value: {self.default}"
 
-    # to be read by the executor
+    # to be read by the executor and the models
     def __repr__(self):
         val = self.world.entity_data([self.ent])
         return f"{val[0]['text']}"
 
-    def create(self, world, oid, pos, rect, fld_nm, fld_typ):
+    def create(self, world, oid, pos, rect, fld):
         font = p.font.SysFont("mono", self.font_size)
         dimn = font.size(self.name)
 
         # *IMPORTANT* graphic object INTERNAL META DATA
-        # ALWAYS include at least an obj_id with fld_nm (field name) and fld_typ (field type)
+        # ALWAYS include at least an obj_id with fld_dt (field data) and cid (constant (graphic object) id)
         # to be recognized as a field
-        world.create(obj_id=oid, fld_nm=fld_nm, fld_typ=fld_typ, cid=self )
+        world.create(obj_id=oid, fld_dt=fld)
 
         # title text field
         world.create(obj_id=oid, pos=pos, rect=[dimn[0], rect[1]], font="mono", font_size=self.font_size,

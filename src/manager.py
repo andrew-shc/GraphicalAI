@@ -55,11 +55,12 @@ class World:
     def create(self, **kwargs):
         """ creates anew entity from list of registered components
         :param **kwargs: Selected component (key) assigning a value (val) to the respective component
+        :return: (short id, long id, kwargs)
         """
 
         for k in kwargs:
             if k not in self.COMPONENT:
-                error(f"Entity creation passed in unregistered component <{k}>")
+                error(f"Entity creation passed in unregistered component <{k}> from <{caller_name()}>")
 
         ID = []  # [0, 3, 4, 5, 2, -1]; -1 means no value for each registered components
         dead = True  # if all the index in the entity is -1 (null pointer)
@@ -73,22 +74,45 @@ class World:
         if dead:
             self.DESTROYING.append(ID)
         self.ENTITIES.append(ID)  # the index
-        self.TAG.append(self.allocate_id(self.TAG))  # append compact index
+        tid = self.allocate_id(self.TAG)
+        self.TAG.append(tid)  # append compact index
 
-        info("Entity Created:", self.allocate_id(self.TAG))
-        return (self.allocate_id(self.TAG), ID, kwargs)
+        info("Entity Created:", self.allocate_id(self.TAG), ID)
+        return (tid, ID, kwargs)
 
     def destroy(self, eid):
         """ destroy the entity through ID
         :param eid: Destroys entity by ID
         """
+
+        info("Entity Destroyed", self.TAG[self.ENTITIES.index(eid)], eid)
+
+        e = self.ENTITIES.index(eid)
+        for ind, i in enumerate(self.TAG):
+            if i > e: self.TAG[ind] -= 1
+        self.TAG.remove(self.ENTITIES.index(eid))
         self.ENTITIES.remove(eid)
         self.DESTROYING.append(eid)
 
-        info("Entity Destroyed", eid)
-
-    def flush(self):
-        """ cleans all the dead data in the container """
+    def flush(self, ez=False):
+        """ cleans all the dead data in the container
+        :param ez: (Take it easy) False -> removes the value from the container and changes the reference to the other entities
+                                  True -> Taking it easy; just set the destroyed entity to None in the container
+        """
+        if not ez:
+            for ea in self.DESTROYING:
+                for ind, cmpnt in enumerate(ea):
+                    if cmpnt >= 0 and ea[ind] != -1:
+                        for eb in self.ENTITIES+self.DESTROYING:
+                            # decrement reference to compensate the destroyed data
+                            if eb[ind] > ea[ind] and eb != ea:
+                                eb[ind] -= 1
+                        del self.CONTAINER[ind][cmpnt]  # removes the value in the container
+        else:
+            for ea in self.DESTROYING:
+                for ind, cmpnt in enumerate(ea):
+                    self.CONTAINER[ind][cmpnt] = None  # just sets the value into none in the container
+        self.DESTROYING.clear()
 
         info("Dead Entity Flushed")
 
@@ -275,3 +299,4 @@ class World:
             else:
                 if c == 1:  # has the pointer but not in ent_dt, definite no-no
                     error(f"Entity ID, <{eid}>, does not align with the data (in order), <{list(ent_dt.keys())}>")
+

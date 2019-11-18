@@ -1,4 +1,11 @@
-## Indev 8.1 [Nov 10, 2019] (MVP)
+## Indev 9.0 [Nov 17, 2019]
+* Added (defunct) AI models
+* Replaced version 3.6 to 3.8 in Travis
+* Added dummy type system to the executor (later to be actual type system)
+* Refactored the components
+* Added a search bar instead of using keyboard to select models individually
+
+## Indev 8.1 [Nov 11, 2019] (MVP)
 * Working models
 * New project listed in the config.yaml automatically gets initialized
 * Polished the execution process

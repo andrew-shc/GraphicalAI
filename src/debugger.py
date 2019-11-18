@@ -23,7 +23,6 @@ def caller_name(skip=2):
     name = []
     module = inspect.getmodule(parentframe)
     # `modname` can be None when frame is executed directly in console
-    # TODO(techtonik): consider using __main__
     if module:
         name.append(module.__name__)
     # detect classname
@@ -41,32 +40,6 @@ def caller_name(skip=2):
     del parentframe, stack
 
     return ".".join(name)
-
-
-print("\033[0;37;40m Normal       Text")
-print("\033[2;37;40m Underlined   Text\033[0;37;40m")
-print("\033[1;37;40m Bright       Colour\033[0;37;40m")
-print("\033[3;37;40m Negative     Colour Background\033[0;37;40m")
-print("\033[5;37;40m Negative     Colour Foreground\033[0;37;40m")
-
-print(
-    "\033[1;37;40m \033[2;37:40m TextColour (Bright)          TextColour                BackgroundColour \033[0;37;40m\n")
-print(
-    "\033[1;30;47m Dark Gray                    \033[0;30;47m Black                   \033[0;31;40m Background                       \033[0m")
-print(
-    "\033[1;31;40m Bright Red                   \033[0;31;40m Red                     \033[0;32;41m Background                       \033[0m")
-print(
-    "\033[1;32;40m Bright Green                 \033[0;32;40m Green                   \033[0;33;42m Background                       \033[0m")
-print(
-    "\033[1;33;40m Yellow                       \033[0;33;40m Brown                   \033[0;34;43m Background                       \033[0m")
-print(
-    "\033[1;34;40m Bright Blue                  \033[0;34;40m Blue                    \033[0;35;44m Background                       \033[0m")
-print(
-    "\033[1;35;40m Bright Magenta               \033[0;35;40m Magenta                 \033[0;36;45m Background                       \033[0m")
-print(
-    "\033[1;36;40m Bright Cyan                  \033[0;36;40m Cyan                    \033[0;37;46m Background                       \033[0m")
-print(
-    "\033[1;37;40m White                        \033[0;37;40m Light Grey              \033[0;30;47m Background                       \033[0m")
 
 esc = "\033[0m "
 
@@ -129,19 +102,3 @@ def getter():
 
 def A(): print("vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv")
 def B(): print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
-
-info("Information")
-error("Error")
-warning("Warning")
-print("Debug")
-normal("Normal")
-normal("\n===\n")
-
-normal("DEBUG TEST")
-
-A()
-B()
-
-info("Finished Color Testing and Pre-Initializing")
-
-

@@ -231,26 +231,33 @@ def at(self, glbl):
                 self.entity_save(eid, dt)
 
 
+# similiar to the buttons, except its when you input value from the text field
+def inputText(self, glbl):
+    req = ["text", "at", "listen", "function", "param"]
+    e_main, e_ind = _entity_req(self, req)
+
+    for dt in e_main:
+        # print(dt)
+        # print(glbl["chrc"]["on"])
+        if glbl["chrc"]["on"] == dt["listen"] and dt["at"]:  # if the key is on-clicked by the listen
+            glbl["oid-cc"] = dt["function"](*[glbl["oid-cc"]]+dt["param"])
+
+
 # special systems -- for specific purposes
 
 def genFields(self, glbl):
-    req = ["obj_id", "pos", "rect", "field", "child"]
+    req = ["obj_id", "pos", "rect", "child", "model"]
     e_main, e_ind = _entity_req(self, req)
     for dt in e_main:
         e_missing = []  # field names that are missing
 
-        entc_req = self.entity_pp_strip(self.entity_data(self.ENTITIES, req=["obj_id", "fld_nm", "fld_typ"]), strict=False,
+        entc_req = self.entity_pp_strip(self.entity_data(self.ENTITIES, req=["obj_id", "fld_dt"]), strict=False,
                                         obj_id=dt["child"])
-        entc_name = self.entity_pp_extc(entc_req, "fld_nm")
-        entc_type = self.entity_pp_extc(entc_req, "fld_typ")
+        entc_field = self.entity_pp_extc(entc_req, "fld_dt")
 
-        for f in dt["field"]:
-            if f[0] not in entc_name:
+        for f in dt["model"].field:
+            if f not in entc_field:
                 e_missing.append(f)
-            else:
-                # if the field type does not match
-                if f[1] != entc_type[entc_name.index(f[0])]:
-                    e_missing.append(f)
 
         nd_pd = glbl["fld_sty"]["nd_pad"]
         nd_sz = glbl["fld_sty"]["nd_sz"]
@@ -259,15 +266,15 @@ def genFields(self, glbl):
         for f in e_missing:  # creating a new entity
             if type(f[1]) == glbl["node_typ"]["inp"]:
                 prfb.boxInpField(self, dt["child"], dt["pos"], dt["rect"], nd_pd, nd_sz, ind_i,
-                                 f[1], f[0], [prfb.NdEn.BoxOut])  # going for reciprocal b/c inp cnnct to out
+                                 [prfb.NdEn.BoxOut], f)  # going for reciprocal b/c inp cnnct to out
                 ind_i += 1
             elif type(f[1]) == glbl["node_typ"]["out"]:
                 prfb.boxOutField(self, dt["child"], dt["pos"], dt["rect"], nd_pd, nd_sz, ind_o,
-                                 f[1], f[0], [prfb.NdEn.BoxInp])
+                                 [prfb.NdEn.BoxInp], f)
                 ind_o += 1
             elif type(f[1]) == glbl["node_typ"]["user"]:  # user defined node, uses custom entities
                 ind_u = max(ind_i, ind_o)+1
                 pos = dt["pos"]
                 rect = dt["rect"]
                 f[1].exe.create(self, dt["child"], [pos[0]+nd_pd, pos[1]+ind_u*(nd_sz+nd_pd)+nd_pd+rect[1]/4+nd_pd],
-                                [rect[0], 20], f[0], f[1])
+                                [rect[0], 20], f)

@@ -5,7 +5,9 @@ AI Model template data is stored in this file
 """
 from .. import prefab as prfb
 from . import graphic_object as go
-from . import types as typ
+from . import node_types as typ
+
+import sklearn as skl
 
 
 # example model
@@ -14,6 +16,9 @@ class OperationModel:
     /input/ is to define the input fields {FIELD NAME : FIELD TYPE}
     /output/ is to define the output fields {FIELD NAME : FIELD TYPE}
     /const/ is to define the user-defined variables [FIELD CLASSTYPE(PARAM)]
+
+    title: The title name to display for the model
+    mid: an id to be easily identified by other files
     """
 
     title = "Operation"
@@ -40,7 +45,7 @@ class OperationModel:
         :param child: child objects id
         :return:
         """
-        prfb.box(world, child, master, self.mid, self.pos, self.rect, self.title, self.field)
+        prfb.modelBox(world, child, master, self.pos, self.rect, self)
 
     @staticmethod
     def execute(inp, const, inst,):
@@ -60,8 +65,10 @@ class OperationModel:
             ans = int(inp["input"])/5
         else:
             print(f"Operand {const['&OPERAND']} is either unavaliable or invalid! (Supports basic 4 operation)")
-        print("OPERATION")
+
         return {"output": ans}
+
+# ========== REAL MODELS ==========
 
 
 # retrieves the data from the file
@@ -78,7 +85,7 @@ class FileReceiver:
         self.rect = rect
 
     def create(self, world, master, child):
-        prfb.box(world, master, child, self.mid, self.pos, self.rect, self.title, self.field)
+        prfb.modelBox(world, child, master, self.pos, self.rect, self)
 
     @staticmethod
     def execute(inp, const, inst,):
@@ -101,14 +108,58 @@ class FileSaver:
         self.rect = rect
 
     def create(self, world, master, child):
-        prfb.box(world, master, child, self.mid, self.pos, self.rect, self.title, self.field)
+        prfb.modelBox(world, child, master, self.pos, self.rect, self)
 
     @staticmethod
     def execute(inp, const, inst,):
-        print(inp)
-        print(const)
-        print(inst)
         with open(inst["root dir"]+"\\"+const["&FNAME"], "w") as fbj:
-            print([str(inp["generic data"])+"\n"])
             fbj.writelines([str(inp["generic data"])+"\n"])
         return {}
+
+
+# Support Vector Machine - SVC Model
+class SVCModel:  # TODO
+    title = "SVM - SVC Model"
+    mid = 0x0003
+
+    def __init__(self, pos, rect, font_size):
+        self.field = [
+            ("numeric data", typ.Input(list)),
+            ("classification", typ.Input(list)),
+            ("model", typ.Output(int)),
+        ]
+        self.pos = pos
+        self.rect = rect
+
+    def create(self, world, master, child):
+        prfb.modelBox(world, child, master, self.pos, self.rect, self)
+
+    @staticmethod
+    def execute(inp, const, inst,):  # TODO: Find a way to data serialize the model
+        model = skl.svm.SVC()
+        model.fit(inp["numeric data"], inp["classification"])
+        return {"model": model}
+
+
+# Support Vector Machine - SVC Model
+class ModelTrain:  # TODO
+    title = "Train Model (for SVC only)"
+    mid = 0x0004
+
+    def __init__(self, pos, rect, font_size):
+        self.field = [
+            ("model", typ.Input(list)),
+            ("result", typ.Output(str)),
+            ("&predict", typ.Constant(go.TextField("User Input:", font_size=font_size))),
+        ]
+        self.pos = pos
+        self.rect = rect
+
+    def create(self, world, master, child):
+        prfb.modelBox(world, child, master, self.pos, self.rect, self)
+
+    @staticmethod
+    def execute(inp, const, inst,):
+        prd = [int(i) for i in const["&predict"].split(" ")]
+        r = " - ".join(inp["model"].predict([prd]))
+        return {"result": r}

@@ -13,7 +13,7 @@ ML works. And not get confused between AI, Neural Network, and ML like
 me.
 
 ### Requirements
-* Python 3.7/3.6 (Developed in 3.7; Tested on 3.7 and 3.6)
+* Python 3.7/3.8 (Developed in 3.7; Tested on 3.7 and 3.8)
 * Libraries Required
     * PyGame
     * SkLearn
@@ -24,10 +24,6 @@ me.
 * Clone this repository
 * Goto the project directory
 * Run `python src/main.py`
-
-### FAQ
-
-### Questions/Comments/Concern
 
 
 ## Developer
