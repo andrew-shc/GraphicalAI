@@ -54,11 +54,11 @@ def boxField(world, obj_id, pos, rect, ptxt, stxt, x_align, cnct_en, tag, dat):
 
 def boxInpField(world, obj_id, pos, rect, nd_pd, nd_sz, fld_ind, cnct_en, dat):
     boxField(world, obj_id, [pos[0]+nd_pd, pos[1]+fld_ind*(nd_sz+nd_pd)+nd_pd+rect[1]/4+nd_pd], [nd_sz, nd_sz],
-             [pos[0]+nd_sz+nd_pd*2, pos[1]+rect[1]/4+nd_pd+nd_pd], [rect[0]/2-nd_pd*2, nd_sz], "left",
+             [pos[0]+nd_sz+nd_pd*2, pos[1]+rect[1]/4+nd_pd+nd_pd+((nd_sz+nd_pd)*fld_ind)], [rect[0]/2-nd_pd*2, nd_sz], "left",
              cnct_en, NdEn.BoxInp, dat)
 
 
 def boxOutField(world, obj_id, pos, rect, nd_pd, nd_sz, fld_ind, cnct_en, dat):
     boxField(world, obj_id, [pos[0]+rect[0]-nd_pd-nd_sz, pos[1]+fld_ind*(nd_sz+nd_pd)+nd_pd+rect[1]/4+nd_pd],
-             [nd_sz, nd_sz], [pos[0]+rect[0]/2+nd_pd, pos[1]+rect[1]/4+nd_pd+nd_pd],
+             [nd_sz, nd_sz], [pos[0]+rect[0]/2+nd_pd, pos[1]+rect[1]/4+nd_pd+nd_pd+((nd_sz+nd_pd)*fld_ind)],
              [rect[0]/2-nd_sz-nd_pd*2-nd_pd*2, nd_sz], "right", cnct_en, NdEn.BoxOut, dat)

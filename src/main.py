@@ -96,7 +96,7 @@ def initProject(project_dir, project_name):
 def selectModel(oid_cc, ent_self, pos, rect, oid):
     get_class = lambda c: [i for i in c.__dict__ if i[0:2] != "__" and i[0] == i[0].upper()]
     class_nm = [eval(f"mdl.{c}.title") for c in get_class(mdl)]
-    print(class_nm)
+
     txt = world.entity_data([ent_self])[0]["text"].lower()
 
     req = world.entity_pp_strip(world.entity_data( world.ENTITIES, req=["obj_id"] ), False, obj_id=oid)
@@ -104,13 +104,11 @@ def selectModel(oid_cc, ent_self, pos, rect, oid):
         for edt_int, eid in zip(world.entity_data(world.ENTITIES), world.ENTITIES):
             if edt == edt_int:  # destroying entities from the previous selections
                 world.destroy(eid)
-    print(world.DESTROYING)
     world.flush()
 
     select_height = 20
     ind = 1
     for c in class_nm:
-        print(txt, c, txt in c)
 
         if txt == c.lower():
             if txt == mdl.OperationModel.title.lower():
@@ -123,6 +121,8 @@ def selectModel(oid_cc, ent_self, pos, rect, oid):
                 mdl.ModelTrain([500, 500],[200, 100],12).create(world,oid_cc,oid_cc+1)
             elif txt == mdl.SVCModel.title.lower():
                 mdl.SVCModel([500, 500],[200, 100],12).create(world,oid_cc,oid_cc+1)
+            elif txt == mdl.CSVLoader.title.lower():
+                mdl.CSVLoader([500, 500], [200, 100], 12).create(world,oid_cc,oid_cc+1)
             oid_cc += 2
         elif txt in c.lower():  # if True -> gets added to the list
             # the title of the text field
@@ -131,7 +131,6 @@ def selectModel(oid_cc, ent_self, pos, rect, oid):
                          text=c, text_align=True)
             ind += 1
 
-    print("SELECT MODEL")
     return oid_cc
 
 event = []
@@ -201,7 +200,7 @@ while app_loop:
     dat["chrc"]["off"] = ""  # characters off clicked
     # dat["chrc"]["raw"] = ""  # raw keyboard input
     dat["cursor"]["cnt_buf"] += 1
-    dat["chrc"]["raw"] = bufferRaw if dat["cursor"]["cld_buf"] > dat["cursor"]["cooldown"] else ""
+    dat["chrc"]["raw"] = bufferRaw if dat["cursor"]["cld_buf"] > dat["cursor"]["cooldown"] and dat["chrc"] else ""
     dat["chrc"]["unicode"] = bufferUnic if dat["cursor"]["cld_buf"] > dat["cursor"]["cooldown"] else ""
 
     dat["cursor"]["cld_buf"] = 0 if not beginCounter and dat["cursor"]["cld_buf"] != 0 else dat["cursor"]["cld_buf"]+1
@@ -225,18 +224,6 @@ while app_loop:
 
             if e.key == K_ESCAPE:
                 app_loop = False
-            elif e.key == K_s and not dat["cursor"]["txt_inp"]:
-                mdl.OperationModel([500, 500], [200, 100], 12).create( world, oid_cc, oid_cc+1)
-
-                oid_cc += 2
-            elif e.key == K_i and not dat["cursor"]["txt_inp"]:
-                mdl.FileReceiver([500, 500], [200, 100], 12).create( world, oid_cc, oid_cc+1)
-
-                oid_cc += 2
-            elif e.key == K_o and not dat["cursor"]["txt_inp"]:
-                mdl.FileSaver([500, 500], [200, 100], 12).create( world, oid_cc, oid_cc+1)
-
-                oid_cc += 2
             elif e.key == K_F11:
                 if fullscreen:
                     surface = p.display.set_mode((width, height), p.RESIZABLE)
@@ -264,7 +251,6 @@ while app_loop:
         elif e.type == MOUSEBUTTONUP:
             dat["event"]["mTrgOff"] = True
 
-    # print(world.entity_data([val])[0]["text"])
     world.execute(dat)
 
     p.display.flip()

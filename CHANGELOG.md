@@ -1,3 +1,7 @@
+## Indev 9.1 [Nov 25, 2019]
+* Working makeshift AI models
+* Other minor changes
+
 ## Indev 9.0 [Nov 17, 2019]
 * Added (defunct) AI models
 * Replaced version 3.6 to 3.8 in Travis

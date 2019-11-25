@@ -1,7 +1,6 @@
 language: python
 python:
-  - "3.8"
-  - "3.7"
+  - "3.7"  # problems with 3.8 and pygame
 install:
   - pip install -r travis/requirements.txt
 script:

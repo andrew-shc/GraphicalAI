@@ -24,4 +24,11 @@ Things can try. __(At your own risk!)__
 * Force close the software
 * Re-install the software
 
+## Known Issue
+* Execute backflow input connector forever loop
+* Unicode and normal characters asynced when typeing resulting continuous typeing
+* Pressing shift for a few second enables the continues key input thus 
+allowing new printable character to be ""
+
+
 ## TODO

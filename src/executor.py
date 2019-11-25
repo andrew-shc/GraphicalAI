@@ -262,6 +262,7 @@ def execSkel(dat, id_bind):
     stack = []
     running = dat
     auto_terminate = False
+    print(running)
     while True:
         for mdl in running:
             MODEL_SKIP = False
@@ -288,6 +289,7 @@ def execSkel(dat, id_bind):
                         else:  # has no connectors
                             good = False
                             stack.append(mdl)
+                            print("SSS1")
                     else:  # input has value
                         if mdl["field"][f]["connect"] != []: # has connectors
                             good = True
@@ -318,6 +320,7 @@ def execSkel(dat, id_bind):
                                         else:  # input backflow failed; will be added to the stack fow later execution
                                             stack.append(mdl)
                                             MODEL_SKIP = True
+                                            print("SSS2")
                                             break
                         else:
                             inp[i] = mdl["field"][i]["value"]
@@ -361,6 +364,10 @@ def execSkel(dat, id_bind):
 
             if MODEL_SKIP: continue
 
+        print("R", running)
+        print("A", auto_terminate)
+        print("S", stack)
+        # breakpoint()
         if stack == running and auto_terminate:
             break
         elif stack == running:

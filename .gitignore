@@ -1,3 +1,8 @@
+
+# to remove any directory or file that gets automatically added from the execution
+MySampleProject/
+
+########################################################################################################################
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

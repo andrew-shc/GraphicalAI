@@ -8,7 +8,8 @@ from . import graphic_object as go
 from . import node_types as typ
 
 import sklearn as skl
-
+import pandas as pd
+from sklearn import svm
 
 # example model
 class OperationModel:
@@ -117,10 +118,41 @@ class FileSaver:
         return {}
 
 
+class CSVLoader:
+    title = "Read CSV"
+    mid = 0x0003
+
+    def __init__(self, pos, rect, font_size):
+        self.field = [
+            ("numeric data", typ.Output(list)),
+            ("classification", typ.Output(list)),
+            ("&fname", typ.Constant(go.TextField("File Name:", font_size=font_size))),
+        ]
+        self.pos = pos
+        self.rect = rect
+
+    def create(self, world, master, child):
+        prfb.modelBox(world, child, master, self.pos, self.rect, self)
+
+    @staticmethod
+    def execute(inp, const, inst, ):  # TODO: How to read CSV with pandas
+        print(const)
+        try:
+            df = pd.read_csv(inst["root dir"]+"\\"+const["&fname"])
+        except FileNotFoundError:
+            print("File Not Found")
+            return False
+
+        result = df['species']
+        data = df.drop('species', axis=1)
+
+        return {"numeric data": data, "classification": result}
+
+
 # Support Vector Machine - SVC Model
 class SVCModel:  # TODO
     title = "SVM - SVC Model"
-    mid = 0x0003
+    mid = 0x0004
 
     def __init__(self, pos, rect, font_size):
         self.field = [
@@ -136,7 +168,7 @@ class SVCModel:  # TODO
 
     @staticmethod
     def execute(inp, const, inst,):  # TODO: Find a way to data serialize the model
-        model = skl.svm.SVC()
+        model = svm.SVC()
         model.fit(inp["numeric data"], inp["classification"])
         return {"model": model}
 
@@ -144,7 +176,7 @@ class SVCModel:  # TODO
 # Support Vector Machine - SVC Model
 class ModelTrain:  # TODO
     title = "Train Model (for SVC only)"
-    mid = 0x0004
+    mid = 0x0005
 
     def __init__(self, pos, rect, font_size):
         self.field = [
@@ -161,5 +193,5 @@ class ModelTrain:  # TODO
     @staticmethod
     def execute(inp, const, inst,):
         prd = [int(i) for i in const["&predict"].split(" ")]
-        r = " - ".join(inp["model"].predict([prd]))
+        r = " - ".join([str(int(i)) for i in inp["model"].predict([prd])])
         return {"result": r}
