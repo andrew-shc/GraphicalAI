@@ -1,386 +1,303 @@
-"""
-The main process of execution in the program
-
-Save Skeleton: Saves the empty models in place
-Save Model: Saves all the parametized settings in each of model
-
-Execute Skeleton: Executes all the user input and other input output
-Execute ML: Automatically changes each settings of the model
-
-"""
-
-from src.model_config import node_types as ndtyp
-import yaml
-
-# this retrieves the user-defined class information from that file
-get_class = lambda c: [i for i in c.__dict__ if i[0:2] != "__" and i[0] == i[0].upper()]
-
-# number encode to different base
-def enc(num, base=128):
-    if num == 0: return [0]
-    place = 1
-    val = []
-    after_zero = False
-    while num%(base**place)//base**(place-1) != 0 or not after_zero or len(val) == 0:
-        val.insert(0, num%(base**place)//base**(place-1))
-        if val[0] != 0:
-            after_zero = True
-        place += 1
-    return val
-
-def dec(num, base=128):
-    val = 0
-    for digit, n in enumerate(reversed(num)):
-        val += n*base**(digit)
-    return val
-
-# binary string format
-def binf(*args):
-    dat = b""
-    for s in args:
-        if type(s) == bytes or type(s) == bytearray:
-            dat += s
-        else:
-            if type(s) != str: buf = str(s)
-            else: buf = s
-            try:
-                dat += buf.encode("ascii")
-            except UnicodeEncodeError:
-                dat += buf.encode("utf-16")
-    return dat
-
-def bin_trans(s, trns):
-    dt = s
-    for k in trns:
-        dt = dt.replace(k, trns[k])
-    return dt
-
-# saves the skeleton
-def saveSkel(self, path):
-    cfg = yaml.safe_load(open("config.yaml", "r").read())
-    char = cfg["file_cfg"]["delimeter"]
-    # initialize specific entities
-    fld = self.entity(self.ENTITIES, ["obj_id","fld_dt"])
-    mdl = self.entity(self.ENTITIES, ["obj_id","model"])
-
-    # inject %short_id% into each entities for easier locating the entities
-    inj = []
-    for fdt, fid in zip(self.entity_data(fld), fld):
-        fdt["%short_id%"] = bytearray([128+i for i in enc(self.short_id(fid))])
-        inj.append(fdt)
-
-    # modelization: grouping fields into models
-    grp = []
-    for m in self.entity_data(mdl):
-        ent = []
-        # get the model's fields
-        for f in inj:
-            if m["child"] == f["obj_id"]:
-                if repr(f["fld_dt"][1]) == "c":
-                    ent.append(self.entity_pp_cmpnt([f], ["obj_id", "fld_dt", "%short_id%"], strict=True)[0])
-                else:
-                    ent.append(self.entity_pp_cmpnt([f], ["obj_id", "fld_dt", "connectee", "%short_id%"], strict=True)[0])
-                    ent[-1]["%fld_data_typ%"] = f["fld_dt"][1].typ.__name__
-
-        # translate each mem addr into meaningful string data of the field
-        field_data = [m["obj_id"], m["model"].mid]
-        for ind, field in enumerate(m["model"].field):
-            if type(field[1]) != ndtyp.Constant: val = repr(field[1].typ)
-            else: val = repr(field[1].exe)
-            field_data.append((field[0], val, str(field[1])))
-        grp.append((field_data, ent))
-
-    # print(grp)
-
-    field_id_bind = {}
-
-    # formatting into file data
-    file_data = []
-    for m, f in grp:
-        s = binf(m[0],char["spc"],m[1],char["spc"])
-        for intf in f:
-            field_id_bind[bytes(intf['%short_id%'])] = binf(intf['fld_dt'][0])
-            cid = intf['fld_dt'][1]
-            if repr(intf['fld_dt'][1]) == "i":
-                s += binf(char['inp'],intf["%short_id%"],":",intf['%fld_data_typ%'],intf['connectee'],char['inp'],char['spc'])
-            elif repr(intf['fld_dt'][1]) == "o":
-                s += binf(char['out'],intf["%short_id%"],":",intf['%fld_data_typ%'],intf['connectee'],char['out'],char['spc'])
-            elif repr(intf['fld_dt'][1]) == "c":
-                s += binf(char['cns'],intf["%short_id%"],":",cid.exe.go_id,char['spc'],repr(cid.exe),char['cns'],char['spc'])
-        file_data.append(s+b"\n")
-
-    file_data.append(b"~\n")
-    for i in field_id_bind:
-        file_data.append(binf(i,char['spc'],field_id_bind[i],"\n"))
-
-    with open(path+"skeleton.dat.bin", "wb") as fbj:
-        fbj.writelines(file_data)
+from src.connector import Connector
+from src.model import Model
+from src.models import *
 
 
-def loadSkel(path):
-    cfg = yaml.safe_load(open("config.yaml", "r").read())
-    char = cfg["file_cfg"]["delimeter"]
-    char["spc"] = binf(char["spc"])
-    char["inp"] = binf(char["inp"])
-    char["out"] = binf(char["out"])
-    char["cns"] = binf(char["cns"])
+class Null:
+	__slots__ = ()
 
-    try:
-        with open(path+"skeleton.dat.bin", "rb") as fbj:
-            raw = fbj.readlines()
-    except FileNotFoundError:
-        print("ERROR: FILE NOT FOUND")
-    fdt = raw[:raw.index(b"~\n")]
-    tbl = raw[raw.index(b"~\n")+1:]
 
-    short_id_bind = {}
-    for l in tbl:
-        byt = l.split(char["spc"])[0]
-        short_id_bind[dec([int(i)-128 for i in byt])] = char["spc"].join(l.split(char["spc"])[1:]).strip(b"\n").decode("ASCII")
+import builtins
 
-    frmt = []
 
-    # format the file data
-    for f in fdt:
-        manp = []
-        nested = False
-        buf = b""
-        for c in f:
-            c = bytes(bytearray([c]))
-            if (c == char["spc"] or c == b"\n") and not nested:
-                manp.append(buf)
-                buf = b""
-            elif c in [char["inp"], char["out"], char["cns"]] and nested:
-                nested = False
-                buf += c
-            elif c in [char["inp"], char["out"], char["cns"]]:
-                nested = True
-                buf += c
-            else:
-                buf += c
-        frmt.append(manp)
+def print(*args):
+	builtins.print("[EXECUTOR]: ", *args)
 
-    pyd = []
-    # transfer data into python data
-    for l in frmt:
-        if b"" in l: l.remove(b"")
-        obj = {}
-        obj["model"] = int(l[1])
-        obj["field"] = {}
-        for fld in l[2:]:  # TODO: Problems when there is \n or not
-            dat = bin_trans(fld, {char["inp"]: b"", char["out"]: b"", char["cns"]: b""}).split(b":")
-            dat[0] = dec([int(i)-128 for i in dat[0]])
 
-            obj["field"][dat[0]] = {}
-            obj["field"][dat[0]]["value"] = None
-            # print(fld[0:1], fld)
-            if fld[0:1] == char["cns"]:
-                obj["field"][dat[0]]["go"] = int(dat[1].split(char["spc"])[0])
-                obj["field"][dat[0]]["data"] = dat[1].split(char["spc"])[1].decode("ASCII")
-                obj["field"][dat[0]]["node"] = "c"
-            elif fld[0:1] == char["inp"]:
-                obj["field"][dat[0]]["type"] = dat[1][:dat[1].index(b"[")].decode("ASCII")
-                cnc = dat[1][dat[1].index(b"["):]
-                obj["field"][dat[0]]["connect"] = [int(i) for i in cnc[1:-1].split(b", ") if i != b""]
-                obj["field"][dat[0]]["node"] = "i"
-            elif fld[0:1] == char["out"]:
-                obj["field"][dat[0]]["type"] = dat[1][:dat[1].index(b"[")].decode("ASCII")
-                cnc = dat[1][dat[1].index(b"["):]
-                obj["field"][dat[0]]["connect"] = [int(i) for i in cnc[1:-1].split(b", ") if i != b""]
-                obj["field"][dat[0]]["node"] = "o"
-        pyd.append(obj)
+def model_saver(model_dt: list, items: list, prj_root: str):
+	"""
+		Saves the model data to a file.
+	items: a list of items in a graphics view
+	"""
+	dat = {}
 
-    return pyd, short_id_bind
+	dt_obj = [i for i in items if isinstance(i, Connector)]
+	for m in model_dt:
+		dt_obj.append(m)
+		for fld in m.field["constant"]:
+			dt_obj.append(fld[1])
 
-def execSkel(dat, id_bind):
+	obj_id = 0
+	obj_map = {}
+	for i in dt_obj:
+		obj_map[i] = obj_id
+		obj_id += 1
 
-    # bind = lambda d, k, v : {k:v for o in d}
+	model_id = 0
+	model = {}
+	for m in model_dt:
+		model[m] = model_id
+		model_id += 1
 
-    import os
+	id_map = {}  # ID # mapping to name
+	for m in model_dt:
+		dat[obj_map[m]] = {}
+		for i in items:
+			if isinstance(i, Connector):  # connectors
+				if i.parent.nmspc_id == m.nmspc_id:
+					id_map[obj_map[m]] = m.nmspc_id
+					id_map[obj_map[i]] = i.field[0]
+					dat[obj_map[m]][obj_map[i]] = (i.tag, i.field[1], [obj_map[c] for c in i.connectees])
+		for c in m.field["constant"]:  # constants
+			id_map[obj_map[m]] = m.nmspc_id
+			id_map[obj_map[c[1]]] = c[0]
+			dat[obj_map[m]][obj_map[c[1]]] = ("const", c[1].value())
+	dat_file_saver(dat, id_map, prj_root)
 
-    inst = {
-        "root dir": "C:/users/andrew shen/desktop/projectemerald/MySampleProject/"
-    }
+	return dat
 
-    del os
 
-    from src.model_config import model
-    from src.model_config import graphic_object
+def dat_file_saver(model_tree, id_map, prj_root: str):
+	"""
+	model_tree:
+	{
+		model title: {
+			connector id: (type, [connector id connections, ...]),
+			...
+		},
+		...
+	}
 
-    cls = get_class(model)
-    go = get_class(graphic_object)
+	id_map:
+		id: display name,
+		...
+	"""
 
-    # binding model id to the model class itself
-    bind_cls = {}  # TODO: Remove this
-    for c in cls:
-        bind_cls[eval(f"model.{c}.mid")] = eval(f"model.{c}")
+	ln = []
+	tab = "    "
 
-    bind_go = {}  # TODO: Remove this
-    for o in go:
-        bind_go[eval(f"graphic_object.{o}.go_id")] = eval(f"graphic_object.{o}")
+	for m in model_tree:  # each models
+		ln.append(str(m))
+		for f in model_tree[m]:  # each items (connectors)
+			fld = model_tree[m][f]
+			if fld[0] == Model.TG_INPUT:
+				ln.append(tab+str(f)+" << "+fld[1]+"["+",".join([str(i) for i in fld[2]])+"]")
+			elif fld[0] == Model.TG_OUTPUT:
+				ln.append(tab+str(f)+" >> "+fld[1]+"["+",".join([str(i) for i in fld[2]])+"]")
+			elif fld[0] == "const":
+				ln.append(tab+str(f)+" == "+str(fld[1]))
 
-    # execute <root> models first: the ones without input
-    for mdl in dat:
-        appnd = True
-        for f in mdl["field"]:
-            if mdl["field"][f]["node"] == "i":
-                appnd = False
-        if appnd:
-            local_bind_go = {id_bind[i]:i for i in list(mdl["field"])}
-            cnst = {i: mdl["field"][i]["data"]
-                    for i in mdl["field"] if mdl["field"][i]["node"] == "c"}
-            cnst = {id_bind[i]:cnst[i] for i in cnst}
+	ln.append("namespace")
+	for o in id_map:  # each objects mapped to id
+		ln.append(tab+str(o)+" "+str(id_map[o]))
+	print(prj_root+"skeleton.dat")
+	with open(prj_root+"skeleton.dat", "w") as fbj:
+		fbj.writelines([l+"\n" for l in ln])
 
-            out = bind_cls[mdl["model"]].execute(inp={}, const=cnst, inst=inst)
-            try:
-                out = {local_bind_go[i]: out[i] for i in out}
-            except KeyError as e:
-                print(f"ERROR: The model <{bind_cls[mdl['model']].__name__}> returned an invalid field, {e} ")
-                return False
-            except TypeError:
-                print(f"ERROR: The model <{bind_cls[mdl['model']].__name__}> did not returned a dictionary")
-                print(f"This is used for binding the executed value for the other models")
-                return False
 
-            # binding the output value to the output fields
-            for f in out:
-                # print("OUT", mdl["field"][f]["type"], type(out[f]).__name__)
-                if mdl["field"][f]["type"] == type(out[f]).__name__:  # check if the types are same
-                    mdl["field"][f]["value"] = out[f]
-                else:
-                    mdl["field"][f]["value"] = out[f]
-                    print(f"Error: Expected Type: {mdl['field'][f]['type']}, Resulted Type: {type(out[f]).__name__}")
-            # posting the output value
-            for f in mdl["field"]:
-                if mdl["field"][f]["node"] == "o":
-                    for fid in mdl["field"][f]["connect"]:
-                        # find the model
-                        for m in dat:
-                            if fid in list(m["field"]):
-                                m["field"][fid]["value"] = mdl["field"][f]["value"]
+def dat_file_loader(prj_root):
+	fdt = []
+	with open(prj_root+"skeleton.dat", "r") as fbj:
+		fdt = fbj.readlines()
+		fdt = [l.strip("\n") for l in fdt]
 
-    stack = []
-    running = dat
-    auto_terminate = False
-    print(running)
-    while True:
-        for mdl in running:
-            MODEL_SKIP = False
-            l = [True if mdl["field"][i]["node"] == "i" else False for i in mdl["field"]]
-            go_run = True
-            # retrieving the input value
-            for f in mdl["field"]:
-                if mdl["field"][f]["node"] == "i":
-                    id_in = True
-                    if mdl["field"][f]["value"] is None:  # input has no value
-                        if mdl["field"][f]["connect"] != []: # has connectors
-                            # putting the value from the external output into the internal input
-                            good = True
-                            id_in = False
-                            for fid in mdl["field"][f]["connect"]:
-                                fid = str(fid)
-                                # find the model
-                                for m in dat:
-                                    if fid in list(m["field"]) and mdl != m:
-                                        id_in = True
-                                        mdl["field"][f]["value"] = m["field"][fid]["value"]
-                                        if mdl["field"][f]["value"] == None:  # if the ext output still ='s None
-                                            good = False
-                        else:  # has no connectors
-                            good = False
-                            stack.append(mdl)
-                            print("SSS1")
-                    else:  # input has value
-                        if mdl["field"][f]["connect"] != []: # has connectors
-                            good = True
-                        else:  # has no connectors
-                            good = True  # a value can still be set by other fields even when it does not have connector
-                    if good is False and id_in:
-                        go_run = False
-                else: # if the input type is not input
-                    pass
-            if go_run and any(l):  # And model must have input
-                bind_fild_out = {id_bind[i]: i for i in list(mdl["field"]) if mdl["field"][i]["node"] == "o"}
-                cnst = {i: mdl["field"][i]["data"]
-                        for i in mdl["field"] if mdl["field"][i]["node"] == "c"}
-                cnst = {id_bind[i]: cnst[i] for i in cnst}
+	model = fdt[:fdt.index("namespace")]
+	raw_id_map = fdt[fdt.index("namespace")+1:]
 
-                inp = {}
-                for i in mdl["field"]:  # backflow input design
-                    if mdl["field"][i]["node"] == "i":
-                        if mdl["field"][i]["value"] is None and mdl["field"][i]["connect"] != []:
-                            fid = mdl["field"][i]["connect"][0]  # TODO: Might want to merge multiple input
-                            for m in dat:
-                                for f in m["field"]:
-                                    if f == fid:
-                                        if m["field"][fid]["value"] is not None:  # check if that model has been ran
-                                            # check if the both field had the same type
-                                            if mdl["field"][i]["type"] == m["field"][fid]["type"]:
-                                                mdl["field"][i]["value"] = m["field"][fid]["value"]
-                                        else:  # input backflow failed; will be added to the stack fow later execution
-                                            stack.append(mdl)
-                                            MODEL_SKIP = True
-                                            print("SSS2")
-                                            break
-                        else:
-                            inp[i] = mdl["field"][i]["value"]
+	mdl_tree = {}
+	last_mdl = None
+	for m in model:
+		if m[0:4] != "    ":
+			mdl_tree[int(m)] = {}
+			last_mdl = int(m)
+		else:
+			dat = m[4:]
+			fld_id = dat[:dat.index(" ")]
+			typ = dat[dat.index(" ")+1:dat.index(" ")+1+2]
 
-                if MODEL_SKIP: break
+			if typ == "==":
+				val = dat[dat.index("==")+3:]  # get the value from the constant
+				mdl_tree[last_mdl][int(fld_id)] = ["CNST", val]
+			elif typ == "<<":
+				fld_typ = dat[dat.index("<<")+3:dat.index("[")]  # field type
+				connect = dat[dat.index("[")+1:-1].split(",")  # connections from the other field
+				if connect == [""]:
+					connect = []
+				else:
+					connect = [int(i) for i in connect]
+				mdl_tree[last_mdl][int(fld_id)] = ["INP", fld_typ, connect, Null]
+			elif typ == ">>":
+				fld_typ = dat[dat.index(">>")+3:dat.index("[")]  # field type
+				connect = dat[dat.index("[")+1:-1].split(",")  # connections from the other field
+				if connect == [""]:
+					connect = []
+				else:
+					connect = [int(i) for i in connect]
+				mdl_tree[last_mdl][int(fld_id)] = ["OUT", fld_typ, connect, Null]
 
-                inp = {i: mdl["field"][i]["value"]
-                        for i in mdl["field"] if mdl["field"][i]["node"] == "i"}
-                inp = {id_bind[i]: inp[i] for i in inp}
+	id_map = {int(ln[4:ln.index(" ", 4)]): ln[6:] for ln in raw_id_map}
 
-                out = bind_cls[mdl["model"]].execute(inp=inp, const=cnst, inst=inst)
-                try:
-                    out = {bind_fild_out[i]: out[i] for i in out}
-                except KeyError as e:
-                    print(f"ERROR: The model <{bind_cls[mdl['model']].__name__}> returned an invalid field, {e} ")
-                    return False
-                except TypeError:
-                    print(f"ERROR: The model <{bind_cls[mdl['model']].__name__}> did not returned a dictionary")
-                    print(f"This is used for binding the executed value for the other models")
-                    return False
+	executor(mdl_tree, id_map)
 
-                # binding the output value to the output fields
-                for f in out:
-                    if mdl["field"][f]["type"] == type(out[f]).__name__:  # check if the types are same
-                        mdl["field"][f]["value"] = out[f]
-                    else:
-                        # TODO: This will be removed when the type system is mature
-                        mdl["field"][f]["value"] = out[f]
-                        print(f"Error: Expected Type: {mdl['field'][f]['type']}, Resulted Type: {type(out[f]).__name__}")
 
-                # posting the output value
-                for f in mdl["field"]:
-                    if mdl["field"][f]["node"] == "o":
-                        for fid in mdl["field"][f]["connect"]:
-                            # find the model
-                            for m in dat:
-                                if fid in list(m["field"]):
-                                    m["field"][fid]["value"] = mdl["field"][f]["value"]
-            else:  # the node is not input
-                pass
+def modelFieldArgs(model, id_map, const="CNST", out="OUT", inp="INP"):
+	"""
+		This passes in the keywords arguments into the model executor function
+	model: the actual variable values and names
+	"""
+	dtinp = {}  # input fields attributes
+	dtout = {}  # output fields attributes; this will leave all the attribute set to "None" and wait for the model \
+	# to change the value to be later returned
+	dtconst = {}  # constant fields attributes
 
-            if MODEL_SKIP: continue
+	for field in model:
+		if model[field][0] == const:
+			dtconst[id_map[field]] = model[field][1]
+		elif model[field][0] == out:
+			dtout[id_map[field]] = Null
+		elif model[field][0] == inp:
+			if model[field][3] is Null:  # an input field is None; aborts of creating the args
+				return False
+			else:
+				dtinp[id_map[field]] = model[field][3]
+	return dtinp, dtconst, dtout
 
-        print("R", running)
-        print("A", auto_terminate)
-        print("S", stack)
-        # breakpoint()
-        if stack == running and auto_terminate:
-            break
-        elif stack == running:
-            auto_terminate = True
-        elif stack != running:
-            auto_terminate = False
 
-        if stack == []:  # emulating do-while loop
-            break
-        running = stack
-        stack = []
-    return True
+def modelFieldReturn(tree, model, id_map, output, const="CNST", inp="INP", out="OUT"):
+	"""
+		This saves the output of the internal field to the connected fields
+	tree: Model Tree
+	model: Selected model
+	id_map: An id map for it to transfer from names to values
+	output: Output value from the model's executor function
+	"""
+
+	# field_map = {id_map[f]:f for f in model}
+
+	for field in model:
+		if model[field][0] == out:
+			for ext_model in tree:
+				for int_field in tree[ext_model]:
+					if int_field == field:
+						print("###", ext_model, int_field, model, output, field, output[id_map[field]])
+						tree[ext_model][int_field][3] = output[
+							id_map[field]]  # saving the value to the internal output field
+						for m in tree:
+							for f in tree[m]:
+								if f in tree[ext_model][int_field][2]:
+									tree[m][f][3] = output[
+										id_map[field]]  # saving the value to the external input field
+	return tree
+
+
+def checkBackflow(tree, selected, id_map, inst, field_map):
+	"""
+		This checks any external output fields with a value connecting to any of the internal input field
+		and copies the value from the output to the input.
+	"""
+
+	for m in tree:
+		if m == selected:
+			for field in tree[m]:
+				if tree[m][field][0] == "INP":
+					no_field = True  # are fields connected and not null
+
+					for ext_m in tree:
+						for ext_field in tree[ext_m]:
+							print(tree[ext_m][ext_field], ext_m, ext_field, tree[ext_m][ext_field][0])
+							if tree[ext_m][ext_field][0] == "OUT":
+								print(field, tree[ext_m][ext_field][2])
+								print(ext_field, tree[m][field][2])
+								if ext_field in tree[m][field][2]:
+									if tree[ext_m][ext_field][3] != Null:  # the field
+										no_field = False
+										tree[m][field][3] = tree[ext_m][ext_field][3]  # copy the data from  \
+									# the external output -> internal input
+					if not no_field:
+						print("BACK FLOW - HAS FIELDS")
+						args = modelFieldArgs(tree[m], id_map)
+						if args != False:
+							print("BACK FLOW - MODEL ARGUMENT", args)
+							out = eval(f"{id_map[m]}.execute(args[0], args[1], args[2], inst)")
+							tree = modelFieldReturn(tree, tree[m], id_map, out)
+						else:
+							print("BACK FLOW FAILED - MODEL NOT CONNECTED")
+							return False
+					else:
+						print("BACK FLOW - HAS NO FIELDS")
+						return False
+	return True
+
+
+def callFrontflow(tree, selected, id_map, inst):
+	"""
+		This calls any model that is connected to the internal output fields when the model itself has value
+	model_tree: Model tree
+	selected: The selected model to be called on
+	"""
+
+	for m in tree:
+		if m == selected:
+			for field in tree[m]:
+				if tree[m][field][0] == "OUT" or tree[m][field][0] == "INP":
+					args = modelFieldArgs(tree[m], id_map)
+					if args != False:
+						print("FRONT FLOW SUCCESS ARGS:", args)
+						out = eval(f"{id_map[m]}.execute(args[0], args[1], args[2], inst)")
+						tree = modelFieldReturn(tree, tree[m], id_map, out)
+						print(id_map[m], out, m)
+						return tree, True
+					else:
+						print("FRONT FLOW FAILED")
+						success = checkBackflow(tree, selected, id_map, inst, {})
+						if not success: return tree, False
+					print(modelFieldArgs(tree[m], id_map))
+	return tree, True
+
+
+def executor(model_tree, id_map):
+	"""
+	model_tree: NOTE: each fields should be (Field Type, Field Name, Connections, Value=Null())
+	"""
+	print(model_tree)
+	print(id_map)
+	print("=====")
+
+	class Instance:
+		a = None
+
+	inst = Instance()
+
+	active_model = [i for i in model_tree]
+
+	for m in model_tree:  # execute root models (the ones without input)
+		onlyOutput = False
+		for f in model_tree[m]:
+			if model_tree[m][f][0] == "OUT":
+				onlyOutput = True
+			elif model_tree[m][f][0] == "INP":
+				onlyOutput = False; break
+
+		if onlyOutput:
+			print("<><><>", m, model_tree)
+			model_tree, success = callFrontflow(model_tree, m, id_map, inst)[0], \
+			                      callFrontflow(model_tree, m, id_map, inst)[1]
+			if success: active_model.remove(m)
+			print("-+-+-+", model_tree)
+		# print(model_tree[m][f][0])
+	# print(model_tree[m], onlyOutput)
+
+	loop = True
+	while loop:
+		for m in active_model:  # execute active models meaning models that haven't gotten an value
+			print("><><><", m, model_tree[m])
+			print(callFrontflow(model_tree, m, id_map, inst))
+			model_tree, success = callFrontflow(model_tree, m, id_map, inst)[0], \
+			                      callFrontflow(model_tree, m, id_map, inst)[1]
+			if success: active_model.remove(m)
+
+		if len(active_model) == 0: loop = False
+
 
 if __name__ == '__main__':
-    dt, idb = loadSkel("C:/users/andrew shen/desktop/projectemerald/MySampleProject/")
-    execSkel(dt, idb)
+	dat_file_loader("../MyTestProj/")

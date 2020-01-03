@@ -8,7 +8,7 @@ import sklearn
 import pygame
 
 test_variable_for_fstring = 17
-print(f"{test_variable_for_fstring} and 31")
+print(f"Test: {test_variable_for_fstring}")
 
 ############################################
 

@@ -1,0 +1,19 @@
+4
+    3 >> type[1]
+    5 == C:/Users/Andrew Shen/Desktop/ProjectEmerald/src/test.txt
+6
+    2 << type[]
+    7 == C:/Users/Andrew Shen/Desktop/ProjectEmerald/src/result.txt
+8
+    0 >> type[2]
+    1 << type[]
+namespace
+    4 FileInput
+    3 data out
+    5 file
+    6 FileOutput
+    2 data in
+    7 file
+    8 LinearRegression
+    0 output
+    1 input

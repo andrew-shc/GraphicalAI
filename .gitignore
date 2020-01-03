@@ -1,13 +1,15 @@
 
 # to remove any directory or file that gets automatically added from the execution
-MySampleProject/
+
+# TODO: Temporarily to remove this directory (and enable it again once it is deleted on the main respository)
+# MySampleProject/
 
 ########################################################################################################################
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
-src/__pycache__/
+old/src5_/__pycache__/
 
 # C extensions
 *.so

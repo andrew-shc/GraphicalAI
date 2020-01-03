@@ -1,3 +1,9 @@
+## Indev 10.0 [Dec 24, 2019]
+* Full Code Refactoring
+* PyQt Library states I can use Apache License so long I only distribute only my part of the source code
+    * <https://softwareengineering.stackexchange.com/a/235846>
+    * <https://github.com/Werkov/PyQt4/blob/master/GPL_EXCEPTION.TXT>
+
 ## Indev 9.1 [Nov 25, 2019]
 * Working makeshift AI models
 * Other minor changes
