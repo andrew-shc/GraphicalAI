@@ -1,3 +1,8 @@
+## Indev 10.2 [Jan 3, 2019]
+* Reorganized the project workspace
+* Changed some other front-end feature (meaning some new things have no
+back-end code to execute it)
+
 ## Indev 10.1 [Jan 3, 2019]
 * Fixed the problems with the output data of the model
 * Changed README.md

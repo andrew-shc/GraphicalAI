@@ -8,8 +8,6 @@ class ModelSelector(QComboBox):
 		self.g_view = g_view  # graphics view
 
 		fl_dt = __import__(py_file_name)  # import the models from a single file
-		self.mdl_typ = [fl_dt.__dict__[c] for c in fl_dt.__dict__ if fl_dt.__dict__[c].__class__ == type]  # TODO
-
 		self.mdl_typ = [fl_dt.__dict__[c] for c in fl_dt.__dir__()
 		                if type(fl_dt.__dict__[c]) == type
 		                if fl_dt.__dict__[c].__module__ == fl_dt.__name__

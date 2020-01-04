@@ -170,11 +170,7 @@ class LinearRegression:
 		result = model.predict([[1, 2, 3, 4]])
 
 		pkl_buf = BytesIO()
-		print(pkl_buf)
 		pickle.dump(model, pkl_buf)
-		print(pkl_buf)
-		print(pkl_buf.getvalue())
-		print(type(bytearray(pkl_buf.getvalue())))
 
 		out["output"] = [bytearray(pkl_buf.getvalue())]
 		return out

@@ -26,24 +26,15 @@ project root v1
 	
 """
 
-# Client code
-def main():
-	app = QApplication(sys.argv)
-
-	win = QMainWindow()
-	win.setWindowTitle("GUI AI Application")
-	win.setGeometry(0, 0, 1920, 1080)
-
-	state = StateHolder()
-
+def tab_ai_model(state):
 	scene = QGraphicsScene(0,0,1920,1080)
 	view = QGraphicsView(scene)
 	view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 	view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 	view.setDragMode(view.NoDrag)
 
-	# w.scene().addItem(Connector(cnc, (10, 10, 50, 50), "A", TAG_EXT, [TAG_EXT]))
-	# w.scene().addItem(Connector(cnc, (10, 100, 50, 50), "A", TAG_EXT, [TAG_EXT]))
+	# view.scene().addItem(Connector(cnc, (10, 10, 50, 50), "A", TAG_EXT, [TAG_EXT]))
+	# view.scene().addItem(Connector(cnc, (10, 100, 50, 50), "A", TAG_EXT, [TAG_EXT]))
 
 	p_rootDir = ProjectRootEdit("project root directory")
 
@@ -54,10 +45,8 @@ def main():
 	b_clearProj.clicked.connect(lambda checked: [scene.removeItem(i) for i in scene.items()])
 	b_execProj = QPushButton("Execute Project")
 	b_execProj.clicked.connect(lambda checked: dat_file_loader(p_rootDir.dir))
-
-
-	outer_layout = QVBoxLayout()
-	project_main = QHBoxLayout()
+	b_loadProj = QPushButton("[ABSTRACT] Load Project")
+	b_newProj = QPushButton("[ABSTRACT] New Project")
 
 	inner_menu = QVBoxLayout()
 	inner_menu.addWidget(b_addModel)
@@ -65,12 +54,47 @@ def main():
 	inner_menu.addWidget(b_clearProj)
 	inner_menu.addWidget(b_execProj)
 	inner_menu.addWidget(p_rootDir)
+	inner_menu.addWidget(b_loadProj)
+	inner_menu.addWidget(b_newProj)
 	inner_menu.addStretch()
 
-	inspector = QVBoxLayout()
+	ai_model = QHBoxLayout()
+	ai_model.addLayout(inner_menu)
+	ai_model.addWidget(view)
 
-	project_main.addLayout(inner_menu)
-	project_main.addWidget(view)
+	central = QWidget()
+	central.setLayout(ai_model)
+
+	return central
+
+# Client code
+def main():
+	app = QApplication(sys.argv)
+
+	win = QMainWindow()
+	win.setWindowTitle("GUI AI Application")
+	win.setGeometry(0, 0, 1920, 1080)
+
+	state = StateHolder()
+
+	outer_layout = QVBoxLayout()
+	project_main = QHBoxLayout()
+
+	prj_tab = QTabWidget()
+	prj_tab.addTab(tab_ai_model(state), "AI Model")
+	prj_tab.addTab(QLabel("Machine Learning: Training and Testing"), "ML")
+	prj_tab.addTab(QLabel("This is where would the model result\n"
+	                      "and prediction graphs will be.\n"
+	                      "And graphs such as, Error Rate\n"
+	                      "and ML settings like settings\n"
+	                      "each batch size."), "Model Result and Prediction")
+	prj_tab.addTab(QLabel("Project Settings such as Theme, Node Size, and related."), "Project Settings")
+
+	inspector = QVBoxLayout()
+	inspector.addWidget(QLabel("This is the inspector panel"))
+
+	project_main.addWidget(QLabel("Project Directory"))
+	project_main.addWidget(prj_tab)
 	project_main.addLayout(inspector)
 
 	outer_layout.addLayout(project_main)
