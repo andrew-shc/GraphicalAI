@@ -1,6 +1,8 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 
+import os.path
+
 class LineInput(QLineEdit):
 	def __init__(self, *args):
 		super().__init__(*args)
@@ -35,6 +37,7 @@ class FileDialog(QPushButton):
 
 	def setUrl(self, url):
 		self.url = url
+		self.setText(os.path.basename(self.url[0]))
 		self.wind.close()  # closes the window
 
 	def value(self):

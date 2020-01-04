@@ -1,11 +1,8 @@
-from PyQt5.QtWidgets import QCheckBox
+from src.model import Model as Model
+from src.constant_models import LineInput, FileDialog
 
-from src.model import Model as _Model
-from src.constant_models import \
-	(LineInput as _CLineInput,
-     FileDialog as _CFileDialog)
-
-from io import StringIO
+from io import StringIO, BytesIO
+import pickle
 
 from sklearn import linear_model
 import pandas as pd
@@ -27,10 +24,10 @@ class GenericModel:
 		cls.field = {
 			"input": [("input1", "type"), ("input2", "type"), ("input3", "type")],
 			"output": [("merge", "type"), ("secondary", "type")],
-			"constant": [("isYes", _CLineInput())],
+			"constant": [("isYes", LineInput())],
 		}  # NOTE: each model must have a UNIQUE field name
 
-		return _Model(state, w, pos, cls)
+		return Model(state, w, pos, cls)
 
 	@staticmethod
 	def execute(inp, const, out, inst):
@@ -64,10 +61,10 @@ class FileInput:
 		cls.field = {
 			"input": [],
 			"output": [("data out", "type")],
-			"constant": [("file", _CFileDialog("open file"))],
+			"constant": [("file", FileDialog("open file"))],
 		}
 
-		return _Model(state, w, pos, cls)
+		return Model(state, w, pos, cls)
 
 	@staticmethod
 	def execute(inp, const, out, inst):
@@ -86,15 +83,58 @@ class FileOutput:
 		cls.field = {
 			"input": [("data in", "type")],
 			"output": [],
-			"constant": [("file", _CFileDialog("open file"))],
+			"constant": [("file", FileDialog("open file"))],
 		}
 
-		return _Model(state, w, pos, cls)
+		return Model(state, w, pos, cls)
 
 	@staticmethod
 	def execute(inp, const, out, inst):
 		with open(const["file"], "w") as fbj:
 			fbj.writelines([ln+"\n" for ln in inp["data in"]])
+		return out
+
+
+class BFileInput:
+	title = "BFileInput"
+	name = "Binary File Receiver"
+
+	@classmethod
+	def create(cls, state, w, pos):
+		cls.field = {
+			"input": [],
+			"output": [("data out", "type")],
+			"constant": [("file", FileDialog("open file"))],
+		}
+
+		return Model(state, w, pos, cls)
+
+	@staticmethod
+	def execute(inp, const, out, inst):
+		out["data out"] = []
+		with open(const["file"], "rb") as fbj:
+			out["data out"] = fbj.readlines()
+		return out
+
+
+class BFileOutput:
+	title = "BFileOutput"
+	name = "Binary File Saver"
+
+	@classmethod
+	def create(cls, state, w, pos):
+		cls.field = {
+			"input": [("data in", "type")],
+			"output": [],
+			"constant": [("file", FileDialog("open file"))],
+		}
+
+		return Model(state, w, pos, cls)
+
+	@staticmethod
+	def execute(inp, const, out, inst):
+		with open(const["file"], "wb") as fbj:
+			fbj.writelines(inp["data in"])
 		return out
 
 
@@ -110,7 +150,7 @@ class LinearRegression:
 			"constant": [],
 		}
 
-		return _Model(state, w, pos, cls)
+		return Model(state, w, pos, cls)
 
 	@staticmethod
 	def execute(inp, const, out, inst):
@@ -128,10 +168,13 @@ class LinearRegression:
 		# y = mx + b
 
 		result = model.predict([[1, 2, 3, 4]])
-		print(result)
-		df2 = pd.DataFrame(result)
-		print([int(i) for i in df2])
-		print(">>", df2["column"])
 
-		out["output"] = df2.to_string()
+		pkl_buf = BytesIO()
+		print(pkl_buf)
+		pickle.dump(model, pkl_buf)
+		print(pkl_buf)
+		print(pkl_buf.getvalue())
+		print(type(bytearray(pkl_buf.getvalue())))
+
+		out["output"] = [bytearray(pkl_buf.getvalue())]
 		return out

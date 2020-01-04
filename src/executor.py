@@ -297,6 +297,7 @@ def executor(model_tree, id_map):
 			if success: active_model.remove(m)
 
 		if len(active_model) == 0: loop = False
+	print("END EXECUTION")
 
 
 if __name__ == '__main__':

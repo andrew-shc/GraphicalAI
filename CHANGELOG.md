@@ -1,6 +1,11 @@
-## Indev 10.0 [Dec 24, 2019]
+## Indev 10.1 [Jan 3, 2019]
+* Fixed the problems with the output data of the model
+* Changed README.md
+
+## Indev 10.0 [Jan 2, 2019]
 * Full Code Refactoring
-* PyQt Library states I can use Apache License so long I only distribute only my part of the source code
+* PyQt Library states I can use Apache License so long I only distribute 
+only my part of the source code
     * <https://softwareengineering.stackexchange.com/a/235846>
     * <https://github.com/Werkov/PyQt4/blob/master/GPL_EXCEPTION.TXT>
 
