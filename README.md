@@ -4,10 +4,9 @@ This is a graphical software for educational and academic purposes to
 make it easier for people to learn Artificial Intelligence (AI),
 Machine Learning (ML), and maybe data visualization.
 
-#### Note: Non-Developer, please visit [The Welcome Page](WELCOME.md) 
+#### Note: For clients and users of this software, please visit [The Welcome Page](WELCOME.md)! 
 
-Note: this project is still under heavy development
-
+Note: this project is still under heavy development  
 Note: This is a project CODE-NAMED, Hexacone
 
 ### General Information

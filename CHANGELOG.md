@@ -1,9 +1,8 @@
 ## Indev 11.0 [Jan 12, 2019]
-* Added `load project` and `new project` which loads in new 
-project directory and initializes a new project respectively
+* The model input and output now uses tag names instead of file location (ease of use)
 * Changed the project input into a file dialogue
-* Added the project directory on the left-panel
-* Added Menu widgets
+* Added ML models
+* Added the project directory on the left-panel (WIP)
 
 ## Indev 10.2 [Jan 3, 2019]
 * Reorganized the project workspace
