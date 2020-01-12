@@ -55,13 +55,14 @@ class Model(QWidget):
 		return (inp, out, usr)
 
 	def _create_node(self):
+		print(self.width())
 		for ind, fld in enumerate(self.field["input"]):
 			self.surf.scene().addItem(
 				Connector(self.state, (0, self.title.rect().height()+(self.field_y)*ind, *self.NODE_SIZE), self,
 				          self.TG_INPUT, [self.TG_OUTPUT], fld) )
 		for ind, fld in enumerate(self.field["output"]):
 			self.surf.scene().addItem(
-				Connector(self.state, (self.MODEL_SIZE[0], self.title.rect().height()+(self.field_y)*ind, *self.NODE_SIZE),
+				Connector(self.state, (self.width(), self.title.rect().height()+(self.field_y)*ind, *self.NODE_SIZE),
 				          self, self.TG_OUTPUT, [self.TG_INPUT], fld) )
 		self.updPosNode()
 
@@ -86,8 +87,15 @@ class Model(QWidget):
 		layout.addStretch()
 
 		self.setLayout(layout)
+		# self.move(self.pos[0], self.pos[1])
 		self.setGeometry(self.pos[0], self.pos[1], self.MODEL_SIZE[0], self.MODEL_SIZE[1])
 
+	def resizeEvent(self, QResizeEvent):
+		""" updates the position of all the connectors, espaically the output fields """
+		for o in self.surf.items():
+			if isinstance(o, Connector):
+				if o.tag == "out" and o.parent == self:
+					o.setX(self.MODEL_SIZE[0]+QResizeEvent.size().width()-self.NODE_SIZE[0]/2)
 
 	# built-in automatically called method
 	def mousePressEvent(self, event):

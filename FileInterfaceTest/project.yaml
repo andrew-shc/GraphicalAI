@@ -1,0 +1,10 @@
+author: null
+date: null
+model:
+  ai_index: 2
+  ml_index: 2
+  tag:
+    0AI: MyModel1
+    0ML: TrainingModel1
+    1AI: MyModel2
+    1ML: TrainingModel2

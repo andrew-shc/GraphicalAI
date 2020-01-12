@@ -1,0 +1,27 @@
+6
+    5 >> type[3]
+    7 == C:/Users/Andrew Shen/Desktop/ProjectEmerald/MyTestProj/predict_val.txt
+8
+    2 >> type[0]
+    3 << type[]
+    4 << binary[]
+9
+    1 >> type[4]
+    10 == iris_model
+11
+    0 << type[]
+    12 == C:/Users/Andrew Shen/Desktop/ProjectEmerald/MyTestProj/output.txt
+namespace
+    6 FileInput
+    5 data out
+    7 file
+    8 PredictValue
+    2 output
+    3 test data
+    4 model
+    9 DFileInput
+    1 model
+    10 tag
+    11 FileOutput
+    0 data in
+    12 file

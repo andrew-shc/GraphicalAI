@@ -1,3 +1,10 @@
+## Indev 11.0 [Jan 12, 2019]
+* Added `load project` and `new project` which loads in new 
+project directory and initializes a new project respectively
+* Changed the project input into a file dialogue
+* Added the project directory on the left-panel
+* Added Menu widgets
+
 ## Indev 10.2 [Jan 3, 2019]
 * Reorganized the project workspace
 * Changed some other front-end feature (meaning some new things have no

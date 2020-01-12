@@ -1,11 +1,15 @@
 from src.connector import Connector
 from src.model import Model
-from src.models import *
+import src.ai_models as aim
+import src.ml_models as mlm
 
+from src.project_file_interface import ProjectFI
 
 class Null:
 	__slots__ = ()
 
+AI = 0x1000
+ML = 0x1001
 
 import builtins
 
@@ -14,7 +18,7 @@ def print(*args):
 	builtins.print("[EXECUTOR]: ", *args)
 
 
-def model_saver(model_dt: list, items: list, prj_root: str):
+def model_saver(model_dt: list, items: list, prj_root: str, fname: str):
 	"""
 		Saves the model data to a file.
 	items: a list of items in a graphics view
@@ -52,12 +56,12 @@ def model_saver(model_dt: list, items: list, prj_root: str):
 			id_map[obj_map[m]] = m.nmspc_id
 			id_map[obj_map[c[1]]] = c[0]
 			dat[obj_map[m]][obj_map[c[1]]] = ("const", c[1].value())
-	dat_file_saver(dat, id_map, prj_root)
+	dat_file_saver(dat, id_map, prj_root, fname)
 
 	return dat
 
 
-def dat_file_saver(model_tree, id_map, prj_root: str):
+def dat_file_saver(model_tree, id_map, prj_root: str, fname: str):
 	"""
 	model_tree:
 	{
@@ -90,14 +94,14 @@ def dat_file_saver(model_tree, id_map, prj_root: str):
 	ln.append("namespace")
 	for o in id_map:  # each objects mapped to id
 		ln.append(tab+str(o)+" "+str(id_map[o]))
-	print(prj_root+"skeleton.dat")
-	with open(prj_root+"skeleton.dat", "w") as fbj:
+
+	with open(prj_root+fname, "w") as fbj:
 		fbj.writelines([l+"\n" for l in ln])
 
 
-def dat_file_loader(prj_root):
+def dat_file_loader(prj_root, fname):
 	fdt = []
-	with open(prj_root+"skeleton.dat", "r") as fbj:
+	with open(prj_root+fname, "r") as fbj:
 		fdt = fbj.readlines()
 		fdt = [l.strip("\n") for l in fdt]
 
@@ -135,9 +139,9 @@ def dat_file_loader(prj_root):
 					connect = [int(i) for i in connect]
 				mdl_tree[last_mdl][int(fld_id)] = ["OUT", fld_typ, connect, Null]
 
-	id_map = {int(ln[4:ln.index(" ", 4)]): ln[6:] for ln in raw_id_map}
+	id_map = {int(ln[4:ln.index(" ", 4)]): ln[ln.index(" ", 4)+1:] for ln in raw_id_map}
 
-	executor(mdl_tree, id_map)
+	return mdl_tree, id_map
 
 
 def modelFieldArgs(model, id_map, const="CNST", out="OUT", inp="INP"):
@@ -165,7 +169,7 @@ def modelFieldArgs(model, id_map, const="CNST", out="OUT", inp="INP"):
 
 def modelFieldReturn(tree, model, id_map, output, const="CNST", inp="INP", out="OUT"):
 	"""
-		This saves the output of the internal field to the connected fields
+		This saves the output of the internal field to the connected fields known by the internal output
 	tree: Model Tree
 	model: Selected model
 	id_map: An id map for it to transfer from names to values
@@ -173,24 +177,29 @@ def modelFieldReturn(tree, model, id_map, output, const="CNST", inp="INP", out="
 	"""
 
 	# field_map = {id_map[f]:f for f in model}
-
-	for field in model:
-		if model[field][0] == out:
-			for ext_model in tree:
-				for int_field in tree[ext_model]:
-					if int_field == field:
-						print("###", ext_model, int_field, model, output, field, output[id_map[field]])
-						tree[ext_model][int_field][3] = output[
-							id_map[field]]  # saving the value to the internal output field
-						for m in tree:
-							for f in tree[m]:
-								if f in tree[ext_model][int_field][2]:
-									tree[m][f][3] = output[
-										id_map[field]]  # saving the value to the external input field
+	print(tree)
+	for mdl in tree:
+		if tree[mdl] == model:
+			for field in tree[mdl]:
+				if tree[mdl][field][0] == out:
+					for int_mdl in tree:
+						for int_field in tree[int_mdl]:
+							if int_field in tree[mdl][field][2]:
+								print("### RETURN", int_field, field)
+								tree[int_mdl][int_field][3] = output[id_map[field]]
+	print(">>>", tree)
+	# for field in model:
+	# 	if model[field][0] == out:
+	# 		print("###", model, field, model, output, field, output[id_map[field]])
+	# 		tree[model][field][3] = output[id_map[field]]  # saving the value to the internal output field
+	# 		for m in tree:
+	# 			for f in tree[m]:
+	# 				if f in tree[model][field][2]:
+	# 					tree[m][f][3] = output[id_map[field]]  # saving the value to the external input field
 	return tree
 
 
-def checkBackflow(tree, selected, id_map, inst, field_map):
+def checkBackflow(tree, selected, id_map, inst, field_map, title_map, typ):
 	"""
 		This checks any external output fields with a value connecting to any of the internal input field
 		and copies the value from the output to the input.
@@ -204,11 +213,10 @@ def checkBackflow(tree, selected, id_map, inst, field_map):
 
 					for ext_m in tree:
 						for ext_field in tree[ext_m]:
-							print(tree[ext_m][ext_field], ext_m, ext_field, tree[ext_m][ext_field][0])
+							# print("@@@", ext_field, tree[ext_m][ext_field])
 							if tree[ext_m][ext_field][0] == "OUT":
-								print(field, tree[ext_m][ext_field][2])
-								print(ext_field, tree[m][field][2])
 								if ext_field in tree[m][field][2]:
+
 									if tree[ext_m][ext_field][3] != Null:  # the field
 										no_field = False
 										tree[m][field][3] = tree[ext_m][ext_field][3]  # copy the data from  \
@@ -218,18 +226,18 @@ def checkBackflow(tree, selected, id_map, inst, field_map):
 						args = modelFieldArgs(tree[m], id_map)
 						if args != False:
 							print("BACK FLOW - MODEL ARGUMENT", args)
-							out = eval(f"{id_map[m]}.execute(args[0], args[1], args[2], inst)")
+							out = eval(f"{'aim' if typ == AI else 'mlm'}.{title_map[id_map[m]]}.execute(args[0], args[1], args[2], inst)")
 							tree = modelFieldReturn(tree, tree[m], id_map, out)
 						else:
 							print("BACK FLOW FAILED - MODEL NOT CONNECTED")
-							return False
+							return tree, False
 					else:
 						print("BACK FLOW - HAS NO FIELDS")
-						return False
-	return True
+						return tree, False
+	return tree, True
 
 
-def callFrontflow(tree, selected, id_map, inst):
+def callFrontflow(tree, selected, id_map, inst, title_map, typ):
 	"""
 		This calls any model that is connected to the internal output fields when the model itself has value
 	model_tree: Model tree
@@ -243,19 +251,17 @@ def callFrontflow(tree, selected, id_map, inst):
 					args = modelFieldArgs(tree[m], id_map)
 					if args != False:
 						print("FRONT FLOW SUCCESS ARGS:", args)
-						out = eval(f"{id_map[m]}.execute(args[0], args[1], args[2], inst)")
+						out = eval(f"{'aim' if typ == AI else 'mlm'}.{title_map[id_map[m]]}.execute(args[0], args[1], args[2], inst)")
 						tree = modelFieldReturn(tree, tree[m], id_map, out)
-						print(id_map[m], out, m)
 						return tree, True
 					else:
 						print("FRONT FLOW FAILED")
-						success = checkBackflow(tree, selected, id_map, inst, {})
+						tree, success = checkBackflow(tree, selected, id_map, inst, {}, title_map, typ)
 						if not success: return tree, False
-					print(modelFieldArgs(tree[m], id_map))
 	return tree, True
 
 
-def executor(model_tree, id_map):
+def executor(model_tree, id_map, prj, typ):
 	"""
 	model_tree: NOTE: each fields should be (Field Type, Field Name, Connections, Value=Null())
 	"""
@@ -263,10 +269,16 @@ def executor(model_tree, id_map):
 	print(id_map)
 	print("=====")
 
-	class Instance:
-		a = None
+	inst = {
+		"project": prj,
+	}
 
-	inst = Instance()
+	mdl = __import__("ai_models" if typ == AI else "ml_models")
+	mdl_map = [mdl.__dict__[c] for c in mdl.__dir__()
+		                if type(mdl.__dict__[c]) == type
+		                if mdl.__dict__[c].__module__ == mdl.__name__
+		                ]
+	title_map = {o.title:o.__name__ for o in mdl_map}
 
 	active_model = [i for i in model_tree]
 
@@ -280,25 +292,28 @@ def executor(model_tree, id_map):
 
 		if onlyOutput:
 			print("<><><>", m, model_tree)
-			model_tree, success = callFrontflow(model_tree, m, id_map, inst)[0], \
-			                      callFrontflow(model_tree, m, id_map, inst)[1]
+			model_tree, success = callFrontflow(model_tree, m, id_map, inst, title_map, typ)
 			if success: active_model.remove(m)
 			print("-+-+-+", model_tree)
 		# print(model_tree[m][f][0])
 	# print(model_tree[m], onlyOutput)
+	print("~~~", active_model)
 
 	loop = True
 	while loop:
+		print("=EPOCH=", active_model, model_tree)
 		for m in active_model:  # execute active models meaning models that haven't gotten an value
 			print("><><><", m, model_tree[m])
-			print(callFrontflow(model_tree, m, id_map, inst))
-			model_tree, success = callFrontflow(model_tree, m, id_map, inst)[0], \
-			                      callFrontflow(model_tree, m, id_map, inst)[1]
+			model_tree, success = callFrontflow(model_tree, m, id_map, inst, title_map, typ)
 			if success: active_model.remove(m)
 
 		if len(active_model) == 0: loop = False
 	print("END EXECUTION")
 
+	inst["project"].save_project()
+
 
 if __name__ == '__main__':
-	dat_file_loader("../MyTestProj/")
+	prj = ProjectFI("../MyTestProj/")
+	prj.load_project()
+	executor(*dat_file_loader("../MyTestProj/", "ml_skl.dat"), prj, ML)

@@ -1,5 +1,4 @@
 from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
 
 import os.path
 
@@ -48,3 +47,19 @@ class FileDialog(QPushButton):
 			else: return self.file_dialog.selectedFiles()
 		print("WARNING: NO FILES SELECTED")
 		return ""
+
+
+class ModelSelectors(QComboBox):
+	def __init__(self, tags: dict):
+		super().__init__(parent=None)
+		self.tag = ""
+
+		[self.addItem(tags[t]) for t in tags]
+
+		self.textActivated.connect(lambda s: self.setTag(s))
+
+	def setTag(self, s):
+		self.tag = s
+
+	def value(self):
+		return self.tag

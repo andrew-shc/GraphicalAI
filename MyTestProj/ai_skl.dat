@@ -1,0 +1,19 @@
+4
+    3 >> type[2]
+    5 == C:/Users/Andrew Shen/Desktop/ProjectEmerald/MyTestProj/testing/iris.csv
+6
+    1 >> type[]
+    2 << list[]
+7
+    0 << type[1]
+    8 == iris_model
+namespace
+    4 FileInput
+    3 data out
+    5 file
+    6 LogisticRegression
+    1 output
+    2 input
+    7 DFileOutput
+    0 data in
+    8 tag

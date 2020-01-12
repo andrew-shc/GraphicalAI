@@ -1,5 +1,5 @@
 # Hexacone
-[![Build Status](https://travis-ci.org/AndrewShen31/Hexacone.svg?branch=master)](https://travis-ci.org/AndrewShen31/Hexacone)  
+[![CodeFactor](https://www.codefactor.io/repository/github/andrewshen31/hexacone/badge)](https://www.codefactor.io/repository/github/andrewshen31/hexacone)  
 This is a graphical software for educational and academic purposes to 
 make it easier for people to learn Artificial Intelligence (AI),
 Machine Learning (ML), and maybe data visualization.
