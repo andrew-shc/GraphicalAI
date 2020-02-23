@@ -1,0 +1,49 @@
+9
+    7 >> type[2]
+    8 >> type[3]
+    10 == C:/Users/Andrew Shen/Desktop/ProjectEmerald/FileInterfaceTest/testing/iris.csv
+    11 == species
+    12 == False
+    13 == False
+14
+    5 >> type[]
+    6 >> type[1]
+    15 == C:/Users/Andrew Shen/Desktop/ProjectEmerald/FileInterfaceTest/testing/test.csv
+    16 == 
+    17 == False
+    18 == False
+19
+    4 << type[]
+    20 == C:/Users/Andrew Shen/Desktop/ProjectEmerald/FileInterfaceTest/testing/out.csv
+    21 == False
+    22 == ,
+23
+    0 >> type[4]
+    1 << type[]
+    2 << type[]
+    3 << type[]
+namespace
+    9 CSVInput
+    7 y
+    8 x
+    10 file input
+    11 result column
+    12 transpose
+    13 result numerical
+    14 CSVInput
+    5 y
+    6 x
+    15 file input
+    16 result column
+    17 transpose
+    18 result numerical
+    19 CSVOutput
+    4 data
+    20 file output
+    21 transpose
+    22 CSV Seperator
+    23 LinearRegression
+    0 result
+    1 test
+    2 y
+    3 x

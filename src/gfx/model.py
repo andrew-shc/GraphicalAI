@@ -3,8 +3,11 @@ from PyQt5.QtCore import Qt, QPoint
 from PyQt5.QtWidgets import *
 
 from typing import Dict, List
-from src.connector import Connector
+
+from src.debug import *
+from src.gfx.connector import Connector
 from src.state import StateHolder
+from src.constants import *
 
 
 class Model(QWidget):
@@ -13,12 +16,9 @@ class Model(QWidget):
 	"""
 	MODEL_SIZE = (200, 50)
 	NODE_SIZE = (16, 16)  # ~ connector size
-	NODE_OFS = QPoint(8, -5)  # NOTE: inverted position (-x, -y)
+	NODE_OFS = QPoint(0, 6)  # NOTE: inverted position (-x, -y)
 
 	MOUSE_OFS = (0, 0)  # position offset when mouse on trigger
-
-	TG_INPUT = "inp"  # tag input
-	TG_OUTPUT = "out"  # tag output
 
 	def __init__(self, state: StateHolder, surf, pos, mdl_dt, parent=None):
 		super().__init__(parent=parent)
@@ -42,7 +42,13 @@ class Model(QWidget):
 
 	def _create_fields(self, field: Dict[str, List[str]]):
 		inp = QVBoxLayout()  # input area selection
-		[inp.addWidget(QLabel(f[0])) for f in field["input"]]
+		# [inp.addWidget(QLabel(f[0])) for f in field["input"]]
+
+		ref = []
+		for f in field["input"]:
+			lbl = QLabel(f[0])
+			ref.append(lbl)
+			inp.addWidget(lbl)
 		inp.addStretch()
 
 		out = QVBoxLayout()  # output area selection
@@ -55,15 +61,14 @@ class Model(QWidget):
 		return (inp, out, usr)
 
 	def _create_node(self):
-		print(self.width())
 		for ind, fld in enumerate(self.field["input"]):
 			self.surf.scene().addItem(
-				Connector(self.state, (0, self.title.rect().height()+(self.field_y)*ind, *self.NODE_SIZE), self,
-				          self.TG_INPUT, [self.TG_OUTPUT], fld) )
+				Connector(self.state, (0, self.title.rect().height()+(self.field_y)*ind+self.NODE_OFS.y(), *self.NODE_SIZE), self,
+				          TG_INPUT, [TG_OUTPUT], fld) )
 		for ind, fld in enumerate(self.field["output"]):
 			self.surf.scene().addItem(
-				Connector(self.state, (self.width(), self.title.rect().height()+(self.field_y)*ind, *self.NODE_SIZE),
-				          self, self.TG_OUTPUT, [self.TG_INPUT], fld) )
+				Connector(self.state, (0, self.title.rect().height()+(self.field_y)*ind+self.NODE_OFS.y(), *self.NODE_SIZE),
+				          self, TG_OUTPUT, [TG_INPUT], fld) )
 		self.updPosNode()
 
 	def _inst_basic_ui(self):
@@ -118,10 +123,21 @@ class Model(QWidget):
 	# updates the position of the node
 	def updPosNode(self):
 		new_pos = QPoint(self.geometry().x(), self.geometry().y())
-		for i in self.surf.scene().items():  # items (graphic objects) in the <scene> container
-			if isinstance(i, Connector):  # filters other items
-				if i.parent == self:
-					i.moveBy(new_pos.x()-self.base_pos.x(), new_pos.y()-self.base_pos.y())
-				i.updatePairedPos()  # outside of the {IF} so if the opposite model decides to move, this function \
+		for go in self.surf.scene().items():  # items (graphic objects) in the <scene> container
+			if isinstance(go, Connector):  # filters other items
+				if go.parent == self:
+					if go.field in self.field["input"]:
+						go.setPos(QPoint(new_pos.x()-self.NODE_SIZE[0]/2,
+						    new_pos.y()))
+					elif go.field in self.field["output"]:
+						go.setPos(QPoint(new_pos.x()-self.NODE_SIZE[0]/2+self.width(),
+						    new_pos.y()))
+					elif go.field in self.field["constant"]:
+						pass
+					else:
+						print("[MODEL] [ERROR] The node field is not in the model's field")
+
+					# go.moveBy(new_pos.x()-self.base_pos.x(), new_pos.y()-self.base_pos.y())
+				go.updatePairedPos()  # outside of the {IF} so if the opposite model decides to move, this function \
 				#                      updates the connection from the other model
 		self.base_pos = new_pos

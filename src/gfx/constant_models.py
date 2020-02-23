@@ -2,6 +2,8 @@ from PyQt5.QtWidgets import *
 
 import os.path
 
+from src.debug import *
+
 class LineInput(QLineEdit):
 	def __init__(self, *args):
 		super().__init__(*args)
@@ -63,3 +65,11 @@ class ModelSelectors(QComboBox):
 
 	def value(self):
 		return self.tag
+
+
+class CheckBox(QCheckBox):
+	def __init__(self):
+		super(CheckBox, self).__init__()
+
+	def value(self):
+		return self.isChecked()

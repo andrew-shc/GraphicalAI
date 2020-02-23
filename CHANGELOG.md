@@ -1,19 +1,24 @@
-## Indev 11.0 [Jan 12, 2019]
+## Indev 12.0 [Jan 15, 2020]
+* Revamp on executor
+* More models
+* More major changes
+
+## Indev 11.0 [Jan 12, 2020]
 * The model input and output now uses tag names instead of file location (ease of use)
 * Changed the project input into a file dialogue
 * Added ML models
 * Added the project directory on the left-panel (WIP)
 
-## Indev 10.2 [Jan 3, 2019]
+## Indev 10.2 [Jan 3, 2020]
 * Reorganized the project workspace
 * Changed some other front-end feature (meaning some new things have no
 back-end code to execute it)
 
-## Indev 10.1 [Jan 3, 2019]
+## Indev 10.1 [Jan 3, 2020]
 * Fixed the problems with the output data of the model
 * Changed README.md
 
-## Indev 10.0 [Jan 2, 2019]
+## Indev 10.0 [Jan 2, 2020]
 * Full Code Refactoring
 * PyQt Library states I can use Apache License so long I only distribute 
 only my part of the source code

@@ -3,6 +3,7 @@ from PyQt5 import QtCore
 from PyQt5.QtCore import Qt, QPoint
 from PyQt5.QtWidgets import QGraphicsLineItem, QGraphicsRectItem
 
+from src.debug import *
 
 class Connector(QGraphicsRectItem):
 	def __init__(self, dat, rect, parent, tag, en, field):
@@ -26,7 +27,6 @@ class Connector(QGraphicsRectItem):
 	def mousePressEvent(self, event):
 		vp = event.pos()
 		sp = self.mapFromItem(self, vp)
-		print(self.connections)
 		self.line.show()
 		self.updateEnd(self.line, sp)
 

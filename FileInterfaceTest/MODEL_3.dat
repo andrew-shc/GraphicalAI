@@ -1,0 +1,35 @@
+6
+    4 >> type[1]
+    5 >> type[2]
+    7 == C:/Users/Andrew Shen/Desktop/ProjectEmerald/test/iris.csv
+    8 == species
+    9 == False
+    10 == False
+11
+    3 << type[]
+    12 == C:/Users/Andrew Shen/Desktop/ProjectEmerald/test/test.csv
+    13 == False
+    14 == ,
+15
+    0 >> type[3]
+    1 << type[]
+    2 << type[]
+    16 == 
+namespace
+    6 CSVInput
+    4 y
+    5 x
+    7 file input
+    8 result column
+    9 transpose
+    10 result numerical
+    11 CSVOutput
+    3 data
+    12 file output
+    13 transpose
+    14 CSV Seperator
+    15 LinearRegression
+    0 result
+    1 y
+    2 x
+    16 test input file

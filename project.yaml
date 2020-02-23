@@ -1,7 +1,6 @@
 author: null
 date: null
 model:
-  ai_index: 1
+  ai_index: 0
   ml_index: 0
-  tag:
-    0AI: iris_model
+  tag: {}

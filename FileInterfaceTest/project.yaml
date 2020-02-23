@@ -1,10 +1,10 @@
 author: null
 date: null
 model:
-  ai_index: 2
-  ml_index: 2
+  index: 5
   tag:
-    0AI: MyModel1
-    0ML: TrainingModel1
-    1AI: MyModel2
-    1ML: TrainingModel2
+    MODEL_0: Model Namefsfs
+    MODEL_1: Model Name
+    MODEL_2: Different
+    MODEL_3: MyLinearRegression
+    MODEL_4: MyLinearRegression2
