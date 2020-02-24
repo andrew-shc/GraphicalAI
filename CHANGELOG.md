@@ -1,4 +1,9 @@
-## Indev 12.0 [Jan 15, 2020]
+## Indev 12.1 [Feb 23, 2020]
+* Code Cleanup
+* Added KMean
+* Added an example
+
+## Indev 12.0 [Feb 23, 2020]
 * Revamp on executor
 * More models
 * More major changes

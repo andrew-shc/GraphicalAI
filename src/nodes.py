@@ -1,246 +1,13 @@
 from src.debug import *
 from src.gfx.model import Model as Model
 from src.gfx.constant_models import LineInput, FileDialog, CheckBox, ModelSelectors
-from src.project_file_interface import ProjectFI
-
-from io import StringIO, BytesIO
-import pickle
 
 import sklearn as skl
 import pandas as pd
 import numpy as np
 
-from sklearn.linear_model import LinearRegression
-
-
-class FileInput:
-	title = "FileInput"
-	name = "File Receiver"
-
-	@classmethod
-	def create(cls, state, w, pos):
-		cls.field = {
-			"input": [],
-			"output": [("data out", "type")],
-			"constant": [("file", FileDialog("open file"))],
-		}
-
-		return Model(state, w, pos, cls)
-
-	@staticmethod
-	def execute(inp, const, out, inst):
-		out["data out"] = []
-		with open(const["file"], "r") as fbj:
-			out["data out"] = [ln.strip("\n") for ln in fbj.readlines()]
-		return out
-
-
-class BFileInput:
-	title = "BFileInput"
-	name = "Binary File Receiver"
-
-	@classmethod
-	def create(cls, state, w, pos):
-		cls.field = {
-			"input": [],
-			"output": [("data out", "type")],
-			"constant": [("file", FileDialog("open file"))],
-		}
-
-		return Model(state, w, pos, cls)
-
-	@staticmethod
-	def execute(inp, const, out, inst):
-		out["data out"] = []
-		with open(const["file"], "rb") as fbj:
-			out["data out"] = fbj.readlines()
-		return out
-
-
-# class LinearRegression:
-# 	title = "LinearRegression"
-# 	name = "Linear Regression"
-#
-# 	@classmethod
-# 	def create(cls, state, w, pos):
-# 		cls.field = {
-# 			"input": [("input", "list")],
-# 			"output": [("output", "type")],
-# 			"constant": [],
-# 		}
-#
-# 		return Model(state, w, pos, cls)
-#
-# 	@staticmethod
-# 	def execute(inp, const, out, inst):
-#
-# 		df = pd.read_csv( StringIO("\n".join(inp["input"])) )
-#
-# 		result = df['species']
-# 		# print("RES", result)
-#
-# 		data = df.drop('species', axis=1)
-# 		# print("DAT", data)
-#
-# 		model = linear_model.LinearRegression()
-# 		model.fit(data, result)
-# 		# y = mx + b
-#
-# 		result = model.predict([[1, 2, 3, 4]])
-#
-# 		pkl_buf = BytesIO()
-# 		pickle.dump(model, pkl_buf)
-#
-# 		out["output"] = [bytearray(pkl_buf.getvalue())]
-# 		return out
-
-
-class LogisticRegression:
-	title = "LogisticRegression"
-	name = "Logistic Regression"
-
-	@classmethod
-	def create(cls, state, w, pos):
-		cls.field = {
-			"input": [("input", "list")],
-			"output": [("output", "type")],
-			"constant": [],
-		}
-		return Model(state, w, pos, cls)
-
-	@staticmethod
-	def execute(inp, const, out, inst):
-
-		df = pd.read_csv( StringIO("\n".join(inp["input"])) )
-
-		result = df['species']
-		# print("RES", result)
-
-		data = df.drop('species', axis=1)
-		# print("DAT", data)
-
-		model = linear_model.LogisticRegression()
-		model.fit(data, result)
-
-		# result = model.predict([[1, 2, 3, 4]])
-
-		pkl_buf = BytesIO()
-		pickle.dump(model, pkl_buf)
-
-		out["output"] = [bytearray(pkl_buf.getvalue())]
-		return out
-
-class CSVInputFormatter:
-	title = "CSVInputFormatter"
-	name = "CSV Parser"
-
-	@classmethod
-	def create(cls, state, w, pos):
-		cls.field = {
-			"input": [],
-			"output": [("Y", "type"), ("X", "type")],
-			"constant": [("file name", FileDialog()), ("transpose", CheckBox())],
-		}
-		return Model(state, w, pos, cls)
-
-	@staticmethod
-	def execute(inp, const, out, inst):
-		print("transpose", const["transpose"])
-
-		FILE_NAME = "iris.csv"
-		RESULT_COLUMN = "5"  # the result name for the header on column
-		TRANSPOSE = True
-		NUMBER = True
-
-		# reading into dataframe
-		df = pd.read_csv(const["file name"])
-
-		if TRANSPOSE: df = df.T
-		if NUMBER: RESULT_COLUMN = int(RESULT_COLUMN)
-
-		# result
-		result = df[RESULT_COLUMN]
-
-		# data
-		data = df.drop(RESULT_COLUMN, axis=1)
-
-		print(result)
-		print(data)
-
-		out["output"] = 0
-		return out
-
-class FileOutput:
-	title = "FileOutput"
-	name = "File Saver"
-
-	@classmethod
-	def create(cls, state, w, pos):
-		cls.field = {
-			"input": [("data in", "type")],
-			"output": [],
-			"constant": [("file", FileDialog("open file"))],
-		}
-
-		return Model(state, w, pos, cls)
-
-	@staticmethod
-	def execute(inp, const, out, inst):
-		with open(const["file"], "w") as fbj:
-			fbj.writelines([ln+"\n" for ln in inp["data in"]])
-		return out
-
-
-class BFileOutput:
-	title = "BFileOutput"
-	name = "Binary File Saver"
-
-	@classmethod
-	def create(cls, state, w, pos):
-		cls.field = {
-			"input": [("data in", "type")],
-			"output": [],
-			"constant": [("file", FileDialog("open file"))],
-		}
-
-		return Model(state, w, pos, cls)
-
-	@staticmethod
-	def execute(inp, const, out, inst):
-		with open(const["file"], "wb") as fbj:
-			fbj.writelines(inp["data in"])
-		return out
-
-
-class PredictValue:
-	title = "PredictValue"
-	name = "Predict Value"
-
-	@classmethod
-	def create(cls, state, w, pos):
-		cls.field = {
-			"input": [("model", "binary"), ("test data", "type")],
-			"output": [("output", "type")],
-			"constant": [],
-		}
-		return Model(state, w, pos, cls)
-
-	@staticmethod
-	def execute(inp, const, out, inst):
-		print(inp, const, out, inst)
-
-		mdl = pickle.loads(b"".join(inp["model"][0]))
-		test_val = [int(i) for i in inp["test data"][0].split(" ")]
-
-		result = mdl.predict([test_val])
-		print(result)
-
-		out["output"] = [str(result[0])]
-		return out
-
-
-
-####################################################
+from sklearn.linear_model import LinearRegression, LogisticRegression
+from sklearn.cluster import KMeans
 
 
 class CSVInput:
@@ -324,15 +91,10 @@ class LinearRegressionMDL:
 
 	@staticmethod
 	def execute(inp, const, out, inst):
-		print(inp)
-		print(const)
-
 		mdl = LinearRegression()
 		mdl.fit(inp["x"], inp["y"])
 
-		print(inp["test"])
-		out["result"] = mdl.predict(inp["test"]) #const["test input file"])
-
+		out["result"] = mdl.predict(inp["test"])
 		return out
 
 
@@ -351,13 +113,30 @@ class LogisticRegressionMDL:
 
 	@staticmethod
 	def execute(inp, const, out, inst):
-		print(inp)
-		print(const)
-
 		mdl = LogisticRegression()
 		mdl.fit(inp["x"], inp["y"])
 
-		print(inp["test"])
-		out["result"] = mdl.predict(inp["test"]) #const["test input file"])
+		out["result"] = mdl.predict(inp["test"])
+		return out
 
+
+class KMeansMDL:
+	title = "KMeans"
+	name = "K-Means Cluster"
+
+	@classmethod
+	def create(cls, state, w, pos):
+		cls.field = {
+			"input": [("x", "type"), ("test", "type")],
+			"output": [("result", "type")],
+			"constant": [("cluster", LineInput(numerical=True))],
+		}
+		return Model(state, w, pos, cls)
+
+	@staticmethod
+	def execute(inp, const, out, inst):
+		mdl = KMeans(n_clusters=int(const["cluster"]))  # it is assume the LineInput() takes care of integer
+		mdl.fit(inp["x"])
+
+		out["result"] = mdl.predict(inp["test"])
 		return out

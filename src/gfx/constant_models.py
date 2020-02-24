@@ -1,12 +1,16 @@
 from PyQt5.QtWidgets import *
+from PyQt5.Qt import QValidator, QIntValidator, QDoubleValidator
 
 import os.path
 
 from src.debug import *
 
 class LineInput(QLineEdit):
-	def __init__(self, *args):
+	def __init__(self, *args, numerical=False):
 		super().__init__(*args)
+
+		if numerical:
+			self.setValidator(QIntValidator())
 
 	def value(self):
 		return self.text()

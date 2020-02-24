@@ -34,6 +34,14 @@ It uses nodes (a little elongated draggable square with inputs and outputs)
 to create the project. Each nodes has input and output connector which
 connects to output and input respectively.
 
+### Example
+Pictures tells more words than a paragraph. As in this case, it does show
+some the rusty, messy, early development of this software.
+
+An example of ML in GUI using Linear Regression on iris.csv.
+
+![Example 1](ref/[EXMP]ML_LinearRegression.png)
+
 ### Requirements
 * Python 3.7 Interpreter
 * Libraries Required
