@@ -1,3 +1,10 @@
+## Indev 12.2 [Feb 24, 2020]
+* Added Standard Decision Tree Classifier
+* Added SVM (Support Vector Machine)
+* Added a colored version for numerical only input line
+    * WHITE: Generic (names, files, ...)
+    * GREEN: Integer Only (numerical, operand, ...)
+
 ## Indev 12.1 [Feb 23, 2020]
 * Code Cleanup
 * Added KMean

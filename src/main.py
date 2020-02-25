@@ -192,7 +192,8 @@ def main():
 	                      "And graphs such as, Error Rate\n"
 	                      "and ML settings like settings\n"
 	                      "each batch size."), "Result")
-	prj_tab.addTab(QLabel("Testing models input"), "Test Input")
+	prj_tab.addTab(QLabel("Testing models input real time"), "Test Input")
+	prj_tab.addTab(QLabel("Deploying this onto a portable and usable AI/ML model to their destination"), "Deployment")
 	prj_tab.addTab(QLabel("Project Settings such as Theme, Node Size, and related."), "Project Settings")
 
 	project_main.addWidget(prj_tab)

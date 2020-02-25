@@ -8,9 +8,11 @@ from src.debug import *
 class LineInput(QLineEdit):
 	def __init__(self, *args, numerical=False):
 		super().__init__(*args)
+		self.setStyleSheet("background: rgb(255, 255, 255);")
 
 		if numerical:
 			self.setValidator(QIntValidator())
+			self.setStyleSheet("background: rgb(225, 255, 225);")
 
 	def value(self):
 		return self.text()
@@ -55,12 +57,15 @@ class FileDialog(QPushButton):
 		return ""
 
 
-class ModelSelectors(QComboBox):
-	def __init__(self, tags: dict):
+class Selector(QComboBox):
+	def __init__(self, tags: dict, default=None):
 		super().__init__(parent=None)
 		self.tag = ""
 
 		[self.addItem(tags[t]) for t in tags]
+
+		if default is not None:
+			self.tag = tags[default]
 
 		self.textActivated.connect(lambda s: self.setTag(s))
 

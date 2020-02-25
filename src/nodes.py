@@ -1,6 +1,6 @@
 from src.debug import *
 from src.gfx.model import Model as Model
-from src.gfx.constant_models import LineInput, FileDialog, CheckBox, ModelSelectors
+from src.gfx.constant_models import *
 
 import sklearn as skl
 import pandas as pd
@@ -8,6 +8,18 @@ import numpy as np
 
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.cluster import KMeans
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.svm import SVC
+
+"""
+class name suffix:
+
+MDL - Generic Model
+REG - Regression (a continuum result)
+CLF - Classifier (a discrete (labeled) result)
+NN - Neural Network
+
+"""
 
 
 class CSVInput:
@@ -76,7 +88,7 @@ class CSVOutput:
 		return out
 
 
-class LinearRegressionMDL:
+class LinearRegressionREG:
 	title = "LinearRegression"
 	name = "Linear Regression"
 
@@ -98,7 +110,7 @@ class LinearRegressionMDL:
 		return out
 
 
-class LogisticRegressionMDL:
+class LogisticRegressionREG:
 	title = "LogisticRegression"
 	name = "Logistic Regression"
 
@@ -120,7 +132,7 @@ class LogisticRegressionMDL:
 		return out
 
 
-class KMeansMDL:
+class KMeansCLF:
 	title = "KMeans"
 	name = "K-Means Cluster"
 
@@ -137,6 +149,54 @@ class KMeansMDL:
 	def execute(inp, const, out, inst):
 		mdl = KMeans(n_clusters=int(const["cluster"]))  # it is assume the LineInput() takes care of integer
 		mdl.fit(inp["x"])
+
+		out["result"] = mdl.predict(inp["test"])
+		return out
+
+
+class DecisionTreeCLF:
+	title = "DecisionTree"
+	name = "Std Decision Tree"
+
+	@classmethod
+	def create(cls, state, w, pos):
+		cls.field = {
+			"input": [("x", "type"), ("y", "type"), ("test", "type")],
+			"output": [("result", "type"), ("probability", "type")],
+			"constant": [("max depth", LineInput(numerical=True)),("min samples leaf", LineInput("1", numerical=True)),
+			             ("min samples split", LineInput("2", numerical=True))],
+		}
+		return Model(state, w, pos, cls)
+
+	@staticmethod
+	def execute(inp, const, out, inst):
+		mdl = DecisionTreeClassifier(max_depth=int(const["max depth"]), min_samples_leaf=int(const["min samples leaf"]),
+		                             min_samples_split=int(const["min samples split"]))
+		mdl.fit(inp["x"], inp["y"])
+
+		out["result"] = mdl.predict(inp["test"])
+		out["probability"] = mdl.predict_proba(inp["test"])
+		return out
+
+
+class SupportVectorCLF:
+	title = "SupportVector"
+	name = "Support Vector Classifier"
+
+	@classmethod
+	def create(cls, state, w, pos):
+		cls.field = {
+			"input": [("x", "type"), ("y", "type"), ("test", "type")],
+			"output": [("result", "type"),],
+			"constant": [("kernel", Selector({"rbf (default)": "rbf", "linear": "linear",
+			                                  "poly": "poly", "sigmoid": "sigmoid"}, default="rbf (default)"))],
+		}
+		return Model(state, w, pos, cls)
+
+	@staticmethod
+	def execute(inp, const, out, inst):
+		mdl = SVC(kernel=const["kernel"])
+		mdl.fit(inp["x"], inp["y"])
 
 		out["result"] = mdl.predict(inp["test"])
 		return out

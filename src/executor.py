@@ -152,10 +152,6 @@ class ModelExecutor:
 		return val == Null
 
 if __name__ == '__main__':
-	# prj = ProjectFI("../MyTestProj/")
-	# prj.load_project()
-	# executor(*dat_file_loader("../MyTestProj/", "ml_skl.dat"), prj, ML)
-
 	prj = ProjectFI("../FileInterfaceTest/")
 	prj.load_project()
 
