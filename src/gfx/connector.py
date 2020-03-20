@@ -28,14 +28,6 @@ class Connector(QGraphicsRectItem):
 
 		self.selector.hide()
 
-	def __getstate__(self):
-		dct = self.__dict__.copy()
-		dct.pop("view")
-		return dct
-
-	def __setstate__(self, state):
-		self.__dict__ = state
-
 	# due to the dynamic nature of the geometric shape of the node, this is to set the position at any time
 	def set_selector(self):
 		S = self.rect()

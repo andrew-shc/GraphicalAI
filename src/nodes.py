@@ -99,7 +99,7 @@ class LinearRegressionREG:
 	@classmethod
 	def create(cls, w, pos):
 		cls.field = {
-			"input": [("x", "type"), ("y", "type"), ("proto", "type")],
+			"input": [("x", "type"), ("y", "type"), ("test", "type")],
 			"output": [("result", "type")],
 			"constant": [],
 		}
@@ -110,7 +110,7 @@ class LinearRegressionREG:
 		mdl = LinearRegression()
 		mdl.fit(inp["x"], inp["y"])
 
-		out["result"] = mdl.predict(inp["proto"])
+		out["result"] = mdl.predict(inp["test"])
 		return out
 
 
@@ -121,7 +121,7 @@ class LogisticRegressionREG:
 	@classmethod
 	def create(cls, w, pos):
 		cls.field = {
-			"input": [("x", "type"), ("y", "type"), ("proto", "type")],
+			"input": [("x", "type"), ("y", "type"), ("test", "type")],
 			"output": [("result", "type")],
 			"constant": [],
 		}
@@ -132,7 +132,7 @@ class LogisticRegressionREG:
 		mdl = LogisticRegression()
 		mdl.fit(inp["x"], inp["y"])
 
-		out["result"] = mdl.predict(inp["proto"])
+		out["result"] = mdl.predict(inp["test"])
 		return out
 
 
@@ -143,7 +143,7 @@ class KMeansCLF:
 	@classmethod
 	def create(cls, w, pos):
 		cls.field = {
-			"input": [("x", "type"), ("proto", "type")],
+			"input": [("x", "type"), ("test", "type")],
 			"output": [("result", "type")],
 			"constant": [("cluster", LineInput(numerical=True))],
 		}
@@ -154,7 +154,7 @@ class KMeansCLF:
 		mdl = KMeans(n_clusters=int(const["cluster"]))  # it is assume the LineInput() takes care of integer
 		mdl.fit(inp["x"])
 
-		out["result"] = mdl.predict(inp["proto"])
+		out["result"] = mdl.predict(inp["test"])
 		return out
 
 
@@ -165,7 +165,7 @@ class DecisionTreeCLF:
 	@classmethod
 	def create(cls, w, pos):
 		cls.field = {
-			"input": [("x", "type"), ("y", "type"), ("proto", "type")],
+			"input": [("x", "type"), ("y", "type"), ("test", "type")],
 			"output": [("result", "type"), ("probability", "type")],
 			"constant": [("max depth", LineInput(numerical=True)), ("min samples leaf", LineInput("1", numerical=True)),
 			             ("min samples split", LineInput("2", numerical=True))],
@@ -178,8 +178,8 @@ class DecisionTreeCLF:
 		                             min_samples_split=int(const["min samples split"]))
 		mdl.fit(inp["x"], inp["y"])
 
-		out["result"] = mdl.predict(inp["proto"])
-		out["probability"] = mdl.predict_proba(inp["proto"])
+		out["result"] = mdl.predict(inp["test"])
+		out["probability"] = mdl.predict_proba(inp["test"])
 		return out
 
 
@@ -190,7 +190,7 @@ class SupportVectorCLF:
 	@classmethod
 	def create(cls, w, pos):
 		cls.field = {
-			"input": [("x", "type"), ("y", "type"), ("proto", "type")],
+			"input": [("x", "type"), ("y", "type"), ("test", "type")],
 			"output": [("result", "type"), ],
 			"constant": [("kernel", Selector({"rbf (default)": "rbf", "linear": "linear",
 			                                  "poly": "poly", "sigmoid": "sigmoid"}, default="rbf (default)"))],
@@ -202,5 +202,5 @@ class SupportVectorCLF:
 		mdl = SVC(kernel=const["kernel"])
 		mdl.fit(inp["x"], inp["y"])
 
-		out["result"] = mdl.predict(inp["proto"])
+		out["result"] = mdl.predict(inp["test"])
 		return out

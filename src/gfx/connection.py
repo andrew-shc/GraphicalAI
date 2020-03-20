@@ -20,14 +20,6 @@ class Connection(QGraphicsLineItem):  # This is an instance class, not a manager
 		l.setP2(p2)
 		self.setLine(l)
 
-	def __getstate__(self):
-		dct = self.__dict__.copy()
-		return dct
-
-	def __setstate__(self, state):
-		super().__init__()
-		self.__dict__ = state
-
 	def update_end(self, p2):
 		l = self.line()
 		l.setP2(p2)

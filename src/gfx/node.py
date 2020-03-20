@@ -21,12 +21,6 @@ class Node(QGraphicsProxyWidget):
 		self.central = NodeInternal(view, pos, nd_cls, parent=None)
 		self.setWidget(self.central)
 
-	def __getstate__(self):
-		return self.__dict__.copy()
-
-	def __setstate__(self, state):
-		self.__dict__ = state
-
 
 class NodeInternal(QWidget):
 	""" Model Class
@@ -52,14 +46,6 @@ class NodeInternal(QWidget):
 		self._inst_basic_ui(view, self.nd_cls.field)
 
 		self.setStyleSheet("background-color: #CCDDFF")
-
-	def __getstate__(self):
-		dct = self.__dict__.copy()
-		del dct["view"]
-		return dct
-
-	def __setstate__(self, state):
-		self.__dict__ = state
 
 	def _inst_basic_ui(self, view, field: List[Tuple[str, str]]):
 		title = QLabel(self.nd_cls.name, self)

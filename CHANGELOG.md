@@ -1,3 +1,7 @@
+## Indev 13.1 [March 20, 2020]
+* Cleaned up the repository and files
+* Added unit/integration tests
+
 ## Indev 13.0 [March 20, 2020]
 * Fixed the connector's initiation position
 * **Models are now serializable!** (Or at least somewhat)
