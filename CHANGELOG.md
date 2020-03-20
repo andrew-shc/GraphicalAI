@@ -1,3 +1,6 @@
+## Indev 13.1b [March 20, 2020]
+* removed os from .travis.yml to default
+
 ## Indev 13.1a [March 20, 2020]
 * .travis.yaml -> .travis.yml
 

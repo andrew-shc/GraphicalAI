@@ -1,7 +1,4 @@
 language: python
-os:
-  - osx
-  - windows
 python:
   - "3.7"
   - "3.8"  # future proof
