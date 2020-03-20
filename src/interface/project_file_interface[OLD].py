@@ -22,7 +22,10 @@ import os
 
 from src.debug import *
 from src.gfx.connector import Connector
+from src.gfx.node import Node
 from src.constants import *
+
+from typing import List
 
 
 class ProjectFI:
@@ -30,11 +33,24 @@ class ProjectFI:
 	"""
 	MODEL_EXT = ".dat"
 
-	def __init__(self, path: str, project_file="project.yaml", model_dir="", training_dir="training/",
+	def __init__(self, proj_name: str, path: str, project_file="project.yaml", model_dir="", training_dir="training/",
 	             testing_dir="testing/"):
 		# loads the models and files references/names/directories from the project directory to the interface
+		if os.path.isabs(path) and os.path.exists(path): pass
+		else:
+			print("[Error] Invalid path name: ", path)
+			print("[Info] Path should be absolute")
+			raise
 
-		self.path = path  # absolute project path location
+		self.path = os.path.join(path, proj_name)+"/"  # absolute project path location
+
+		try:
+			os.mkdir(self.path)  # make the project directory
+		except FileExistsError:
+			print("[Error] Directory is already existed: ", self.path)
+		except:
+			print("[Error] Invalid project name: ", proj_name)
+			raise
 
 		self.project_file = project_file  # project file directory (project.yaml)
 		self.model_dir = model_dir  # model directory (*.dat); usually in the main directory
@@ -46,7 +62,7 @@ class ProjectFI:
 
 	def create_project(self):
 		""" Creates a new project data and saves it """
-		FILE_CREATED_ERROR = False
+		FILE_CREATION_ERROR = False
 
 		self.project_dat = {
 			"author": None,
@@ -62,20 +78,20 @@ class ProjectFI:
 				yaml.dump(self.project_dat, fbj, default_flow_style=False)
 		else:
 			print(f"{self.path+self.project_file} for project file is already existed!", l=ERR)
-			FILE_CREATED_ERROR = True
+			FILE_CREATION_ERROR = True
 
 		if not os.path.exists(self.path+self.training_dir):  # creating a new training files directory
 			os.makedirs(self.path+self.training_dir)
 		else:
 			print(f"{self.path+self.training_dir} for training directory is already existed!", l=ERR)
-			FILE_CREATED_ERROR = True
+			FILE_CREATION_ERROR = True
 
 		if not os.path.exists(self.path+self.testing_dir):  # creating a new testings files directory
 			os.makedirs(self.path+self.testing_dir)
 		else:
 			print(f"{self.path+self.testing_dir} for testing directory is already existed!", l=ERR)
-			FILE_CREATED_ERROR = True
-		return FILE_CREATED_ERROR
+			FILE_CREATION_ERROR = True
+		return FILE_CREATION_ERROR
 
 	def load_project(self):
 		""" Loads the models and files data to the interface for quick access and buffering """
@@ -93,6 +109,7 @@ class ProjectFI:
 			yaml.dump(self.project_dat, fbj, default_flow_style=False)
 
 		for mdl in self.MODELS:
+			print(mdl, self.MODELS[mdl])
 			with open(self.path+self.model_dir+mdl+self.MODEL_EXT, "w") as fbj:
 				fbj.writelines(self.MODELS[mdl])
 		print("[INFO]: Project Saved")
@@ -115,7 +132,7 @@ class ProjectFI:
 			self.MODELS[mdl_k[tag]] = fdt
 			if tag != "": self.project_dat["model"]["tag"][mdl_k[tag]] = tag
 
-	def model_saver(self, model_dt: list, items: list, name: str):
+	def model_saver(self, model_dt: List[Node], items: list, name: str):
 		"""
 			Saves the model data to a file.
 		items: a list of items in a graphics view
@@ -125,7 +142,7 @@ class ProjectFI:
 		dt_obj = [i for i in items if isinstance(i, Connector)]
 		for m in model_dt:
 			dt_obj.append(m)
-			for fld in m.field["constant"]:
+			for fld in m.central.nd_cls.field["constant"]:
 				dt_obj.append(fld[1])
 
 		obj_id = 0
@@ -145,17 +162,22 @@ class ProjectFI:
 			dat[obj_map[m]] = {}
 			for i in items:
 				if isinstance(i, Connector):  # connectors
-					if i.parent == m:
-						id_map[obj_map[m]] = m.nmspc_id
+					if i in m.central.connector:
+						id_map[obj_map[m]] = m.central.nd_cls.title
 						id_map[obj_map[i]] = i.field[0]
-						dat[obj_map[m]][obj_map[i]] = (i.tag, i.field[1], [obj_map[c] for c in i.connectees])
-			for c in m.field["constant"]:  # constants
-				id_map[obj_map[m]] = m.nmspc_id
+						dat[obj_map[m]][obj_map[i]] = (i.tag, i.field[1], [obj_map[c.connector_a] for c in i.connections])
+			for c in m.central.nd_cls.field["constant"]:  # constants
+				id_map[obj_map[m]] = m.central.nd_cls.title
 				id_map[obj_map[c[1]]] = c[0]
 				dat[obj_map[m]][obj_map[c[1]]] = ("const", c[1].value())
 		self._dat_file_saver(dat, id_map, name)
 
 		return dat
+
+	def _model_objects_saver(self, model_tree, id_map, name: str):
+		print(id_map)
+		# self.write_model(name, [l+"\n" for l in ln])
+		self.save_project()
 
 	def _dat_file_saver(self, model_tree, id_map, name: str):
 		"""
@@ -234,7 +256,7 @@ class ProjectFI:
 
 
 if __name__ == '__main__':
-	f = ProjectFI("C:/Users/Andrew Shen/Desktop/ProjectEmerald/FileInterfaceTest/")
+	f = ProjectFI("/FileInterfaceTest/")
 	f.create_project()
 	f.write_model("MyModel1", [b"model data"])
 	f.write_model("MyModel2", [b"damn it"])

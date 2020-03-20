@@ -4,9 +4,16 @@ from PyQt5.QtCore import Qt
 from src.debug import *
 from src.widgets import *
 from src.executor import *
+from src.state import StateHolder
+
+from src.gfx.connector import Connector
+from src.gfx.connection import Connection
+from src.gfx.node import Node
+
+import pickle
 
 
-class ModelWorkspace:
+class ModelWorkspace:  # instance class
 	central = None  # the central widget
 	name = None  # the model workspace name
 
@@ -34,7 +41,48 @@ class ModelWorkspace:
 	def save(self) -> "list of str":
 		pass
 
-class ModelManager:
+
+class ModelWorkspace_:
+	def __init__(self, state, name=None):
+		self.central = QWidget()
+		self.name = name  # starting name
+
+		b_addModel = NodeSelector(__import__("nodes"), state, view)
+		b_modelName = QLineEdit("Model Name")
+		b_saveProj = QPushButton("Save Model")
+		b_saveProj.clicked.connect(
+			lambda checked: self.updateModel(state.project, view.items(), b_modelName.text(), state))
+		b_clearProj = QPushButton("Clear Model")
+		b_clearProj.clicked.connect(lambda checked: [scene.removeItem(i) for i in scene.items()])
+		b_execProj = QPushButton("Execute Model")
+		b_execProj.clicked.connect(lambda checked: self.execute(state))
+
+		inner_menu = QVBoxLayout()
+		inner_menu.addWidget(b_currModel)
+		inner_menu.addWidget(b_addModel)
+		inner_menu.addWidget(b_modelName)
+		inner_menu.addWidget(b_saveProj)
+		inner_menu.addWidget(b_clearProj)
+		inner_menu.addWidget(QHLine())
+		inner_menu.addWidget(b_execProj)
+		# inner_menu.addWidget(ErrorDialogue())
+		inner_menu.addStretch()
+
+		layout = QHBoxLayout()
+
+		layout.addLayout(inner_menu)
+		layout.addWidget(mdl_wrkspc.central)
+
+
+class _ModelManager:  # manager class
+	def __init__(self, _state):
+		models = []  # list of model workspace
+		index = 0  # current choice of model workspace
+
+	def getCurrentModel(self, state): pass
+
+
+class ModelManager:  # manager class
 	models = []  # list of model tab reference
 	index = 0  # current choice of the model
 
@@ -51,7 +99,7 @@ class ModelManager:
 			b_addModel = NodeSelector(__import__("nodes"), state, view)
 			b_modelName = QLineEdit("Model Name")
 			b_saveProj = QPushButton("Save Model")
-			b_saveProj.clicked.connect(lambda checked: self.updateModelList(state.project, state.model_dt, view.items(), b_modelName.text()))
+			b_saveProj.clicked.connect(lambda checked: self.updateModel(state.project, view.items(), b_modelName.text(), state))
 			b_clearProj = QPushButton("Clear Model")
 			b_clearProj.clicked.connect(lambda checked: [scene.removeItem(i) for i in scene.items()])
 			b_execProj = QPushButton("Execute Model")
@@ -80,9 +128,16 @@ class ModelManager:
 		print(f"Model index <{self.index}> is invalid because the length of the model list is <{len(self.models)}>", l=ERR)
 		return None
 
-	def updateModelList(self, project, model_dt, items, model_name):
+	def updateModel(self, project, items, model_name, state):
+
+		#================== SERIALIZE DATA ==================#
+		self.model_serializer(items, "model.yaml")
+		print("~~~")
+		item_list = self.model_deserializer(state, "model.yaml")
+
 		if project is not None:
-			project.model_saver(model_dt, items, model_name)
+			self.model_serializer(items, str(self.index)+".yaml")
+			project.model_saver([i for i in items if isinstance(i, Node)], items, model_name)
 		else:
 			ErrorBox(**ErrorBox.E001).exec()
 
@@ -97,7 +152,24 @@ class ModelManager:
 			self.executor = ModelExecutor(state.project, "MODEL_4.dat")
 			self.executor.beginExecution()
 		else:
-			ErrorBox(ErrorBox.E001).exec()
+			ErrorBox(**ErrorBox.E001).exec()
+
+	def model_serializer(self, items: list, fname: str):  # items -> A list of items such as from the QGraphicsView
+		with open("../MODEL_0.dat", "wb") as fbj:
+			print("<<<", items)
+			pickle.dump(items, fbj)
+
+	def model_deserializer(self, state, fname: str):
+		items = []
+		with open("../MODEL_0.dat", "rb") as fbj:
+			items = pickle.load(fbj)
+			print(">>>", items)
+		return items
+
+
+if __name__ == '__main__':
+	mdl = ModelManager.model_deserializer(None, StateHolder(), "model.yaml")
+	print(mdl)
 
 """
 select models

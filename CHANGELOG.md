@@ -1,3 +1,14 @@
+## Indev 13.0 [March 20, 2020]
+* Fixed the connector's initiation position
+* **Models are now serializable!** (Or at least somewhat)
+  * Allows for deployment
+  * Added multiple model workspace
+  * Saves the visual progress (e.g. lines, node position)
+  * And many more features yet to come stemming from this
+  * NOTE: load_proj() currently returns partially restored object state
+* Refactored some components (Project File Interface & Model Manager)
+* Re-organized some GUI components
+
 ## Indev 12.2 [Feb 24, 2020]
 * Added Standard Decision Tree Classifier
 * Added SVM (Support Vector Machine)

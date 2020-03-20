@@ -1,12 +1,9 @@
 from src.debug import *
-from src.gfx.connector import Connector
-from src.gfx.model import Model
-from src.project_file_interface import ProjectFI
+from src.interface.project_file_interface import ProjectFI
 from src.constants import *
 
 import ast
 
-import sklearn as skl
 import pandas as pd
 import numpy as np
 
@@ -24,8 +21,8 @@ class ModelExecutor:
 	tCONST = "CNST"
 
 
-	def __init__(self, proj, fname):
-		self.tree, self.id_map = proj.dat_file_loader(fname)
+	def __init__(self, proj: ProjectFI, key: int):
+		self.tree, self.id_map = proj.read_mdl_exec(key)
 		self.completed = []  # a list of index reference to the model in the tree that are FINISHED executing
 
 		mdl = __import__("nodes")
@@ -129,6 +126,7 @@ class ModelExecutor:
 
 		if not model_incomplete:
 			fnlMod = lambda dct: {k:self._type_conversion(dct[k]) for k in dct}
+			print(inp_field)
 			out_data = model_class.execute(inp=fnlMod(inp_field), const=fnlMod(const_field), out=fnlMod(out_field), inst=fnlMod(self.instance))
 
 			if [fld for fld in out_data if fld == Null] == []:  # shows all the output data has been set (not Null)
@@ -151,9 +149,3 @@ class ModelExecutor:
 			return False
 		return val == Null
 
-if __name__ == '__main__':
-	prj = ProjectFI("../FileInterfaceTest/")
-	prj.load_project()
-
-	exc = ModelExecutor(prj, "MODEL_1.dat")  # "../FileInterfaceTest/", "MODEL_3.dat")
-	exc.beginExecution()
