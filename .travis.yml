@@ -2,6 +2,9 @@ language: python
 python:
   - "3.7"
   - "3.8"  # future proof
+matrix:
+  allow_failures:
+    - python: "3.8"
 # command to install dependencies
 install:
   - pip3 install -r requirements.txt
