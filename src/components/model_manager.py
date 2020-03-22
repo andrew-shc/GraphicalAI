@@ -40,21 +40,14 @@ class ModelWorkspace(QWidget):
 		# Graphics Scene: Where the node will be selected
 		scene = QGraphicsScene(0, 0, 1920, 1080)
 
-		if view is None:
-			self.view = QGraphicsView(scene)
-			self.view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-			self.view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-			self.view.setDragMode(self.view.NoDrag)
-		else:
-			self.view = view
-			self.view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-			self.view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-			self.view.setDragMode(self.view.NoDrag)
+		if view is None: self.view = QGraphicsView(scene)
+		else: self.view = view
+		self.view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+		self.view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+		self.view.setDragMode(self.view.NoDrag)
 
 		b_add_nd = NodeSelector(__import__("nodes"), self.view)
-		print(self.name)
 		self.b_name = QLabel(self.name)
-		print(self.b_name.text())
 		name_fnt = self.b_name.font()
 		name_fnt.setPointSize(14)
 		self.b_name.setFont(name_fnt)
