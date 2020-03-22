@@ -7,10 +7,8 @@ __pycache__/
 .idea/
 .venv/
 .mypy_cache/
+.pytest_cache/
 
-# project
+# project internal
 old/
-
-# project proto
-MyTestProj2/
 proto/

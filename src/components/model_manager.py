@@ -30,22 +30,31 @@ class ModelWorkspace(QWidget):
 
 	nameChanged = pyqtSignal(str)
 
-	def __init__(self, proj: ProjectFI, parent=None):
+	def __init__(self, proj: ProjectFI, inst_ui=True, parent=None):
 		super().__init__(parent=parent)
 		self.project = proj
 
-		self.inst_ui()
+		if inst_ui: self.inst_ui()
 
-	def inst_ui(self):
+	def inst_ui(self, view=None):
 		# Graphics Scene: Where the node will be selected
 		scene = QGraphicsScene(0, 0, 1920, 1080)
-		self.view = QGraphicsView(scene)
-		self.view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-		self.view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-		self.view.setDragMode(self.view.NoDrag)
+
+		if view is None:
+			self.view = QGraphicsView(scene)
+			self.view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+			self.view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+			self.view.setDragMode(self.view.NoDrag)
+		else:
+			self.view = view
+			self.view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+			self.view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+			self.view.setDragMode(self.view.NoDrag)
 
 		b_add_nd = NodeSelector(__import__("nodes"), self.view)
+		print(self.name)
 		self.b_name = QLabel(self.name)
+		print(self.b_name.text())
 		name_fnt = self.b_name.font()
 		name_fnt.setPointSize(14)
 		self.b_name.setFont(name_fnt)
@@ -120,7 +129,10 @@ class ModelWorkspace(QWidget):
 		if self.project is not None:
 			if self.key is not None:
 				self.executor = ModelExecutor(self.project, self.key)
-				self.executor.beginExecution()
+				try:
+					self.executor.beginExecution()
+				except:
+					ErrorBox(**ErrorBox.E005).exec()
 			else:
 				print("Error: Project File Interface key is empty")
 		else:
@@ -188,12 +200,16 @@ class ModelManager(QWidget):
 			self.models.remove(mdl_wrkspc)
 			self.mdl_slctr.update_list(self.models)
 			self.select_model(0)
+
+			self.project.delete_mdl(mdl_wrkspc.key)
 		elif self.mdl_slctr.count() == 1:
 			self.models.remove(mdl_wrkspc)
 			self.mdl_slctr.update_list(self.models)
 			self.cur_mdl.hide()
 			self.central.removeWidget(mdl_wrkspc)
 			self.spacer.show()
+
+			self.project.delete_mdl(mdl_wrkspc.key)
 		else:
 			print("Error: No more models!")
 
@@ -208,16 +224,9 @@ class ModelManager(QWidget):
 		[mdl.update_proj(proj) for mdl in self.models]
 
 		for mdl_key in self.project.project["model"]["tag"]:
-			mdl_wksp = ModelWorkspace(self.project)
+			mdl_wksp = ModelWorkspace(self.project, inst_ui=False)
 			mdl_wksp.key = mdl_key
 			mdl_wksp.name = self.project.project["model"]["tag"][mdl_key]
-			mdl_wksp.b_name.setText(mdl_wksp.name)
-			for itm in self.project.read_mdl_proj(mdl_key).items()[::-1]:
-				mdl_wksp.view.scene().addItem(itm)
-			print(":::", mdl_wksp.view.items())
+			mdl_wksp.inst_ui(view=self.project.read_mdl_proj(mdl_key))
 			self.models.append(mdl_wksp)
 		self.mdl_slctr.update_list(self.models)
-
-		print(self.project.project["model"]["tag"])
-
-

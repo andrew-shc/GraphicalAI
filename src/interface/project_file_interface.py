@@ -43,6 +43,7 @@ project.yaml
 """
 from __future__ import annotations
 
+from PyQt5.QtCore import QPoint, Qt
 from PyQt5.QtWidgets import QGraphicsView, QGraphicsScene
 
 import yaml
@@ -132,7 +133,7 @@ def _dat_file_saver(model_tree, id_map, key: int):
 	return ln
 
 def dat_file_loader(fdt):
-	fdt = [fdt for f in fdt]
+	fdt = [f.strip("\n") for f in fdt]
 	model = fdt[:fdt.index("namespace")]
 	raw_id_map = fdt[fdt.index("namespace")+1:]
 
@@ -170,6 +171,7 @@ def dat_file_loader(fdt):
 	id_map = {int(ln[4:ln.index(" ", 4)]): ln[ln.index(" ", 4)+1:] for ln in raw_id_map}
 
 	return mdl_tree, id_map
+
 
 class FileType(Enum):
 	Executor = 1  # each node's execution ready format
@@ -338,47 +340,65 @@ class ProjectFI:
 			# THAN instantiate the graphical parts
 			# ALSO instantiate with the missing index which later will be replaced with
 
-			print("~~~")
 			fdt = {}
 			with open(os.path.join(self.path, "MDL"+str(key)+self.mdl_proj), "r") as fbj:
 				fdt = yaml.safe_load(fbj)
-			print("~~~")
+
 			scene = QGraphicsScene(0, 0, 1920, 1080)
 			view = QGraphicsView(scene)
 			nodes = __import__("nodes")
 			for i in fdt:
-				print(fdt[i])
 				if fdt[i].get("connector") is not None:  # Node
 					o: Node = eval(f"nodes.{fdt[i]['nd_cls']}").create(view, fdt[i]['pos'])
 					for ind, c in enumerate(o.central.connector):
 						c.TEMP_ind = fdt[i]["connector"][ind]
 					view.scene().addItem(o)
-				elif fdt[i].get("connections") is not None:  # Connector
-					pass
+
 			for i in fdt:
 				if fdt[i].get("connector_a") is not None:  # Connection
 					item = view.items()
 					cnc_a = None
 					cnc_b = None
 					if fdt[i]["connector_a"] != None:
-						for c in item:
-							if isinstance(c, Connector):
-								if fdt[i]["connector_a"] == c.TEMP_ind:
-									cnc_a = c
+						for ca in item:
+							if isinstance(ca, Connector):
+								if fdt[i]["connector_a"] == ca.TEMP_ind:
+									cnc_a = ca
 					if fdt[i]["connector_b"] != None:
-						for c in item:
-							if isinstance(c, Connector):
-								if fdt[i]["connector_b"] == c.TEMP_ind:
-									cnc_b = c
-					view.scene().addItem(Connection((0,0),(0,0),parent=cnc_a,external=cnc_b))
-			print(view.items())
+						for cb in item:
+							if isinstance(cb, Connector):
+								if fdt[i]["connector_b"] == cb.TEMP_ind:
+									cnc_b = cb
+					if cnc_b is not None:  # connector connections
+						S = cnc_a.mapRectToItem(cnc_a, cnc_a.rect())
+						O = cnc_b.mapRectToItem(cnc_a, cnc_b.rect())
+						view.scene().addItem(Connection(QPoint(S.x()+S.width()/2, S.y()+S.height()/2),
+														QPoint(O.x()+O.width()/2, O.y()+O.height()/2),
+														parent=cnc_a,external=cnc_b, color=Qt.green))
+					else:  # selector connections
+						S = cnc_a.rect()
+						view.scene().addItem(Connection(QPoint(S.x()+S.width()/2, S.y()+S.height()/2),
+														QPoint(S.x()+S.width()/2, S.y()+S.height()/2),
+														parent=cnc_a,external=cnc_b, color=Qt.red))
+			for c in view.items():  # using the `view` for the generated connectors
+				if isinstance(c, Connector):  # Connector
+					del c.TEMP_ind
+					for i in view.items():
+						if isinstance(i, Connection):
+							if i.connector_a == c and i.connector_b is not None:  # filter out selection connection
+								print("PAIR", i, c, i.connector_a)
+								c.connections.append(i)
+			for node in view.items():
+				if isinstance(node, Node):
+					node.central.view = view  # updating the view attribute
+
 			return view
 		else:
 			print("Error: Invalid key")
 
-	def delete_mdl(self, key: int, typ: FileType):
-		if self.valid_key(key):
-			pass
+	def delete_mdl(self, key: int):
+		if self.valid_key(key):  # deleting a file can be dangerous at times; only can remove the reference but to delete the actual file, users must delete it manually
+			del self.project["model"]["tag"][key]
 		else:
 			print("Error: Invalid key")
 

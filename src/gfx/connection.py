@@ -8,7 +8,7 @@ from typing import Optional
 # from src.gfx.connector import Connector
 
 class Connection(QGraphicsLineItem):  # This is an instance class, not a manager class
-	def __init__(self, p1, p2, parent: 'Connector', external: Optional['Connector'], color=Qt.black):
+	def __init__(self, p1: QPoint, p2: QPoint, parent: 'Connector', external: Optional['Connector'], color=Qt.black):
 		super().__init__(parent)
 
 		self.connector_a = parent  # parent; internal connector

@@ -1,11 +1,13 @@
-from src.debug import *
-from src.interface.project_file_interface import ProjectFI
-from src.constants import *
+from src.debug import print
+from src.interface.project_file_interface import ProjectFI  # type: ignore
+from src.constants import Null
 
 import ast
 
-import pandas as pd
-import numpy as np
+import pandas as pd  # type: ignore
+import numpy as np  # type: ignore
+
+from typing import List
 
 
 class ModelExecutor:
@@ -23,7 +25,7 @@ class ModelExecutor:
 
 	def __init__(self, proj: ProjectFI, key: int):
 		self.tree, self.id_map = proj.read_mdl_exec(key)
-		self.completed = []  # a list of index reference to the model in the tree that are FINISHED executing
+		self.completed: List[dict] = []  # a list of index reference to the model in the tree that are FINISHED executing
 
 		mdl = __import__("nodes")
 		mdl_cls_ref = [mdl.__dict__[c] for c in mdl.__dir__()
@@ -35,8 +37,6 @@ class ModelExecutor:
 		self.instance = {
 			"root": proj.path,
 		}
-
-		print(self.tree)
 
 	def beginExecution(self):
 		self.execAnchor()  # executes all the anchor to set-up the main execution
@@ -126,7 +126,7 @@ class ModelExecutor:
 
 		if not model_incomplete:
 			fnlMod = lambda dct: {k:self._type_conversion(dct[k]) for k in dct}
-			print(inp_field)
+
 			out_data = model_class.execute(inp=fnlMod(inp_field), const=fnlMod(const_field), out=fnlMod(out_field), inst=fnlMod(self.instance))
 
 			if [fld for fld in out_data if fld == Null] == []:  # shows all the output data has been set (not Null)

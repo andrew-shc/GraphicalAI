@@ -1,3 +1,11 @@
+## Indev 13.2 [March 21, 2020]
+* Fixed the `executor` problem
+* Further improvement on serialization though broken still
+* Models are removable from the project reference
+    * Users has to manually delete the actual file data
+* Changed `pip` to `pip3` in .travis.yml
+    *  <https://stackoverflow.com/questions/59981615/receiving-error-when-trying-to-install-pyqt5-package-on-pycharm-on-ubuntu-18-04>
+
 ## Indev 13.1b [March 20, 2020]
 * removed os from .travis.yml to default
 

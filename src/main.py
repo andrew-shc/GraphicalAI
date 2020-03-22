@@ -1,12 +1,11 @@
 import sys
 
-from src.debug import print
+from src.debug import print  # type: ignore
 
-from src.widgets import *
-from src.executor import *
-from interface.project_file_interface import ProjectFI
-from src.components.project_setup import ProjectSetup
-from src.components.model_manager import ModelManager
+from src.widgets import *  # type: ignore
+from src.executor import *  # type: ignore
+from src.components.project_setup import ProjectSetup  # type: ignore
+from src.components.model_manager import ModelManager  # type: ignore
 
 
 """
@@ -82,6 +81,7 @@ def main():
 
 	win.show()
 	sys.exit(app.exec())
+
 
 print("PROGRAM START")
 if __name__ == '__main__':

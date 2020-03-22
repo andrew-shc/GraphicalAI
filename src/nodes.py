@@ -1,44 +1,72 @@
-from src.debug import *
-from src.gfx.node import Node as Node
-from src.gfx.constant_models import *
+from src.gfx.node import Node as Node  # type: ignore
+from src.gfx.constant_models import *  # type: ignore
 
-import sklearn as skl
 import pandas as pd
 import numpy as np
 
-from sklearn.linear_model import LinearRegression, LogisticRegression
-from sklearn.cluster import KMeans
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.svm import SVC
+from sklearn.linear_model import LinearRegression, LogisticRegression  # type: ignore
+from sklearn.cluster import KMeans  # type: ignore
+from sklearn.tree import DecisionTreeClassifier  # type: ignore
+from sklearn.svm import SVC  # type: ignore
 
 """
 class name suffix:
 
-MDL - Generic Node
+MDL - Generic Node (can be omitted)
 REG - Regression (a continuum result)
 CLF - Classifier (a discrete (labeled) result)
+GRD - Gradient
 NN - Neural Network
 
 """
 
-
-class CSVInput:
-	title = "CSVInput"  # back-end oriented
-	name = "Read CSV"  # user oriented
+class Nodes:
+	title = "#[Abstract]"  # back-end oriented
+	name = "#[Abstract]"  # user oriented
 
 	@classmethod
-	def create(cls, w, pos):
+	def create(cls, view, pos):
+		""" Creates an instance of the node from this custom node class
+		:param w:
+		:param pos:
+		:return:
+		"""
+		raise NotImplementedError
+
+	@staticmethod
+	def execute(inp, const, out, inst) -> dict:
+		""" Execute function to execute this node
+		:param inp: input dict
+		:param const: constant input dict
+		:param out: output dict (w/ side effects)
+		:param inst: project instance/global variables
+		:return: returns a dictionary type for output
+		"""
+		raise NotImplementedError
+
+	@staticmethod
+	def descriptor():
+		pass
+
+
+class CSVInput(Nodes):
+	title = "CSVInput"
+	name = "Read CSV"
+
+	@classmethod
+	def create(cls, view, pos):
 		cls.field = {
 			"input": [],
 			"output": [("x", "type"), ("y", "type")],
 			"constant": [("file input", FileDialog()), ("result column", LineInput()), ("transpose", CheckBox()),
 			             ("result numerical", CheckBox()), ],
 		}
-		return Node(w, pos, cls)
+		return Node(view, pos, cls)
 
 	@staticmethod
 	def execute(inp, const, out, inst):
 		# reading into dataframe
+
 		df = pd.read_csv(const["file input"])
 
 		if const["transpose"]: df = df.T
@@ -65,18 +93,18 @@ class CSVInput:
 		return out
 
 
-class CSVOutput:
+class CSVOutput(Nodes):
 	title = "CSVOutput"
 	name = "Write CSV"
 
 	@classmethod
-	def create(cls, w, pos):
+	def create(cls, view, pos):
 		cls.field = {
 			"input": [("data", "type")],
 			"output": [],
 			"constant": [("file output", FileDialog()), ("transpose", CheckBox()), ("seperator", LineInput(","))],
 		}
-		return Node(w, pos, cls)
+		return Node(view, pos, cls)
 
 	@staticmethod
 	def execute(inp, const, out, inst):
@@ -92,18 +120,18 @@ class CSVOutput:
 		return out
 
 
-class LinearRegressionREG:
+class LinearRegressionREG(Nodes):
 	title = "LinearRegression"
 	name = "Linear Regression"
 
 	@classmethod
-	def create(cls, w, pos):
+	def create(cls, view, pos):
 		cls.field = {
 			"input": [("x", "type"), ("y", "type"), ("test", "type")],
 			"output": [("result", "type")],
 			"constant": [],
 		}
-		return Node(w, pos, cls)
+		return Node(view, pos, cls)
 
 	@staticmethod
 	def execute(inp, const, out, inst):
@@ -114,18 +142,18 @@ class LinearRegressionREG:
 		return out
 
 
-class LogisticRegressionREG:
+class LogisticRegressionREG(Nodes):
 	title = "LogisticRegression"
 	name = "Logistic Regression"
 
 	@classmethod
-	def create(cls, w, pos):
+	def create(cls, view, pos):
 		cls.field = {
 			"input": [("x", "type"), ("y", "type"), ("test", "type")],
 			"output": [("result", "type")],
 			"constant": [],
 		}
-		return Node(w, pos, cls)
+		return Node(view, pos, cls)
 
 	@staticmethod
 	def execute(inp, const, out, inst):
@@ -136,18 +164,18 @@ class LogisticRegressionREG:
 		return out
 
 
-class KMeansCLF:
+class KMeansCLF(Nodes):
 	title = "KMeans"
 	name = "K-Means Cluster"
 
 	@classmethod
-	def create(cls, w, pos):
+	def create(cls, view, pos):
 		cls.field = {
 			"input": [("x", "type"), ("test", "type")],
 			"output": [("result", "type")],
-			"constant": [("cluster", LineInput(numerical=True))],
+			"constant": [("clusters", LineInput(numerical=True))],
 		}
-		return Node(w, pos, cls)
+		return Node(view, pos, cls)
 
 	@staticmethod
 	def execute(inp, const, out, inst):
@@ -158,19 +186,19 @@ class KMeansCLF:
 		return out
 
 
-class DecisionTreeCLF:
+class DecisionTreeCLF(Nodes):
 	title = "DecisionTree"
 	name = "Std Decision Tree"
 
 	@classmethod
-	def create(cls, w, pos):
+	def create(cls, view, pos):
 		cls.field = {
 			"input": [("x", "type"), ("y", "type"), ("test", "type")],
 			"output": [("result", "type"), ("probability", "type")],
 			"constant": [("max depth", LineInput(numerical=True)), ("min samples leaf", LineInput("1", numerical=True)),
 			             ("min samples split", LineInput("2", numerical=True))],
 		}
-		return Node(w, pos, cls)
+		return Node(view, pos, cls)
 
 	@staticmethod
 	def execute(inp, const, out, inst):
@@ -183,19 +211,19 @@ class DecisionTreeCLF:
 		return out
 
 
-class SupportVectorCLF:
+class SupportVectorCLF(Nodes):
 	title = "SupportVector"
 	name = "Support Vector Classifier"
 
 	@classmethod
-	def create(cls, w, pos):
+	def create(cls, view, pos):
 		cls.field = {
 			"input": [("x", "type"), ("y", "type"), ("test", "type")],
 			"output": [("result", "type"), ],
 			"constant": [("kernel", Selector({"rbf (default)": "rbf", "linear": "linear",
 			                                  "poly": "poly", "sigmoid": "sigmoid"}, default="rbf (default)"))],
 		}
-		return Node(w, pos, cls)
+		return Node(view, pos, cls)
 
 	@staticmethod
 	def execute(inp, const, out, inst):

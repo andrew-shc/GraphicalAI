@@ -141,12 +141,13 @@ class NodeInternal(QWidget):
 			else:
 				print("[MODEL] [ERROR] The node field is not in the model's field")
 
-			# updates the position of the connector and the connector connecting this connector
+			# updates the position of the connector and the connector connecting to this connector
 			for oline in self.view.items():
 				if isinstance(oline, Connection):
 					if oline.connector_b in self.connector:
 						oline.update_pair()
 
+			# updates the position of the `self.connector` of its conneciton
 			for oline in c.connections:
 				oline.update_pair()
 

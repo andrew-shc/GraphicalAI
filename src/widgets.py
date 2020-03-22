@@ -1,21 +1,19 @@
 from PyQt5.QtWidgets import *
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import Qt, pyqtSignal, QPoint
 
 import os
 
-from interface.project_file_interface import ProjectFI
-
 class NodeSelector(QComboBox):
-	def __init__(self, py_fobj, g_view, parent=None):
+	def __init__(self, py_fobj, view, parent=None):
 		super().__init__(parent)
-		self.g_view = g_view  # graphics view
+		self.view = view  # graphics view
 
 		self.mdl_typ = [py_fobj.__dict__[c] for c in py_fobj.__dir__()
 		                if type(py_fobj.__dict__[c]) == type
 		                if py_fobj.__dict__[c].__module__ == py_fobj.__name__
 		                ]
 
-		[self.addItem(c.name) for c in self.mdl_typ]
+		[self.addItem(c.name) for c in self.mdl_typ if c.name != "#[Abstract]"]
 
 		self.textActivated.connect(lambda string: self.addModel(string))
 
@@ -25,7 +23,7 @@ class NodeSelector(QComboBox):
 
 		for c in self.mdl_typ:
 			if string == c.name:
-				self.g_view.scene().addItem(c.create(self.g_view, (400, 200)))
+				self.view.scene().addItem(c.create(self.view, (400, 200)))
 
 
 class ProjectRootEdit(QPushButton):
@@ -75,12 +73,12 @@ class InputDialog(QPushButton):
 
 	def on_click(self):
 		self.wind = QMainWindow()
-		self.wind.setWindowTitle("File Dialogue")
+		self.wind.setWindowTitle("Input Dialogue")
 		self.wind.setGeometry(200, 300, 300, 100)  # todo: GLOBAL POSITION; may not position it correctly
 		self.wind.setWindowModality(Qt.ApplicationModal)
 
-		self.inp_dialog = QInputDialog(parent=self)
-		self.inp_dialog.setLabelText("Input your model's name: ")  # todo: ONLY ALPHABET
+		self.inp_dialog = QInputDialog()
+		self.inp_dialog.setLabelText("Input your model's name: ")
 
 		self.inp_dialog.textValueSelected.connect(lambda txt: self.set_txt(txt))
 		self.inp_dialog.finished.connect(lambda code: self.wind.close())
@@ -104,9 +102,12 @@ class NewProject(QPushButton):  # todo: a mess of code; revisit for some aesthet
 		self.clicked.connect(lambda checked: self.on_click())
 
 	def on_click(self):
-		self.wind = QMainWindow()
+		self.wind = QMainWindow(parent=self)
 		self.wind.setWindowTitle("Select Directory")
-		self.wind.setGeometry(100, 300, 300, 100)  # todo: GLOBAL POSITION; may not position it correctly
+
+		pos: QPoint = self.wind.mapToGlobal(QPoint(100, 300))
+		self.wind.setGeometry(pos.x(), pos.y(), 300, 100)  # todo: GLOBAL POSITION; may not position it correctly
+
 		self.wind.setWindowModality(Qt.WindowModal)
 
 		def row(widget_a, widget_b):
@@ -192,10 +193,12 @@ class QVLine(QFrame):
 
 
 class ErrorBox(QMessageBox):
-	E000 = {"level":QMessageBox.Information, "title":"No Title", "txt":"No Text"}
-	E001 = {"level":QMessageBox.Critical, "title":"Project", "txt":"The project directory has not been set."}
-	E002 = {"level": QMessageBox.Warning, "title":"Project", "txt": "Invalid project file"}
+	E000 = {"level":QMessageBox.Information, "title": "No Title", "txt": "No Text"}
+	E001 = {"level":QMessageBox.Critical, "title": "Project", "txt": "The project directory has not been set."}
+	E002 = {"level": QMessageBox.Warning, "title": "Project", "txt": "Invalid project file"}
 	E003 = {"level": QMessageBox.Warning, "title": "Project", "txt": "Invalid project directory"}
+	E004 = {"level": QMessageBox.Warning, "title": "Project", "txt": "Invalid project key\n(You have not set the model name)"}
+	E005 = {"level": QMessageBox.Critical, "title": "Executor", "txt": "Runtime Error"}
 
 	def __init__(self, title="No Title", level=QMessageBox.Information, txt="No Text"):
 		super().__init__()
