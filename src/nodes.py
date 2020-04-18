@@ -46,7 +46,50 @@ class Nodes:
 
 	@staticmethod
 	def descriptor():
+		""" Describes the model
+		:return: the text of the description
+		"""
 		pass
+
+
+Matrix = "mtx"
+ScalarInt = "scl_int"
+# class FutureNode:
+# 	title = "#[Abstract]"  # back-end oriented
+# 	name = "#[Abstract]"  # user oriented
+#
+# 	@__input__(name="input data", type=Matrix)
+# 	def input(self, inp: list) -> Matrix:  # the list comes from all the connection line connecting to this connector
+# 		#                          user define custom aggregator to aggregate the list of data or just the first element
+# 		dat = sum(inp)
+# 		return dat
+#
+# 	@__input__(name="bias", type=ScalarInt)
+# 	def bias(self, inp: list) -> ScalarInt:
+# 		dat = inp[0]
+# 		return dat
+#
+# 	@__output__(name="result data", type=ScalarInt)  # can be a final modification for the output
+# 	def result(self, out) -> ScalarInt:
+# 		dat = int(out)
+# 		return dat
+#
+# 	@__constant__  # define custom widgets for each constant. the returning class must have `value()` method
+# 	def mode(self) -> QWidget:
+# 		widget = QWidget()
+# 		return widget
+#
+# 	@classmethod
+# 	def create(cls, view, pos):
+# 		raise NotImplementedError
+#
+# 	@staticmethod
+# 	def execute(inp, const, out, inst) -> dict:
+# 		return out
+#
+# 	@staticmethod
+# 	def descriptor():
+# 		pass
 
 
 class CSVInput(Nodes):

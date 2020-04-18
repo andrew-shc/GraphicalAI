@@ -29,6 +29,7 @@ class ModelWorkspace(QWidget):
 	key: Optional[int] = None
 
 	nameChanged = pyqtSignal(str)
+	modelUpdate = pyqtSignal("PyQt_PyObject")  # emits an update to any changes in the model workspace
 
 	def __init__(self, proj: ProjectFI, inst_ui=True, parent=None):
 		super().__init__(parent=parent)
@@ -124,6 +125,7 @@ class ModelWorkspace(QWidget):
 				self.executor = ModelExecutor(self.project, self.key)
 				try:
 					self.executor.beginExecution()
+					self.modelUpdate.emit(self)
 				except:
 					ErrorBox(**ErrorBox.E005).exec()
 			else:
@@ -134,6 +136,8 @@ class ModelWorkspace(QWidget):
 
 class ModelManager(QWidget):
 	models: List[ModelWorkspace] = []
+
+	modelUpdate = pyqtSignal("PyQt_PyObject")  # emits an update to any changes in the current model
 
 	def __init__(self, proj: ProjectFI, parent=None):
 		super().__init__(parent=parent)
@@ -174,6 +178,7 @@ class ModelManager(QWidget):
 	def add_model(self, proj: ProjectFI):
 		mdl_wksp = ModelWorkspace(proj)
 		mdl_wksp.nameChanged.connect(lambda s: self.mdl_slctr.update_list(self.models))
+		mdl_wksp.modelUpdate.connect(lambda o: self.modelUpdate.emit(o))
 		self.models.append(mdl_wksp)
 		self.mdl_slctr.update_list(self.models)
 		self.spacer.hide()

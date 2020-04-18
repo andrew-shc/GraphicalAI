@@ -8,6 +8,15 @@ from PyQt5.QtWidgets import QGraphicsRectItem
 from src.debug import print
 from src.gfx.connection import Connection
 
+"""
+Blue Square = Matrix Type
+Red Square = Array/List Type
+Green (Semi)Circle = Scalar Type - Numerical
+
+Black Triangle = Misc. Type  (TRY TO MINIMALLY USE MISC. TYPE)
+"""
+
+
 class Connector(QGraphicsRectItem):
 	clicked = False
 

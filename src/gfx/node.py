@@ -2,7 +2,7 @@ from PyQt5 import QtGui
 from PyQt5.QtCore import Qt, QPoint
 from PyQt5.QtWidgets import *
 
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
 from src.debug import *
 from src.constants import *
@@ -47,7 +47,7 @@ class NodeInternal(QWidget):
 
 		self.setStyleSheet("background-color: #CCDDFF")
 
-	def _inst_basic_ui(self, view, field: List[Tuple[str, str]]):
+	def _inst_basic_ui(self, view, field: Dict[str,tuple]):
 		title = QLabel(self.nd_cls.name, self)
 		title.setAlignment(Qt.AlignTop)
 		title.setFont(QtGui.QFont("courier", 10, QtGui.QFont.Bold))
@@ -90,12 +90,13 @@ class NodeInternal(QWidget):
 		# NOTE: The following initializes the starting position of the connector, which effects how the position of
 		# the connector gets updated.
 		for ind, fld in enumerate(field["input"]):
-			cnc = Connector((0, title.rect().height()+(self.FIELD_PADY)*ind+self.FIELD_OFSY, *self.CONNECTOR_SIZE),
+			print(fld)
+			cnc = Connector((0, title.rect().height()+self.FIELD_PADY*ind+self.FIELD_OFSY, *self.CONNECTOR_SIZE),
 			        TG_INPUT, [TG_OUTPUT], fld, view)
 			self.connector.append(cnc)
 			view.scene().addItem(cnc)
 		for ind, fld in enumerate(field["output"]):
-			cnc = Connector((0, title.rect().height()+(self.FIELD_PADY)*ind+self.FIELD_OFSY, *self.CONNECTOR_SIZE),
+			cnc = Connector((0, title.rect().height()+self.FIELD_PADY*ind+self.FIELD_OFSY, *self.CONNECTOR_SIZE),
 				    TG_OUTPUT, [TG_INPUT], fld, view)
 			self.connector.append(cnc)
 			view.scene().addItem(cnc)
