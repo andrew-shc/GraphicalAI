@@ -7,8 +7,11 @@ from typing import Optional
 
 # from src.gfx.connector import Connector
 
-class Connection(QGraphicsLineItem):  # This is an instance class, not a manager class
+class Connection(QGraphicsLineItem):
 	def __init__(self, p1: QPoint, p2: QPoint, parent: 'Connector', external: Optional['Connector'], color=Qt.black):
+		# Selector Connection (cnc_a: Cnc, cnc_b: None); appears when the line follows the cursor waiting to be selected
+		# Connector Connection (cnc_a: Cnc, cnc_b: Cnc); appears as when a line connects from one end to another end
+
 		super().__init__(parent)
 
 		self.connector_a = parent  # parent; internal connector
@@ -27,6 +30,7 @@ class Connection(QGraphicsLineItem):  # This is an instance class, not a manager
 
 	# updates the position of the connection (the line that is connecting between the connectors) IF the connector is movable
 	def update_pair(self):
-		O = self.connector_b.mapRectToItem(self.connector_a, self.connector_b.rect())
-		self.update_end(QPoint(O.x()+O.width()/2, O.y()+O.height()/2))
-
+		O = self.connector_b.mapToItem(self.connector_a, self.connector_b.spos)
+		# O = self.connector_b.mapRectToItem(self.connector_a, self.connector_b.rect())
+		self.update_end(O)
+		# self.update_end(QPoint(O.x()+O.width()/2, O.y()+O.height()/2))

@@ -1,17 +1,8 @@
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
+from typing import Optional
 
-from typing import List, Optional
-
-from src.debug import *
 from src.widgets import *
-from src.executor import *
-
-from src.gfx.connector import Connector
-from src.gfx.connection import Connection
-from src.gfx.node import Node
-
-import pickle
+from components.workspace.executor import *
+from constants import DEBUG__
 
 """
 ### GUI Layout (under Model Tab) ###
@@ -47,7 +38,9 @@ class ModelWorkspace(QWidget):
 		self.view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 		self.view.setDragMode(self.view.NoDrag)
 
-		b_add_nd = NodeSelector(__import__("nodes"), self.view)
+		from src.components.workspace import nodes
+
+		b_add_nd = NodeSelector(nodes, self.view)
 		self.b_name = QLabel(self.name)
 		name_fnt = self.b_name.font()
 		name_fnt.setPointSize(14)
@@ -128,6 +121,7 @@ class ModelWorkspace(QWidget):
 					self.modelUpdate.emit(self)
 				except:
 					ErrorBox(**ErrorBox.E005).exec()
+					if DEBUG__: raise
 			else:
 				print("Error: Project File Interface key is empty")
 		else:
@@ -225,6 +219,9 @@ class ModelManager(QWidget):
 			mdl_wksp = ModelWorkspace(self.project, inst_ui=False)
 			mdl_wksp.key = mdl_key
 			mdl_wksp.name = self.project.project["model"]["tag"][mdl_key]
-			mdl_wksp.inst_ui(view=self.project.read_mdl_proj(mdl_key))
-			self.models.append(mdl_wksp)
+			try:
+				mdl_wksp.inst_ui(view=self.project.read_mdl_proj(mdl_key))
+				self.models.append(mdl_wksp)
+			except:
+				ErrorBox(**ErrorBox.E006).exec()
 		self.mdl_slctr.update_list(self.models)

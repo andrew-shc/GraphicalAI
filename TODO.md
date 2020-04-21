@@ -32,3 +32,15 @@ allowing new printable character to be ""
 
 
 ## TODO
+
+#### Next Release Candidates
+- The FileDialog in the nodes does not close when clicked [CANCEL]
+- Add an option "Load Empty" when the file failed to load
+- Serialize each constant fields
+- README.md: Add an installation info
+- ... we'll be using Cx_freeze for making executables for distribution
+
+#### Near Future
+
+
+#### Vision

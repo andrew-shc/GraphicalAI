@@ -7,8 +7,9 @@ from typing import List, Tuple, Dict
 from src.debug import *
 from src.constants import *
 
-from src.gfx.connector import Connector
-from src.gfx.connection import Connection  # todo: [WARN] diff between the import between src.gfx vs gfx
+from src.gfx.connector import Connector, nConnector, hConnector
+from src.gfx.connection import Connection  # [WARN] diff between the import between src.gfx vs gfx
+from src.components.workspace.connector_type import ConnectorType as CT
 
 
 class Node(QGraphicsProxyWidget):
@@ -43,34 +44,28 @@ class NodeInternal(QWidget):
 
 		self.view = view
 
-		self._inst_basic_ui(view, self.nd_cls.field)
+		self._inst_basic_ui(view)
 
 		self.setStyleSheet("background-color: #CCDDFF")
 
-	def _inst_basic_ui(self, view, field: Dict[str,tuple]):
+	def _inst_basic_ui(self, view):
 		title = QLabel(self.nd_cls.name, self)
 		title.setAlignment(Qt.AlignTop)
 		title.setFont(QtGui.QFont("courier", 10, QtGui.QFont.Bold))
 		title.setStyleSheet("background-color: #CCF0FF")
 		title.setAlignment(Qt.AlignCenter)
 
-		inp = QVBoxLayout()  # input area selection
-		# [inp.addWidget(QLabel(f[0])) for f in field["input"]]
-
 		# === FIELD CREATION === #
-		ref = []
-		for f in field["input"]:
-			lbl = QLabel(f[0])
-			ref.append(lbl)
-			inp.addWidget(lbl)
+		inp = QVBoxLayout()  # input area selection
+		[inp.addWidget(QLabel(f[0])) for f in self.nd_cls.field["input"]]
 		inp.addStretch()
 
 		out = QVBoxLayout()  # output area selection
-		[out.addWidget(QLabel(f[0])) for f in field["output"]]
+		[out.addWidget(QLabel(f[0])) for f in self.nd_cls.field["output"]]
 		out.addStretch()
-
+		print("====", self.nd_cls.field["constant"])
 		usr = QFormLayout()  # user input area selection
-		[usr.addRow(QLabel(f[0]), f[1]) for f in field["constant"]]
+		[usr.addRow(QLabel(f[0]), f[1]) for f in self.nd_cls.field["constant"]]
 
 		# === LAYOUT CREATION === #
 		data_selector = QBoxLayout(QBoxLayout.LeftToRight)  # a horizontal layout for input and output
@@ -87,19 +82,34 @@ class NodeInternal(QWidget):
 		self.setLayout(layout)
 		self.setGeometry(self.pos[0], self.pos[1], self.NODE_SIZE[0], self.NODE_SIZE[1])
 
+		# o = hConnector(CT.Matrix | CT.String, QPoint(-100, -100), TG_INPUT, [TG_OUTPUT], ("a", CT.Matrix | CT.String), view)
+		# view.scene().addItem(o)
+		# self.connector.append(o)
+		# print(view.items())
+
 		# NOTE: The following initializes the starting position of the connector, which effects how the position of
 		# the connector gets updated.
-		for ind, fld in enumerate(field["input"]):
-			print(fld)
-			cnc = Connector((0, title.rect().height()+self.FIELD_PADY*ind+self.FIELD_OFSY, *self.CONNECTOR_SIZE),
-			        TG_INPUT, [TG_OUTPUT], fld, view)
-			self.connector.append(cnc)
-			view.scene().addItem(cnc)
-		for ind, fld in enumerate(field["output"]):
-			cnc = Connector((0, title.rect().height()+self.FIELD_PADY*ind+self.FIELD_OFSY, *self.CONNECTOR_SIZE),
-				    TG_OUTPUT, [TG_INPUT], fld, view)
-			self.connector.append(cnc)
-			view.scene().addItem(cnc)
+		for ind, fld in enumerate(self.nd_cls.field["input"]):
+			# cnc = Connector((0, title.rect().height()+self.FIELD_PADY*ind+self.FIELD_OFSY, *self.CONNECTOR_SIZE),
+			#         TG_INPUT, [TG_OUTPUT], fld, view)
+			# self.connector.append(cnc)
+			# view.scene().addItem(cnc)
+
+			o = hConnector(QPoint(0, title.rect().height()+self.FIELD_PADY*ind+self.FIELD_OFSY),
+						   TG_INPUT, [TG_OUTPUT], fld, view)
+			self.connector.append(o)
+			view.scene().addItem(o)
+		for ind, fld in enumerate(self.nd_cls.field["output"]):
+			print("===", fld)
+			# cnc = Connector((0, title.rect().height()+self.FIELD_PADY*ind+self.FIELD_OFSY, *self.CONNECTOR_SIZE),
+			# 	    TG_OUTPUT, [TG_INPUT], fld, view)
+			# self.connector.append(cnc)
+			# view.scene().addItem(cnc)
+
+			o = hConnector(QPoint(0, title.rect().height()+self.FIELD_PADY*ind+self.FIELD_OFSY),
+						   TG_OUTPUT, [TG_INPUT], fld, view)
+			self.connector.append(o)
+			view.scene().addItem(o)
 		self.updPosConnector()
 
 	def resizeEvent(self, QResizeEvent):

@@ -1,0 +1,121 @@
+0:
+  connector:
+  - 6
+  - 3
+  nd_cls: CSVInput
+  pos:
+  - 436
+  - 251
+2:
+  connector_a: 3
+  connector_b: 23
+3:
+  connections:
+  - 2
+  en:
+  - inp
+  field:
+  - y
+  - 193
+  tag: out
+5:
+  connector_a: 6
+  connector_b: 25
+6:
+  connections:
+  - 5
+  en:
+  - inp
+  field:
+  - x
+  - 193
+  tag: out
+7:
+  connector:
+  - 9
+  nd_cls: CSVOutput
+  pos:
+  - 1097
+  - 331
+9:
+  connections: []
+  en:
+  - out
+  field:
+  - data
+  - 193
+  tag: inp
+10:
+  connector:
+  - 15
+  - 12
+  nd_cls: CSVInput
+  pos:
+  - 445
+  - 475
+12:
+  connections: []
+  en:
+  - inp
+  field:
+  - y
+  - 193
+  tag: out
+14:
+  connector_a: 15
+  connector_b: 21
+15:
+  connections:
+  - 14
+  en:
+  - inp
+  field:
+  - x
+  - 193
+  tag: out
+16:
+  connector:
+  - 25
+  - 23
+  - 21
+  - 19
+  nd_cls: LogisticRegressionREG
+  pos:
+  - 763
+  - 347
+17:
+  connector_a: 19
+  connector_b: 9
+19:
+  connections:
+  - 17
+  en:
+  - inp
+  field:
+  - result
+  - 193
+  tag: out
+21:
+  connections: []
+  en:
+  - out
+  field:
+  - test
+  - 193
+  tag: inp
+23:
+  connections: []
+  en:
+  - out
+  field:
+  - y
+  - 193
+  tag: inp
+25:
+  connections: []
+  en:
+  - out
+  field:
+  - x
+  - 193
+  tag: inp

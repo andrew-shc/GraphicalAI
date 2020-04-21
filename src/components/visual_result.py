@@ -3,14 +3,9 @@ from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QPalette, QColor
 
 from src.components.model_manager import ModelWorkspace
+from src.components.graphs import *
 
-"""
-"This is where would the model result\n"
-               "and prediction graphs will be.\n"
-               "And graphs such as, Error Rate\n"
-               "and ML settings like settings\n"
-               "each batch size."
-"""
+import pandas as pd
 
 class VisualResult(QWidget):
     model: ModelWorkspace = None
@@ -20,9 +15,18 @@ class VisualResult(QWidget):
         self.inst_gui()
 
     def inst_gui(self):
-        base = QHBoxLayout()
-        base.addWidget(QLabel("Graphing Available"))
+        base = QVBoxLayout()
+        base.addWidget(QLabel("Graph Testing v0.1"))
         base.addStretch(2)
+
+        df = pd.read_csv("../MyModel/test/iris.csv")
+        df = df.drop("species", axis=1)
+
+        cv = MplLinearReg(5, 5, dpi=100)
+        cv.plot_data(df)
+        for row in cv.graphs:
+            for graph in row:
+                base.addWidget(graph)
 
         self.setLayout(base)
 

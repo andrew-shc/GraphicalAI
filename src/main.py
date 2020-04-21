@@ -1,15 +1,12 @@
 import sys
 
-from src.debug import print  # type: ignore
-
-from src.widgets import *  # type: ignore
-from src.executor import *  # type: ignore
-from src.components.project_setup import ProjectSetup  # type: ignore
-from src.components.model_manager import ModelManager  # type: ignore
-from src.components.visual_result import VisualResult  # type: ignore
-from src.components.menu_bar import CustomMenu  # type: ignore
-from src.components.status_bar import CustomStatus  # type: ignore
-
+from src.widgets import *
+from src.components.workspace.executor import *
+from src.components.project_setup import ProjectSetup
+from src.components.model_manager import ModelManager
+from src.components.visual_result import VisualResult
+from src.components.menu_bar import CustomMenu
+from src.components.status_bar import CustomStatus
 
 """
 menu tab
@@ -49,10 +46,10 @@ Tensorflow - Artificial Intelligence backend
 LightGBM - Machine Learning backend
 
 PyTest - general testing
-MyPy - application type checker [REMOVE: PyCharm IDE has better type checking than just messing around with MyPy]
 
-(Moderngl) - Backend graphics visualizer :/: replaces Seaborn -> Matplotlib -> Tkinter
 (NumExpr) - Number expression optimizer (a strict accompaniment to NumPy)
+
+cx_Freeze - for building executables for deployment purposes.
 """
 
 """

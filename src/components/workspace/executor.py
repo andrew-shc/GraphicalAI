@@ -1,6 +1,7 @@
 from src.debug import print
 from src.interface.project_file_interface import ProjectFI  # type: ignore
 from src.constants import Null
+from src.components.workspace.connector_type import ConnectorType as CT
 
 import ast
 
@@ -11,13 +12,14 @@ from typing import List
 
 
 class ModelExecutor:
-	FLD_TYP = 0  # index
-	IO_NAME = 1
+	# indexes
+	FLD_TYP = 0
+	IO_TYP = 1
 	IO_CONNECT = 2
 	IO_VAL = 3
 	CONST_VAL = 1
 
-	# t means type
+	# t := type
 	tINP = "INP"
 	tOUT = "OUT"
 	tCONST = "CNST"
@@ -26,11 +28,12 @@ class ModelExecutor:
 	def __init__(self, proj: ProjectFI, key: int):
 		self.tree, self.id_map = proj.read_mdl_exec(key)
 		self.completed: List[dict] = []  # a list of index reference to the model in the tree that are FINISHED executing
+		print(self.tree)
+		from src.components.workspace import nodes
 
-		mdl = __import__("nodes")
-		mdl_cls_ref = [mdl.__dict__[c] for c in mdl.__dir__()
-		           if type(mdl.__dict__[c]) == type
-		           if mdl.__dict__[c].__module__ == mdl.__name__
+		mdl_cls_ref = [nodes.__dict__[c] for c in nodes.__dir__()
+		           if type(nodes.__dict__[c]) == type
+		           if nodes.__dict__[c].__module__ == nodes.__name__
 		           ]
 		self.mdl_map = {o.title: o for o in mdl_cls_ref}
 
@@ -80,34 +83,44 @@ class ModelExecutor:
 	def execNode(self, node: int):
 		model_class = self.mdl_map[self.id_map[node]]
 		model_incomplete = False
+		model_type_error = []  # []: No Error; [{field name (INP): field type, field name(OUT): field type},...]
 		int_fld_map = {self.id_map[fld]:fld for fld in self.tree[node]}  # (internal field map); local reverse field identification map
 
 		inp_field = {}
 		for field in self.tree[node]:
-			if self.tree[node][field][self.FLD_TYP] == self.tINP:
-				if self._is_null(self.tree[node][field][self.IO_VAL]):
-					if self.tree[node][field][self.IO_CONNECT] == []:  # When the input value itself is None and HAS NO connection
+			int_fdata = self.tree[node][field]  # internal field data; improve readability
+			if int_fdata[self.FLD_TYP] == self.tINP:
+				if self._is_null(int_fdata[self.IO_VAL]):
+					if int_fdata[self.IO_CONNECT] == []:  # When the input value itself is None and HAS NO connection
 						ext_val = []
 						# to find value when there are no connections and the value is none
 						for ext_node in self.tree:
 							for ext_field in self.tree[ext_node]:
-								if self.tree[ext_node][ext_field][self.FLD_TYP] == self.tOUT:
-									# TODO: the pandas dataframe results a value error because of ambiguity and trying to cast the dataframe so it can easily be compared
-									if field in self.tree[ext_node][ext_field][self.IO_CONNECT] and \
-											not self._is_null(self.tree[ext_node][ext_field][self.IO_VAL]):
-										ext_val.append(self.tree[ext_node][ext_field][self.IO_VAL])
-						if ext_val != []: inp_field[self.id_map[field]] = ext_val[-1]  # edit this for different summation from multiple values
+								ext_fdata = self.tree[ext_node][ext_field]  # external field data; improve readability
+								if ext_fdata[self.FLD_TYP] == self.tOUT:
+									# note: the pandas dataframe results a value error because of ambiguity and trying to cast the dataframe so it can easily be compared
+									if field in ext_fdata[self.IO_CONNECT] and \
+											not self._is_null(ext_fdata[self.IO_VAL]):
+										if self._compat_type(int_fdata[self.IO_TYP], ext_fdata[self.IO_TYP]):
+											ext_val.append(ext_fdata[self.IO_VAL])
+										else: model_incomplete = True; model_type_error.append({self.id_map[field]: int_fdata[self.IO_TYP], self.id_map[ext_field]: ext_fdata[self.IO_TYP]})
+						if ext_val != []:
+							inp_field[self.id_map[field]] = ext_val[-1]  # edit this for different summation from multiple values
 						else: model_incomplete = True; break
 					else:  # When the input value itself is None and HAS connection
 						ext_val = []
 						# to find value when there are no connections and the value is none
 						for ext_node in self.tree:
 							for ext_field in self.tree[ext_node]:
-								if self.tree[ext_node][ext_field][self.FLD_TYP] == self.tOUT:
-									if ext_field in self.tree[node][field][self.IO_CONNECT] and \
-											not self._is_null(self.tree[ext_node][ext_field][self.IO_VAL]):
-										ext_val.append(self.tree[ext_node][ext_field][self.IO_VAL])
-						if ext_val != []: inp_field[self.id_map[field]] = ext_val[-1]  # edit this for different summation from multiple values
+								ext_fdata = self.tree[ext_node][ext_field]  # external field data; improve readability
+								if ext_fdata[self.FLD_TYP] == self.tOUT:
+									if ext_field in int_fdata[self.IO_CONNECT] and \
+											not self._is_null(ext_fdata[self.IO_VAL]):
+										if self._compat_type(int_fdata[self.IO_TYP], ext_fdata[self.IO_TYP]):
+											ext_val.append(ext_fdata[self.IO_VAL])
+										else: model_incomplete = True; model_type_error.append({self.id_map[field]: int_fdata[self.IO_TYP], self.id_map[ext_field]: ext_fdata[self.IO_TYP]})
+						if ext_val != []:
+							inp_field[self.id_map[field]] = ext_val[-1]  # edit this for different summation from multiple values
 						else: model_incomplete = True; break
 				else:  # When the input value itself has already have a value
 					inp_field[self.id_map[field]] = self.tree[node][field][self.IO_VAL]
@@ -127,6 +140,8 @@ class ModelExecutor:
 		if not model_incomplete:
 			fnlMod = lambda dct: {k:self._type_conversion(dct[k]) for k in dct}
 
+			# print(self.tree)
+			# print(inp_field)
 			out_data = model_class.execute(inp=fnlMod(inp_field), const=fnlMod(const_field), out=fnlMod(out_field), inst=fnlMod(self.instance))
 
 			if [fld for fld in out_data if fld == Null] == []:  # shows all the output data has been set (not Null)
@@ -149,3 +164,14 @@ class ModelExecutor:
 			return False
 		return val == Null
 
+	def _compat_type(self, typ1, typ2):
+		# TODO: Make the Any type mechanism compatible to *any* type
+		# TODO: Make the Int compatible to both Int and Bool
+		# note: Scalar | Any is incompat to Matrix | Any
+		typ1 = int(typ1) if type(typ1) == str else typ1
+		typ2 = int(typ2) if type(typ2) == str else typ2
+
+		if typ1 == typ2:
+			return True
+		else:
+			return False

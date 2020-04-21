@@ -1,13 +1,14 @@
-from src.gfx.node import Node as Node  # type: ignore
-from src.gfx.constant_models import *  # type: ignore
+from src.gfx.node import Node as Node
+from src.gfx.constant_models import *
+from src.components.workspace.connector_type import ConnectorType as CT
 
 import pandas as pd
 import numpy as np
 
-from sklearn.linear_model import LinearRegression, LogisticRegression  # type: ignore
-from sklearn.cluster import KMeans  # type: ignore
-from sklearn.tree import DecisionTreeClassifier  # type: ignore
-from sklearn.svm import SVC  # type: ignore
+from sklearn.linear_model import LinearRegression, LogisticRegression
+from sklearn.cluster import KMeans
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.svm import SVC
 
 """
 class name suffix:
@@ -16,6 +17,7 @@ MDL - Generic Node (can be omitted)
 REG - Regression (a continuum result)
 CLF - Classifier (a discrete (labeled) result)
 GRD - Gradient
+MTX - Matrix manipulator
 NN - Neural Network
 
 """
@@ -24,9 +26,11 @@ class Nodes:
 	title = "#[Abstract]"  # back-end oriented
 	name = "#[Abstract]"  # user oriented
 
-	@classmethod
-	def create(cls, view, pos):
+	@staticmethod
+	def create(view, pos):
 		""" Creates an instance of the node from this custom node class
+		** NOTE **: Removed this as statimethod from classmethod because the .field attr was storing to the class itself
+		            (which had an unintended effect on serialization of node)
 		:param w:
 		:param pos:
 		:return:
@@ -54,53 +58,18 @@ class Nodes:
 
 Matrix = "mtx"
 ScalarInt = "scl_int"
-# class FutureNode:
-# 	title = "#[Abstract]"  # back-end oriented
-# 	name = "#[Abstract]"  # user oriented
-#
-# 	@__input__(name="input data", type=Matrix)
-# 	def input(self, inp: list) -> Matrix:  # the list comes from all the connection line connecting to this connector
-# 		#                          user define custom aggregator to aggregate the list of data or just the first element
-# 		dat = sum(inp)
-# 		return dat
-#
-# 	@__input__(name="bias", type=ScalarInt)
-# 	def bias(self, inp: list) -> ScalarInt:
-# 		dat = inp[0]
-# 		return dat
-#
-# 	@__output__(name="result data", type=ScalarInt)  # can be a final modification for the output
-# 	def result(self, out) -> ScalarInt:
-# 		dat = int(out)
-# 		return dat
-#
-# 	@__constant__  # define custom widgets for each constant. the returning class must have `value()` method
-# 	def mode(self) -> QWidget:
-# 		widget = QWidget()
-# 		return widget
-#
-# 	@classmethod
-# 	def create(cls, view, pos):
-# 		raise NotImplementedError
-#
-# 	@staticmethod
-# 	def execute(inp, const, out, inst) -> dict:
-# 		return out
-#
-# 	@staticmethod
-# 	def descriptor():
-# 		pass
 
 
 class CSVInput(Nodes):
 	title = "CSVInput"
 	name = "Read CSV"
 
-	@classmethod
-	def create(cls, view, pos):
+	@staticmethod
+	def create(view, pos):
+		cls = CSVInput()
 		cls.field = {
 			"input": [],
-			"output": [("x", "type"), ("y", "type")],
+			"output": [("x", CT.Matrix | CT.Any), ("y", CT.Matrix | CT.Any)],
 			"constant": [("file input", FileDialog()), ("result column", LineInput()), ("transpose", CheckBox()),
 			             ("result numerical", CheckBox()), ],
 		}
@@ -140,10 +109,11 @@ class CSVOutput(Nodes):
 	title = "CSVOutput"
 	name = "Write CSV"
 
-	@classmethod
-	def create(cls, view, pos):
+	@staticmethod
+	def create(view, pos):
+		cls = CSVOutput()
 		cls.field = {
-			"input": [("data", "type")],
+			"input": [("data", CT.Matrix | CT.Any)],
 			"output": [],
 			"constant": [("file output", FileDialog()), ("transpose", CheckBox()), ("seperator", LineInput(","))],
 		}
@@ -153,7 +123,7 @@ class CSVOutput(Nodes):
 	def execute(inp, const, out, inst):
 		if type(inp["data"]) in [set, dict, list, pd.DataFrame, np.ndarray]:
 			dat: pd.DataFrame = pd.DataFrame(inp["data"])  # convert all the listed above data types into pd.Dataframe
-
+			print(const)
 			if const["transpose"]: dat = dat.T
 
 			dat.to_csv(const["file output"], sep=const["seperator"])
@@ -167,11 +137,12 @@ class LinearRegressionREG(Nodes):
 	title = "LinearRegression"
 	name = "Linear Regression"
 
-	@classmethod
-	def create(cls, view, pos):
+	@staticmethod
+	def create(view, pos):
+		cls = LinearRegressionREG()
 		cls.field = {
-			"input": [("x", "type"), ("y", "type"), ("test", "type")],
-			"output": [("result", "type")],
+			"input": [("x", CT.Matrix | CT.Any), ("y", CT.Matrix | CT.Any), ("test", CT.Matrix | CT.Any)],
+			"output": [("result", CT.Matrix | CT.Any)],
 			"constant": [],
 		}
 		return Node(view, pos, cls)
@@ -189,11 +160,12 @@ class LogisticRegressionREG(Nodes):
 	title = "LogisticRegression"
 	name = "Logistic Regression"
 
-	@classmethod
-	def create(cls, view, pos):
+	@staticmethod
+	def create(view, pos):
+		cls = LogisticRegressionREG()
 		cls.field = {
-			"input": [("x", "type"), ("y", "type"), ("test", "type")],
-			"output": [("result", "type")],
+			"input": [("x", CT.Matrix | CT.Any), ("y", CT.Matrix | CT.Any), ("test", CT.Matrix | CT.Any)],
+			"output": [("result", CT.Matrix | CT.Any)],
 			"constant": [],
 		}
 		return Node(view, pos, cls)
@@ -211,11 +183,12 @@ class KMeansCLF(Nodes):
 	title = "KMeans"
 	name = "K-Means Cluster"
 
-	@classmethod
-	def create(cls, view, pos):
+	@staticmethod
+	def create(view, pos):
+		cls = KMeansCLF()
 		cls.field = {
-			"input": [("x", "type"), ("test", "type")],
-			"output": [("result", "type")],
+			"input": [("x", CT.Matrix | CT.Any), ("test", CT.Matrix | CT.Any)],
+			"output": [("result", CT.Matrix | CT.Any)],
 			"constant": [("clusters", LineInput(numerical=True))],
 		}
 		return Node(view, pos, cls)
@@ -233,11 +206,12 @@ class DecisionTreeCLF(Nodes):
 	title = "DecisionTree"
 	name = "Std Decision Tree"
 
-	@classmethod
-	def create(cls, view, pos):
+	@staticmethod
+	def create(view, pos):
+		cls = DecisionTreeCLF()
 		cls.field = {
-			"input": [("x", "type"), ("y", "type"), ("test", "type")],
-			"output": [("result", "type"), ("probability", "type")],
+			"input": [("x", CT.Matrix | CT.Any), ("y", CT.Matrix | CT.Any), ("test", CT.Matrix | CT.Any)],
+			"output": [("result", CT.Matrix | CT.Any), ("probability", CT.Matrix | CT.Any)],
 			"constant": [("max depth", LineInput(numerical=True)), ("min samples leaf", LineInput("1", numerical=True)),
 			             ("min samples split", LineInput("2", numerical=True))],
 		}
@@ -258,13 +232,13 @@ class SupportVectorCLF(Nodes):
 	title = "SupportVector"
 	name = "Support Vector Classifier"
 
-	@classmethod
-	def create(cls, view, pos):
+	@staticmethod
+	def create(view, pos):
+		cls = SupportVectorCLF()
 		cls.field = {
-			"input": [("x", "type"), ("y", "type"), ("test", "type")],
-			"output": [("result", "type"), ],
-			"constant": [("kernel", Selector({"rbf (default)": "rbf", "linear": "linear",
-			                                  "poly": "poly", "sigmoid": "sigmoid"}, default="rbf (default)"))],
+			"input": [("x", CT.Matrix | CT.Any), ("y", CT.Matrix | CT.Any), ("test", CT.Matrix | CT.Any)],
+			"output": [("result", CT.Matrix | CT.Any), ],
+			"constant": [("kernel", Selector({"rbf (default)": "rbf", "linear": "linear", "poly": "poly", "sigmoid": "sigmoid"}, default="rbf (default)"))],
 		}
 		return Node(view, pos, cls)
 
@@ -274,4 +248,101 @@ class SupportVectorCLF(Nodes):
 		mdl.fit(inp["x"], inp["y"])
 
 		out["result"] = mdl.predict(inp["test"])
+		return out
+
+
+class InputLayerNN(Nodes):
+	title = "InputLayerNN"
+	name = "Input Layer NN"
+
+	@staticmethod
+	def create(view, pos):
+		cls = InputLayerNN()
+		cls.field = {
+			"input": [],
+			"output": [("input nodes", CT.Matrix | CT.Any), ],
+			"constant": [("file name", FileDialog()), ("input", Selector({"row": "row", "column": "column"}))],
+		}
+		return Node(view, pos, cls)
+
+	@staticmethod
+	def execute(inp, const, out, inst):
+
+		out["input nodes"] = []
+		return out
+
+
+class HiddenLayerNN(Nodes):
+	title = "HiddenLayerNN"
+	name = "Hidden Layer NN"
+
+	@staticmethod
+	def create(view, pos):
+		cls = HiddenLayerNN()
+		cls.field = {
+			"input": [],
+			"output": [("input nodes", CT.Matrix | CT.Any), ],
+			"constant": [("file name", FileDialog()), ("input", Selector({"row": "row", "column": "column"}))],
+		}
+		return Node(view, pos, cls)
+
+	@staticmethod
+	def execute(inp, const, out, inst):
+		return out
+
+
+class OutputLayerNN(Nodes):
+	title = "OutputLayerNN"
+	name = "Output Layer NN"
+
+	@staticmethod
+	def create(view, pos):
+		cls = OutputLayerNN()
+		cls.field = {
+			"input": [],
+			"output": [("input nodes", CT.Matrix | CT.Any), ],
+			"constant": [("file name", FileDialog()), ("input", Selector({"row": "row", "column": "column"}))],
+		}
+		return Node(view, pos, cls)
+
+	@staticmethod
+	def execute(inp, const, out, inst):
+		return out
+
+
+class ConvolutionalLayerMTX(Nodes):
+	title = "ConvolutionalLayerMTX"
+	name = "Convolutional Layer"
+
+	@staticmethod
+	def create(view, pos):
+		cls = ConvolutionalLayerMTX()
+		cls.field = {
+			"input": [],
+			"output": [("input nodes", CT.Matrix | CT.Any), ],
+			"constant": [("file name", FileDialog()), ("input", Selector({"row": "row", "column": "column"}))],
+		}
+		return Node(view, pos, cls)
+
+	@staticmethod
+	def execute(inp, const, out, inst):
+		return out
+
+
+class PoolingMTX(Nodes):
+	title = "PoolingMTX"
+	name = "Pooling Layer"
+
+	@staticmethod
+	def create(view, pos):
+		cls = PoolingMTX()
+		cls.field = {
+			"input": [],
+			"output": [("input nodes", CT.Matrix | CT.Any), ],
+			"constant": [("file name", FileDialog()), ("input", Selector({"row": "row", "column": "column"}))],
+		}
+		return Node(view, pos, cls)
+
+	@staticmethod
+	def execute(inp, const, out, inst):
 		return out

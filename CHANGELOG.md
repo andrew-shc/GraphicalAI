@@ -1,3 +1,25 @@
+## Indev 14.0 [April 19, 2020]
+* Graphs Testing:
+  * Linear Regression
+* Added few more node types:
+  * Input Layer NN (Non-functional)
+  * Hidden Layer NN (Non-functional)
+  * Output Layer NN (Non-functional)
+  * CNN (Non-functional)
+  * Pooling (Non-functional)
+* Added variation towards each connector based on type
+  * .. which means basic type checking in executor
+* Serialization update
+  * updated with typing mechanism
+  * refactored the executor data saver (it was buggy)
+* Fixes:
+  * Serializing nodes with the same class yields same instances
+  * File output from the .proj.dat was resulting a file serialization "memory" leak
+    * (While I was debugging, saving model a lot of time, the .proj.dat >1000 lines)
+
+## Indev 13.3 [April 18, 2020]
+* Graphic Testing (no change)
+
 ## Indev 13.2 [March 21, 2020]
 * Fixed the `executor` problem
 * Further improvement on serialization though broken still

@@ -48,19 +48,69 @@ from PyQt5.QtWidgets import QGraphicsView, QGraphicsScene
 
 import yaml
 import os
-import pickle
 
 from src.debug import *
 from src.gfx.connection import Connection
-from src.gfx.connector import Connector
+from src.gfx.connector import hConnector
 from src.gfx.node import Node
 from src.constants import *
 
 from typing import List, Optional, Union
 from enum import Enum
 
+# TODO: There could be a file serialization 'memory' leak
 
-def model_saver(key: int, items: list):
+
+def model_saver(items: List[Union[Node, hConnector, Connection]]):  # TODO: Optimize and compact
+	skl_tree = {}  # skeleton tree: pre-tree generation
+	dat_tree = {}  # data tree: using skl_tree to generate data tree
+	id_map = {}
+	id_counter = 0
+
+	# filling up nodes|connectors with allocated unique id (regardless of node type/field name)
+	n: Node
+	for n in [nd for nd in items if isinstance(nd, Node)]:
+		skl_tree[id_counter] = {}
+		id_map[id_counter] = n.central.nd_cls.title
+		node_id = id_counter
+		id_counter += 1
+
+		connc: hConnector  # only input|output connector
+		for connc in n.central.connector:
+			skl_tree[node_id][id_counter] = connc
+			id_map[id_counter] = connc.field[hConnector.FNAME]
+			id_counter += 1
+
+		for const in n.central.nd_cls.field["constant"]:  # only constant field
+			skl_tree[node_id][id_counter] = const[1]
+			id_map[id_counter] = const[0]
+			id_counter += 1
+
+	# filling up the tree with actual data
+	n: Node
+	for n in skl_tree:
+		dat_tree[n] = {}
+		for field in skl_tree[n]:
+			connc = skl_tree[n][field]
+			if isinstance(connc, hConnector):  # input|output field
+				cnc_typ = connc.tag
+				fld_typ = connc.field[hConnector.FTYPE]
+				cnc_cnctn = []
+				cnntn: Connection
+				for cnntn in connc.connections:
+					for int_n in skl_tree:
+						for int_connc in skl_tree[int_n]:
+							# uses each unique class reference instead of relying on unique field name
+							#                                   (the name that users can see) -----^
+							if cnntn.connector_b == skl_tree[int_n][int_connc]:
+								cnc_cnctn.append(int_connc)
+				dat_tree[n][field] = (cnc_typ, fld_typ, cnc_cnctn)
+			else:  # constant field
+				dat_tree[n][field] = (FLD_CONST, skl_tree[n][field].value())
+
+	return _dat_file_saver(dat_tree, id_map)
+
+def old_model_saver(key: int, items: List[Union[Node, hConnector, Connection]]):
 	"""
 		Saves the model data to a file.
 	items: a list of items in a graphics view
@@ -68,7 +118,7 @@ def model_saver(key: int, items: list):
 	dat = {}
 	nodes = [nd for nd in items if isinstance(nd, Node)]
 
-	dt_obj = [i for i in items if isinstance(i, Connector)]
+	dt_obj = [i for i in items if isinstance(i, hConnector)]
 	for m in nodes:
 		dt_obj.append(m)
 		for fld in m.central.nd_cls.field["constant"]:
@@ -90,7 +140,7 @@ def model_saver(key: int, items: list):
 	for m in nodes:
 		dat[obj_map[m]] = {}
 		for i in items:
-			if isinstance(i, Connector):  # connectors
+			if isinstance(i, hConnector):  # connectors
 				if i in m.central.connector:
 					id_map[obj_map[m]] = m.central.nd_cls.title
 					id_map[obj_map[i]] = i.field[0]
@@ -100,14 +150,14 @@ def model_saver(key: int, items: list):
 			id_map[obj_map[c[1]]] = c[0]
 			dat[obj_map[m]][obj_map[c[1]]] = ("const", c[1].value())
 
-	return _dat_file_saver(dat, id_map, key)
+	return _dat_file_saver(dat, id_map)
 
-def _dat_file_saver(model_tree, id_map, key: int):
+def _dat_file_saver(model_tree, id_map):
 	"""
 	model_tree:
-		model title:
-			connector id: (type, [connector id connections, ...]),
-
+		node id:
+			connector id: (connector type, data type, [connector id connections, ...]),
+			connector id: (connector type = CONST, generic data),
 	id_map:
 		id: display name,
 	"""
@@ -120,10 +170,10 @@ def _dat_file_saver(model_tree, id_map, key: int):
 		for f in model_tree[m]:  # each items (connectors)
 			fld = model_tree[m][f]
 			if fld[0] == TG_INPUT:
-				ln.append(tab + str(f) + " << " + fld[1] + "[" + ",".join([str(i) for i in fld[2]]) + "]")
+				ln.append(tab + str(f) + " << " + str(fld[1]) + "[" + ",".join([str(i) for i in fld[2]]) + "]")
 			elif fld[0] == TG_OUTPUT:
-				ln.append(tab + str(f) + " >> " + fld[1] + "[" + ",".join([str(i) for i in fld[2]]) + "]")
-			elif fld[0] == "const":
+				ln.append(tab + str(f) + " >> " + str(fld[1]) + "[" + ",".join([str(i) for i in fld[2]]) + "]")
+			elif fld[0] == FLD_CONST:
 				ln.append(tab + str(f) + " == " + str(fld[1]))
 
 	ln.append("namespace")
@@ -292,9 +342,9 @@ class ProjectFI:
 		else:
 			print("Error: Invalid key")
 
-	def save_mdl_exec(self, key: int, items: List[Union[Node, Connector, Connection]]):
+	def save_mdl_exec(self, key: int, items: List[Union[Node, hConnector, Connection]]):
 		if self.valid_key(key):
-			fdt = model_saver(key, items)
+			fdt = model_saver(items)
 			with open(os.path.join(self.path, "MDL"+str(key)+self.mdl_exec), "w") as fbj:
 				fbj.writelines([ln+"\n" for ln in fdt])
 		else:
@@ -309,24 +359,25 @@ class ProjectFI:
 		else:
 			print("Error: Invalid key")
 
-	def save_mdl_proj(self, key: int, items: List[Union[Node, Connector, Connection]]):
+	def save_mdl_proj(self, key: int, items: List[Union[Node, hConnector, Connection]]):
 		if self.valid_key(key):
 			fdt = {}
 			for itm in items:
 				if isinstance(itm, Node): fdt[items.index(itm)] = {
 						"pos":itm.central.pos,
-						"nd_cls":itm.central.nd_cls.__name__,
+						"nd_cls":itm.central.nd_cls.__class__.__name__,
 						"connector":[items.index(c) for c in itm.central.connector],
 					}
-				elif isinstance(itm, Connector): fdt[items.index(itm)] = {
+				elif isinstance(itm, hConnector): fdt[items.index(itm)] = {
 						"tag": itm.tag,
 						"en": itm.en,
 						"field": itm.field,
 						"connections": [items.index(c) for c in itm.connections],
 					}
-				elif isinstance(itm, Connection): fdt[items.index(itm)] = {
+				elif isinstance(itm, Connection):   # the connector auto adds "selector connection" adding redundancy
+					if itm.connector_b is not None: fdt[items.index(itm)] = {
 						"connector_a": items.index(itm.connector_a),
-						"connector_b": None if itm.connector_b is None else items.index(itm.connector_b),
+						"connector_b": items.index(itm.connector_b),
 					}
 			with open(os.path.join(self.path, "MDL"+str(key)+self.mdl_proj), "w") as fbj:
 				yaml.safe_dump(fdt, fbj)
@@ -346,7 +397,10 @@ class ProjectFI:
 
 			scene = QGraphicsScene(0, 0, 1920, 1080)
 			view = QGraphicsView(scene)
-			nodes = __import__("nodes")
+
+			# used in the eval()
+			from src.components.workspace import nodes
+
 			for i in fdt:
 				if fdt[i].get("connector") is not None:  # Node
 					o: Node = eval(f"nodes.{fdt[i]['nd_cls']}").create(view, fdt[i]['pos'])
@@ -361,27 +415,24 @@ class ProjectFI:
 					cnc_b = None
 					if fdt[i]["connector_a"] != None:
 						for ca in item:
-							if isinstance(ca, Connector):
+							if isinstance(ca, hConnector):
 								if fdt[i]["connector_a"] == ca.TEMP_ind:
 									cnc_a = ca
 					if fdt[i]["connector_b"] != None:
 						for cb in item:
-							if isinstance(cb, Connector):
+							if isinstance(cb, hConnector):
 								if fdt[i]["connector_b"] == cb.TEMP_ind:
 									cnc_b = cb
 					if cnc_b is not None:  # connector connections
-						S = cnc_a.mapRectToItem(cnc_a, cnc_a.rect())
-						O = cnc_b.mapRectToItem(cnc_a, cnc_b.rect())
-						view.scene().addItem(Connection(QPoint(S.x()+S.width()/2, S.y()+S.height()/2),
-														QPoint(O.x()+O.width()/2, O.y()+O.height()/2),
+						S = cnc_a.mapToItem(cnc_a, cnc_a.spos)
+						O = cnc_b.mapToItem(cnc_a, cnc_b.spos)
+						# S = cnc_a.mapRectToItem(cnc_a, cnc_a.rect())
+						# O = cnc_b.mapRectToItem(cnc_a, cnc_b.rect())
+						view.scene().addItem(Connection(S, # QPoint(S.x()+S.width()/2, S.y()+S.height()/2),
+														O, # QPoint(O.x()+O.width()/2, O.y()+O.height()/2),
 														parent=cnc_a,external=cnc_b, color=Qt.green))
-					else:  # selector connections
-						S = cnc_a.rect()
-						view.scene().addItem(Connection(QPoint(S.x()+S.width()/2, S.y()+S.height()/2),
-														QPoint(S.x()+S.width()/2, S.y()+S.height()/2),
-														parent=cnc_a,external=cnc_b, color=Qt.red))
 			for c in view.items():  # using the `view` for the generated connectors
-				if isinstance(c, Connector):  # Connector
+				if isinstance(c, hConnector):  # Connector
 					del c.TEMP_ind
 					for i in view.items():
 						if isinstance(i, Connection):

@@ -2,9 +2,16 @@ from PyQt5.QtWidgets import *
 from PyQt5.Qt import QValidator, QIntValidator, QDoubleValidator
 
 import os.path
-from abc import ABC, abstractmethod
 
 from src.debug import *
+
+
+class ConstantModels:
+	def __init__(self): pass
+
+	def value(self): pass  # used in retrieving value for execution purpose; for *.exec.dat
+	def save(self): pass  # used in serializing the class; for *.proj.dat
+	def load(self): pass  # use for deserializing the data into class; for *.proj.dat
 
 
 class LineInput(QLineEdit):

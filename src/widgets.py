@@ -4,13 +4,13 @@ from PyQt5.QtCore import Qt, pyqtSignal, QPoint
 import os
 
 class NodeSelector(QComboBox):
-	def __init__(self, py_fobj, view, parent=None):
+	def __init__(self, py_module, view, parent=None):
 		super().__init__(parent)
 		self.view = view  # graphics view
 
-		self.mdl_typ = [py_fobj.__dict__[c] for c in py_fobj.__dir__()
-		                if type(py_fobj.__dict__[c]) == type
-		                if py_fobj.__dict__[c].__module__ == py_fobj.__name__
+		self.mdl_typ = [py_module.__dict__[c] for c in py_module.__dir__()
+		                if type(py_module.__dict__[c]) == type
+		                if py_module.__dict__[c].__module__ == py_module.__name__
 		                ]
 
 		[self.addItem(c.name) for c in self.mdl_typ if c.name != "#[Abstract]"]
@@ -193,12 +193,13 @@ class QVLine(QFrame):
 
 
 class ErrorBox(QMessageBox):
-	E000 = {"level":QMessageBox.Information, "title": "No Title", "txt": "No Text"}
-	E001 = {"level":QMessageBox.Critical, "title": "Project", "txt": "The project directory has not been set."}
+	E000 = {"level": QMessageBox.Information, "title": "No Title", "txt": "No Text"}
+	E001 = {"level": QMessageBox.Critical, "title": "Project", "txt": "The project directory has not been set."}
 	E002 = {"level": QMessageBox.Warning, "title": "Project", "txt": "Invalid project file"}
 	E003 = {"level": QMessageBox.Warning, "title": "Project", "txt": "Invalid project directory"}
 	E004 = {"level": QMessageBox.Warning, "title": "Project", "txt": "Invalid project key\n(You have not set the model name)"}
 	E005 = {"level": QMessageBox.Critical, "title": "Executor", "txt": "Runtime Error"}
+	E006 = {"level": QMessageBox.Critical, "title": "Project", "txt": "Model file failed to load"}
 
 	def __init__(self, title="No Title", level=QMessageBox.Information, txt="No Text"):
 		super().__init__()
