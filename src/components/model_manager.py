@@ -138,16 +138,16 @@ class ModelManager(QWidget):
 		self.spacer = QVLine(visible=False)  # vertical spacer
 		self.spacer.hide()
 		self.cur_mdl: Optional[ModelWorkspace] = None
-		self.project: Optional[ProjectFI] = None
+		self.project: Optional[ProjectFI] = proj
 
-		self.inst_ui(proj)
-		self.add_model(proj)
+		self.inst_ui()
+		self.add_model()
 
-	def inst_ui(self, proj: ProjectFI):
+	def inst_ui(self):
 		self.mdl_slctr = ModelWorkspaceSelector(self.models)
 		self.mdl_slctr.activated.connect(lambda ind: self.select_model(ind))
 		b_new_mdl = QPushButton("New Model")
-		b_new_mdl.clicked.connect(lambda checked: self.add_model(proj))
+		b_new_mdl.clicked.connect(lambda checked: self.add_model())
 		b_rem_mdl = QPushButton("Remove Current Model")
 		b_rem_mdl.clicked.connect(lambda checked: self.rem_model(self.cur_mdl))
 
@@ -169,8 +169,8 @@ class ModelManager(QWidget):
 
 		self.setLayout(self.central)
 
-	def add_model(self, proj: ProjectFI):
-		mdl_wksp = ModelWorkspace(proj)
+	def add_model(self):
+		mdl_wksp = ModelWorkspace(self.project)
 		mdl_wksp.nameChanged.connect(lambda s: self.mdl_slctr.update_list(self.models))
 		mdl_wksp.modelUpdate.connect(lambda o: self.modelUpdate.emit(o))
 		self.models.append(mdl_wksp)
@@ -224,4 +224,5 @@ class ModelManager(QWidget):
 				self.models.append(mdl_wksp)
 			except:
 				ErrorBox(**ErrorBox.E006).exec()
+				if DEBUG__: raise
 		self.mdl_slctr.update_list(self.models)

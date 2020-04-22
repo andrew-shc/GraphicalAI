@@ -1,49 +1,49 @@
 0
-    1 >> 193[20]
-    2 >> 193[21]
-    3 == C:/Users/Andrew Shen/Desktop/ProjectEmerald/MyModel/test/iris.csv
-    4 == species
-    5 == False
-    6 == False
-7
-    8 << 193[]
-    9 == C:/Users/Andrew Shen/Desktop/ProjectEmerald/MyModel/test/out.csv
+    1 << 193[]
+    2 << 193[]
+    3 << 193[]
+    4 >> 193[13]
+5
+    6 >> 193[3]
+    7 >> 193[]
+    8 == 
+    9 == 
     10 == False
-    11 == ,
+    11 == False
 12
-    13 >> 193[22]
-    14 >> 193[]
-    15 == C:/Users/Andrew Shen/Desktop/ProjectEmerald/MyModel/test/test.csv
-    16 == 
-    17 == False
-    18 == False
-19
-    20 << 193[]
-    21 << 193[]
-    22 << 193[]
-    23 >> 193[8]
+    13 << 193[]
+    14 == 
+    15 == True
+    16 == ,$#$
+17
+    18 >> 193[1]
+    19 >> 193[2]
+    20 == 
+    21 == species
+    22 == False
+    23 == False
 namespace
-    0 CSVInput
+    0 LogisticRegression
     1 x
     2 y
-    3 file input
-    4 result column
-    5 transpose
-    6 result numerical
-    7 CSVOutput
-    8 data
-    9 file output
+    3 test
+    4 result
+    5 CSVInput
+    6 x
+    7 y
+    8 file input
+    9 result column
     10 transpose
-    11 seperator
-    12 CSVInput
-    13 x
-    14 y
-    15 file input
-    16 result column
-    17 transpose
-    18 result numerical
-    19 LogisticRegression
-    20 x
-    21 y
-    22 test
-    23 result
+    11 result numerical
+    12 CSVOutput
+    13 data
+    14 file output
+    15 transpose
+    16 seperator
+    17 CSVInput
+    18 x
+    19 y
+    20 file input
+    21 result column
+    22 transpose
+    23 result numerical

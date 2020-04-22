@@ -84,7 +84,6 @@ class ModelExecutor:
 		model_class = self.mdl_map[self.id_map[node]]
 		model_incomplete = False
 		model_type_error = []  # []: No Error; [{field name (INP): field type, field name(OUT): field type},...]
-		int_fld_map = {self.id_map[fld]:fld for fld in self.tree[node]}  # (internal field map); local reverse field identification map
 
 		inp_field = {}
 		for field in self.tree[node]:
@@ -99,8 +98,7 @@ class ModelExecutor:
 								ext_fdata = self.tree[ext_node][ext_field]  # external field data; improve readability
 								if ext_fdata[self.FLD_TYP] == self.tOUT:
 									# note: the pandas dataframe results a value error because of ambiguity and trying to cast the dataframe so it can easily be compared
-									if field in ext_fdata[self.IO_CONNECT] and \
-											not self._is_null(ext_fdata[self.IO_VAL]):
+									if field in ext_fdata[self.IO_CONNECT] and not self._is_null(ext_fdata[self.IO_VAL]):
 										if self._compat_type(int_fdata[self.IO_TYP], ext_fdata[self.IO_TYP]):
 											ext_val.append(ext_fdata[self.IO_VAL])
 										else: model_incomplete = True; model_type_error.append({self.id_map[field]: int_fdata[self.IO_TYP], self.id_map[ext_field]: ext_fdata[self.IO_TYP]})
@@ -114,8 +112,7 @@ class ModelExecutor:
 							for ext_field in self.tree[ext_node]:
 								ext_fdata = self.tree[ext_node][ext_field]  # external field data; improve readability
 								if ext_fdata[self.FLD_TYP] == self.tOUT:
-									if ext_field in int_fdata[self.IO_CONNECT] and \
-											not self._is_null(ext_fdata[self.IO_VAL]):
+									if ext_field in int_fdata[self.IO_CONNECT] and not self._is_null(ext_fdata[self.IO_VAL]):
 										if self._compat_type(int_fdata[self.IO_TYP], ext_fdata[self.IO_TYP]):
 											ext_val.append(ext_fdata[self.IO_VAL])
 										else: model_incomplete = True; model_type_error.append({self.id_map[field]: int_fdata[self.IO_TYP], self.id_map[ext_field]: ext_fdata[self.IO_TYP]})
@@ -140,8 +137,6 @@ class ModelExecutor:
 		if not model_incomplete:
 			fnlMod = lambda dct: {k:self._type_conversion(dct[k]) for k in dct}
 
-			# print(self.tree)
-			# print(inp_field)
 			out_data = model_class.execute(inp=fnlMod(inp_field), const=fnlMod(const_field), out=fnlMod(out_field), inst=fnlMod(self.instance))
 
 			if [fld for fld in out_data if fld == Null] == []:  # shows all the output data has been set (not Null)

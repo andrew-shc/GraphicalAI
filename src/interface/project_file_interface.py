@@ -51,17 +51,14 @@ import os
 
 from src.debug import *
 from src.gfx.connection import Connection
-from src.gfx.connector import hConnector
+from src.gfx.connector import Connector
 from src.gfx.node import Node
 from src.constants import *
 
 from typing import List, Optional, Union
-from enum import Enum
-
-# TODO: There could be a file serialization 'memory' leak
 
 
-def model_saver(items: List[Union[Node, hConnector, Connection]]):  # TODO: Optimize and compact
+def model_saver(items: List[Union[Node, Connector, Connection]]):  # TODO: Optimize and compact
 	skl_tree = {}  # skeleton tree: pre-tree generation
 	dat_tree = {}  # data tree: using skl_tree to generate data tree
 	id_map = {}
@@ -75,10 +72,10 @@ def model_saver(items: List[Union[Node, hConnector, Connection]]):  # TODO: Opti
 		node_id = id_counter
 		id_counter += 1
 
-		connc: hConnector  # only input|output connector
+		connc: Connector  # only input|output connector
 		for connc in n.central.connector:
 			skl_tree[node_id][id_counter] = connc
-			id_map[id_counter] = connc.field[hConnector.FNAME]
+			id_map[id_counter] = connc.field[Connector.FNAME]
 			id_counter += 1
 
 		for const in n.central.nd_cls.field["constant"]:  # only constant field
@@ -92,9 +89,9 @@ def model_saver(items: List[Union[Node, hConnector, Connection]]):  # TODO: Opti
 		dat_tree[n] = {}
 		for field in skl_tree[n]:
 			connc = skl_tree[n][field]
-			if isinstance(connc, hConnector):  # input|output field
+			if isinstance(connc, Connector):  # input|output field
 				cnc_typ = connc.tag
-				fld_typ = connc.field[hConnector.FTYPE]
+				fld_typ = connc.field[Connector.FTYPE]
 				cnc_cnctn = []
 				cnntn: Connection
 				for cnntn in connc.connections:
@@ -110,47 +107,6 @@ def model_saver(items: List[Union[Node, hConnector, Connection]]):  # TODO: Opti
 
 	return _dat_file_saver(dat_tree, id_map)
 
-def old_model_saver(key: int, items: List[Union[Node, hConnector, Connection]]):
-	"""
-		Saves the model data to a file.
-	items: a list of items in a graphics view
-	"""
-	dat = {}
-	nodes = [nd for nd in items if isinstance(nd, Node)]
-
-	dt_obj = [i for i in items if isinstance(i, hConnector)]
-	for m in nodes:
-		dt_obj.append(m)
-		for fld in m.central.nd_cls.field["constant"]:
-			dt_obj.append(fld[1])
-
-	obj_id = 0
-	obj_map = {}
-	for i in dt_obj:
-		obj_map[i] = obj_id
-		obj_id += 1
-
-	model_id = 0
-	model = {}
-	for m in nodes:
-		model[m] = model_id
-		model_id += 1
-
-	id_map = {}  # ID # mapping to name
-	for m in nodes:
-		dat[obj_map[m]] = {}
-		for i in items:
-			if isinstance(i, hConnector):  # connectors
-				if i in m.central.connector:
-					id_map[obj_map[m]] = m.central.nd_cls.title
-					id_map[obj_map[i]] = i.field[0]
-					dat[obj_map[m]][obj_map[i]] = (i.tag, i.field[1], [obj_map[c.connector_a] for c in i.connections])
-		for c in m.central.nd_cls.field["constant"]:  # constants
-			id_map[obj_map[m]] = m.central.nd_cls.title
-			id_map[obj_map[c[1]]] = c[0]
-			dat[obj_map[m]][obj_map[c[1]]] = ("const", c[1].value())
-
-	return _dat_file_saver(dat, id_map)
 
 def _dat_file_saver(model_tree, id_map):
 	"""
@@ -223,12 +179,6 @@ def dat_file_loader(fdt):
 	return mdl_tree, id_map
 
 
-class FileType(Enum):
-	Executor = 1  # each node's execution ready format
-	Project = 2  # each node's property in each model workspac
-	Graph = 3  # graphs and visualization of the result
-
-
 class ProjectFI:
 	""" Project File Interface
 	"""
@@ -243,8 +193,6 @@ class ProjectFI:
 	mdl_grph = ".grph.dat"
 
 	prj_file = "project.yaml"
-
-	__id = 0
 
 	def __init__(self, *, name: str, path: str):  # name: valid directory name
 		if os.path.exists(path):
@@ -342,7 +290,7 @@ class ProjectFI:
 		else:
 			print("Error: Invalid key")
 
-	def save_mdl_exec(self, key: int, items: List[Union[Node, hConnector, Connection]]):
+	def save_mdl_exec(self, key: int, items: List[Union[Node, Connector, Connection]]):
 		if self.valid_key(key):
 			fdt = model_saver(items)
 			with open(os.path.join(self.path, "MDL"+str(key)+self.mdl_exec), "w") as fbj:
@@ -359,16 +307,20 @@ class ProjectFI:
 		else:
 			print("Error: Invalid key")
 
-	def save_mdl_proj(self, key: int, items: List[Union[Node, hConnector, Connection]]):
+	def save_mdl_proj(self, key: int, items: List[Union[Node, Connector, Connection]]):
 		if self.valid_key(key):
 			fdt = {}
 			for itm in items:
-				if isinstance(itm, Node): fdt[items.index(itm)] = {
-						"pos":itm.central.pos,
-						"nd_cls":itm.central.nd_cls.__class__.__name__,
-						"connector":[items.index(c) for c in itm.central.connector],
+				if isinstance(itm, Node):
+					print({c[0]:c[1] for c in itm.central.nd_cls.field["constant"]})
+					fdt[items.index(itm)] = {
+						"pos": itm.central.pos,
+						"nd_cls": itm.central.nd_cls.__class__.__name__,
+						"connector": [items.index(c) for c in itm.central.connector],
+						"constants": {c[0]:c[1].save() for c in itm.central.nd_cls.field["constant"]},
 					}
-				elif isinstance(itm, hConnector): fdt[items.index(itm)] = {
+				elif isinstance(itm, Connector):
+					fdt[items.index(itm)] = {
 						"tag": itm.tag,
 						"en": itm.en,
 						"field": itm.field,
@@ -401,12 +353,20 @@ class ProjectFI:
 			# used in the eval()
 			from src.components.workspace import nodes
 
-			for i in fdt:
+			for i in fdt:  # TODO: A Cleaner way to deserialize constant fields
 				if fdt[i].get("connector") is not None:  # Node
 					o: Node = eval(f"nodes.{fdt[i]['nd_cls']}").create(view, fdt[i]['pos'])
-					for ind, c in enumerate(o.central.connector):
+					consts = []
+
+					for ind, const in enumerate(o.central.nd_cls.field["constant"]):
+						consts.append((const[0], const[1].load(fdt[i]["constants"][const[0]])))
+					del o
+
+					node: Node = eval(f"nodes.{fdt[i]['nd_cls']}").create(view, fdt[i]['pos'], const=consts)
+					# also updates the connector, so this must be place after the update
+					for ind, c in enumerate(node.central.connector):
 						c.TEMP_ind = fdt[i]["connector"][ind]
-					view.scene().addItem(o)
+					view.scene().addItem(node)
 
 			for i in fdt:
 				if fdt[i].get("connector_a") is not None:  # Connection
@@ -415,24 +375,20 @@ class ProjectFI:
 					cnc_b = None
 					if fdt[i]["connector_a"] != None:
 						for ca in item:
-							if isinstance(ca, hConnector):
+							if isinstance(ca, Connector):
 								if fdt[i]["connector_a"] == ca.TEMP_ind:
 									cnc_a = ca
 					if fdt[i]["connector_b"] != None:
 						for cb in item:
-							if isinstance(cb, hConnector):
+							if isinstance(cb, Connector):
 								if fdt[i]["connector_b"] == cb.TEMP_ind:
 									cnc_b = cb
 					if cnc_b is not None:  # connector connections
 						S = cnc_a.mapToItem(cnc_a, cnc_a.spos)
 						O = cnc_b.mapToItem(cnc_a, cnc_b.spos)
-						# S = cnc_a.mapRectToItem(cnc_a, cnc_a.rect())
-						# O = cnc_b.mapRectToItem(cnc_a, cnc_b.rect())
-						view.scene().addItem(Connection(S, # QPoint(S.x()+S.width()/2, S.y()+S.height()/2),
-														O, # QPoint(O.x()+O.width()/2, O.y()+O.height()/2),
-														parent=cnc_a,external=cnc_b, color=Qt.green))
-			for c in view.items():  # using the `view` for the generated connectors
-				if isinstance(c, hConnector):  # Connector
+						view.scene().addItem(Connection(S, O, parent=cnc_a,external=cnc_b, color=Qt.green))
+			for c in view.items():  # using the list `view` for the generated connectors from the Node class
+				if isinstance(c, Connector):  # Connector
 					del c.TEMP_ind
 					for i in view.items():
 						if isinstance(i, Connection):
@@ -467,22 +423,4 @@ if __name__ == '__main__':
 	# THAN instantiate the graphical parts
 	# ALSO instantiate with the missing index which later will be replaced with
 
-	print("~~~")
-	fdt = {}
-	with open(os.path.join("C:/users/andrew shen/desktop/projectemerald/mymodel/MDL0.proj.dat"),  "r") as fbj:
-		fdt = yaml.safe_load(fbj)
-	print("~~~")
-	from PyQt5.QtWidgets import QGraphicsView
-	view = QGraphicsView()
-	nodes = __import__("src", fromlist=["nodes"])
-	print("@@@")
-	for i in fdt:
-		print(fdt[i])
-		if fdt[i].get("connector") is not None:  # Node
-			o = eval(f"nodes.{fdt[i]['nd_cls']}.create({view}, {fdt[i]['pos']})")
-			view.scene().addItem(o)
-		elif fdt[i].get("connections") is not None:  # Connector
-			pass
-		elif fdt[i].get("connector_a") is not None:  # Connection
-			pass
-	print(view.items())
+	pass

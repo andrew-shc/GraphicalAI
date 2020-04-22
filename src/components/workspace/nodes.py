@@ -10,6 +10,9 @@ from sklearn.cluster import KMeans
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
 
+import tensorflow as tf
+import tensorflow.keras as keras
+
 """
 class name suffix:
 
@@ -27,12 +30,12 @@ class Nodes:
 	name = "#[Abstract]"  # user oriented
 
 	@staticmethod
-	def create(view, pos):
+	def create(view, pos, const=None):
 		""" Creates an instance of the node from this custom node class
 		** NOTE **: Removed this as statimethod from classmethod because the .field attr was storing to the class itself
 		            (which had an unintended effect on serialization of node)
-		:param w:
-		:param pos:
+		:param view: the graphical object list of the Model Workspace Scene
+		:param pos: position of each node
 		:return:
 		"""
 		raise NotImplementedError
@@ -56,8 +59,32 @@ class Nodes:
 		pass
 
 
-Matrix = "mtx"
-ScalarInt = "scl_int"
+class NodeRev2(Nodes):
+	title = "#[Abstract]"
+	name = "#[Abstract]"
+
+	def inp(self, **kwargs): pass
+
+	def out(self, **kwargs): pass
+
+	def const(self, **kwargs): pass
+
+	@classmethod
+	def create(cls, view, pos, **load_const):
+		node = cls()
+
+		# replace the underscore with space when users sees it
+		node.inp( x=CT.Any, x2=CT.Any, )
+		node.out( y=CT.Any, other=CT.Any, file_output=CT.Any, )
+		if load_const == {}: node.const( file_input=FileDialog() )
+		else: node.const( **load_const )
+
+		return node
+
+	@staticmethod
+	def execute(inp, const, out, inst) -> dict:
+		out.x = const.file_input()
+		return out
 
 
 class CSVInput(Nodes):
@@ -65,12 +92,13 @@ class CSVInput(Nodes):
 	name = "Read CSV"
 
 	@staticmethod
-	def create(view, pos):
+	def create(view, pos, const=None):
 		cls = CSVInput()
 		cls.field = {
 			"input": [],
 			"output": [("x", CT.Matrix | CT.Any), ("y", CT.Matrix | CT.Any)],
-			"constant": [("file input", FileDialog()), ("result column", LineInput()), ("transpose", CheckBox()),
+			"constant": const if const is not None else
+				[("file input", FileDialog()), ("result column", LineInput()), ("transpose", CheckBox()),
 			             ("result numerical", CheckBox()), ],
 		}
 		return Node(view, pos, cls)
@@ -110,12 +138,13 @@ class CSVOutput(Nodes):
 	name = "Write CSV"
 
 	@staticmethod
-	def create(view, pos):
+	def create(view, pos, const=None):
 		cls = CSVOutput()
 		cls.field = {
 			"input": [("data", CT.Matrix | CT.Any)],
 			"output": [],
-			"constant": [("file output", FileDialog()), ("transpose", CheckBox()), ("seperator", LineInput(","))],
+			"constant": const if const is not None else
+			[("file output", FileDialog()), ("transpose", CheckBox()), ("seperator", LineInput(","))],
 		}
 		return Node(view, pos, cls)
 
@@ -138,12 +167,12 @@ class LinearRegressionREG(Nodes):
 	name = "Linear Regression"
 
 	@staticmethod
-	def create(view, pos):
+	def create(view, pos, const=None):
 		cls = LinearRegressionREG()
 		cls.field = {
 			"input": [("x", CT.Matrix | CT.Any), ("y", CT.Matrix | CT.Any), ("test", CT.Matrix | CT.Any)],
 			"output": [("result", CT.Matrix | CT.Any)],
-			"constant": [],
+			"constant": const if const is not None else [],
 		}
 		return Node(view, pos, cls)
 
@@ -161,12 +190,12 @@ class LogisticRegressionREG(Nodes):
 	name = "Logistic Regression"
 
 	@staticmethod
-	def create(view, pos):
+	def create(view, pos, const=None):
 		cls = LogisticRegressionREG()
 		cls.field = {
 			"input": [("x", CT.Matrix | CT.Any), ("y", CT.Matrix | CT.Any), ("test", CT.Matrix | CT.Any)],
 			"output": [("result", CT.Matrix | CT.Any)],
-			"constant": [],
+			"constant": const if const is not None else [],
 		}
 		return Node(view, pos, cls)
 
@@ -184,12 +213,12 @@ class KMeansCLF(Nodes):
 	name = "K-Means Cluster"
 
 	@staticmethod
-	def create(view, pos):
+	def create(view, pos, const=None):
 		cls = KMeansCLF()
 		cls.field = {
 			"input": [("x", CT.Matrix | CT.Any), ("test", CT.Matrix | CT.Any)],
 			"output": [("result", CT.Matrix | CT.Any)],
-			"constant": [("clusters", LineInput(numerical=True))],
+			"constant": const if const is not None else [("clusters", LineInput(numerical=True))],
 		}
 		return Node(view, pos, cls)
 
@@ -207,12 +236,13 @@ class DecisionTreeCLF(Nodes):
 	name = "Std Decision Tree"
 
 	@staticmethod
-	def create(view, pos):
+	def create(view, pos, const=None):
 		cls = DecisionTreeCLF()
 		cls.field = {
 			"input": [("x", CT.Matrix | CT.Any), ("y", CT.Matrix | CT.Any), ("test", CT.Matrix | CT.Any)],
 			"output": [("result", CT.Matrix | CT.Any), ("probability", CT.Matrix | CT.Any)],
-			"constant": [("max depth", LineInput(numerical=True)), ("min samples leaf", LineInput("1", numerical=True)),
+			"constant": const if const is not None else
+			[("max depth", LineInput(numerical=True)), ("min samples leaf", LineInput("1", numerical=True)),
 			             ("min samples split", LineInput("2", numerical=True))],
 		}
 		return Node(view, pos, cls)
@@ -233,12 +263,13 @@ class SupportVectorCLF(Nodes):
 	name = "Support Vector Classifier"
 
 	@staticmethod
-	def create(view, pos):
+	def create(view, pos, const=None):
 		cls = SupportVectorCLF()
 		cls.field = {
 			"input": [("x", CT.Matrix | CT.Any), ("y", CT.Matrix | CT.Any), ("test", CT.Matrix | CT.Any)],
 			"output": [("result", CT.Matrix | CT.Any), ],
-			"constant": [("kernel", Selector({"rbf (default)": "rbf", "linear": "linear", "poly": "poly", "sigmoid": "sigmoid"}, default="rbf (default)"))],
+			"constant": const if const is not None else
+			[("kernel", Selector({"rbf (default)": "rbf", "linear": "linear", "poly": "poly", "sigmoid": "sigmoid"}, default="rbf (default)"))],
 		}
 		return Node(view, pos, cls)
 
@@ -256,38 +287,20 @@ class InputLayerNN(Nodes):
 	name = "Input Layer NN"
 
 	@staticmethod
-	def create(view, pos):
+	def create(view, pos, const=None):
 		cls = InputLayerNN()
 		cls.field = {
-			"input": [],
-			"output": [("input nodes", CT.Matrix | CT.Any), ],
-			"constant": [("file name", FileDialog()), ("input", Selector({"row": "row", "column": "column"}))],
+			"input": [("x", CT.Optional | CT.Matrix | CT.Any)],
+			"output": [("nodes", CT.Matrix | CT.Any), ],
+			"constant": const if const is not None else
+			[("input number", LineInput(numerical=True))],
 		}
 		return Node(view, pos, cls)
 
 	@staticmethod
 	def execute(inp, const, out, inst):
-
+		print(inp["constant"])
 		out["input nodes"] = []
-		return out
-
-
-class HiddenLayerNN(Nodes):
-	title = "HiddenLayerNN"
-	name = "Hidden Layer NN"
-
-	@staticmethod
-	def create(view, pos):
-		cls = HiddenLayerNN()
-		cls.field = {
-			"input": [],
-			"output": [("input nodes", CT.Matrix | CT.Any), ],
-			"constant": [("file name", FileDialog()), ("input", Selector({"row": "row", "column": "column"}))],
-		}
-		return Node(view, pos, cls)
-
-	@staticmethod
-	def execute(inp, const, out, inst):
 		return out
 
 
@@ -296,12 +309,54 @@ class OutputLayerNN(Nodes):
 	name = "Output Layer NN"
 
 	@staticmethod
-	def create(view, pos):
+	def create(view, pos, const=None):
 		cls = OutputLayerNN()
 		cls.field = {
-			"input": [],
-			"output": [("input nodes", CT.Matrix | CT.Any), ],
-			"constant": [("file name", FileDialog()), ("input", Selector({"row": "row", "column": "column"}))],
+			"input": [("class", CT.Matrix | CT.Any), ("output nodes", CT.Matrix | CT.Any), ],
+			"output": [("model", CT.Matrix | CT.Any),],
+			"constant": const if const is not None else [("nodes", LineInput(numerical=True))],
+		}
+		return Node(view, pos, cls)
+
+	@staticmethod
+	def execute(inp, const, out, inst):
+		return out
+
+
+class HiddenLayerNN(Nodes):
+	title = "HiddenLayerNN"
+	name = "Hidden Layer NN"
+
+	@staticmethod
+	def create(view, pos, const=None):
+		cls = HiddenLayerNN()
+		cls.field = {
+			"input": [("inp", CT.Matrix | CT.Any), ],
+			"output": [("out", CT.Matrix | CT.Any), ],
+			"constant": const if const is not None else
+			[("nodes", LineInput(numerical=True)),
+			 ("activation", Selector({"Linear": "linear", "ReLU": "ReLU", "Softmax": "softmax"}))],
+		}
+		return Node(view, pos, cls)
+
+	@staticmethod
+	def execute(inp, const, out, inst):
+		return out
+
+
+class TrainNN(Nodes):
+	title = "TrainNN"
+	name = "Training NN"
+
+	@staticmethod
+	def create(view, pos, const=None):
+		cls = HiddenLayerNN()
+		cls.field = {
+			"input": [("model", CT.Matrix | CT.Any), ],
+			"output": [("classification", CT.Matrix | CT.Any), ],
+			"constant": const if const is not None else
+			[("nodes", LineInput(numerical=True)),
+			 ("loss", Selector({"...": "...",}))],
 		}
 		return Node(view, pos, cls)
 
@@ -315,12 +370,13 @@ class ConvolutionalLayerMTX(Nodes):
 	name = "Convolutional Layer"
 
 	@staticmethod
-	def create(view, pos):
+	def create(view, pos, const=None):
 		cls = ConvolutionalLayerMTX()
 		cls.field = {
 			"input": [],
 			"output": [("input nodes", CT.Matrix | CT.Any), ],
-			"constant": [("file name", FileDialog()), ("input", Selector({"row": "row", "column": "column"}))],
+			"constant": const if const is not None else
+			[("file name", FileDialog()), ("input", Selector({"row": "row", "column": "column"}))],
 		}
 		return Node(view, pos, cls)
 
@@ -334,12 +390,13 @@ class PoolingMTX(Nodes):
 	name = "Pooling Layer"
 
 	@staticmethod
-	def create(view, pos):
+	def create(view, pos, const=None):
 		cls = PoolingMTX()
 		cls.field = {
 			"input": [],
 			"output": [("input nodes", CT.Matrix | CT.Any), ],
-			"constant": [("file name", FileDialog()), ("input", Selector({"row": "row", "column": "column"}))],
+			"constant": const if const is not None else
+			[("file name", FileDialog()), ("input", Selector({"row": "row", "column": "column"}))],
 		}
 		return Node(view, pos, cls)
 

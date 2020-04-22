@@ -193,19 +193,21 @@ class QVLine(QFrame):
 
 
 class ErrorBox(QMessageBox):
-	E000 = {"level": QMessageBox.Information, "title": "No Title", "txt": "No Text"}
-	E001 = {"level": QMessageBox.Critical, "title": "Project", "txt": "The project directory has not been set."}
-	E002 = {"level": QMessageBox.Warning, "title": "Project", "txt": "Invalid project file"}
-	E003 = {"level": QMessageBox.Warning, "title": "Project", "txt": "Invalid project directory"}
-	E004 = {"level": QMessageBox.Warning, "title": "Project", "txt": "Invalid project key\n(You have not set the model name)"}
-	E005 = {"level": QMessageBox.Critical, "title": "Executor", "txt": "Runtime Error"}
-	E006 = {"level": QMessageBox.Critical, "title": "Project", "txt": "Model file failed to load"}
+	# once the error is created, it can not be removed from the list unless it was removed before a commit
+	E000 = {"code": "E000", "level": QMessageBox.Information, "title": "No Title", "txt": "No Text"}
+	E001 = {"code": "E001", "level": QMessageBox.Critical, "title": "Project", "txt": "The project directory has not been set."}
+	E002 = {"code": "E002", "level": QMessageBox.Warning, "title": "Project", "txt": "Invalid project file"}
+	E003 = {"code": "E003", "level": QMessageBox.Warning, "title": "Project", "txt": "Invalid project directory"}
+	E004 = {"code": "E004", "level": QMessageBox.Warning, "title": "Project", "txt": "Invalid project key\n(You have not set the model name)"}
+	E005 = {"code": "E005", "level": QMessageBox.Critical, "title": "Executor", "txt": "Runtime Error"}
+	E006 = {"code": "E006", "level": QMessageBox.Critical, "title": "Project", "txt": "Executor file failed to load"}
+	E007 = {"code": "E007", "level": QMessageBox.Critical, "title": "Project", "txt": "Model file failed to load"}
 
-	def __init__(self, title="No Title", level=QMessageBox.Information, txt="No Text"):
+	def __init__(self, code="E000", title="No Title", level=QMessageBox.Information, txt="No Text"):
 		super().__init__()
 		self.setIcon(level)
 		self.setText(txt)
-		self.setWindowTitle(title)
+		self.setWindowTitle(code+" - "+title)
 
 
 class ModelWorkspaceSelector(QComboBox):

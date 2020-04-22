@@ -4,6 +4,7 @@ from PyQt5.QtGui import QPalette, QColor
 
 from src.widgets import ErrorBox, NewProject, LoadProject
 from src.interface.project_file_interface import ProjectFI
+from src.constants import DEBUG__
 
 from typing import Optional
 import os
@@ -60,7 +61,13 @@ class ProjectSetup(QWidget):
         self.proj_name.setPalette(p)
 
     def load_project(self, dir: str):
-        self.project = ProjectFI.load(dir)
+        try:
+            self.project = ProjectFI.load(dir)
+        except:
+            ErrorBox(**ErrorBox.E007).exec()
+            self.project = None
+            if DEBUG__: raise
+
         if self.project is not None:
             self.projectLoaded.emit(self.project)
 

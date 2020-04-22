@@ -9,7 +9,7 @@ so small bugs no need to be issued *for now*.
 
 ##### Software
 [Desktop Platform (Win10, Linux:Gnome, MacOS, etc.)]  
-[Software Version (Indev 1.0, Alpha 2.1, etc.)]
+[Software Version (Indev 1.0, 0.2.1, etc.)]
 
 ##### Effect
 What effect had it made on software or interfering external application?
@@ -25,22 +25,27 @@ Things can try. __(At your own risk!)__
 * Re-install the software
 
 ## Known Issue
-* Execute backflow input connector forever loop
-* Unicode and normal characters asynced when typeing resulting continuous typeing
-* Pressing shift for a few second enables the continues key input thus 
-allowing new printable character to be ""
-
 
 ## TODO
 
 #### Next Release Candidates
-- The FileDialog in the nodes does not close when clicked [CANCEL]
 - Add an option "Load Empty" when the file failed to load
-- Serialize each constant fields
 - README.md: Add an installation info
 - ... we'll be using Cx_freeze for making executables for distribution
+- The text size changes on the QComboBox on the side of each Model Workspace
+- Add an delete button on top corners of each Node to delete the relative Node
+- Add a pre-process normalize image node
+- Add read image node
+- Ask to save the project (if not saved) after the user decides to quit
+- Don't save model if the user hadnt click [save model]
 
-#### Near Future
-
+#### Near Future (Ordered)
+- A better way to create nodes
+- Serializing Constant Field based on objects instead of relying on names (possible duplicate names)
+- More descriptive errors
+- Support circular reference for executing nodes (will implemented when needed)
+- Text break when the Model Workspace Title reach pass a limit
+- Add a boosting/bagging model
 
 #### Vision
+- Move codebase from Python to possibly C++/C, Rust

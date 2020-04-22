@@ -31,6 +31,4 @@ class Connection(QGraphicsLineItem):
 	# updates the position of the connection (the line that is connecting between the connectors) IF the connector is movable
 	def update_pair(self):
 		O = self.connector_b.mapToItem(self.connector_a, self.connector_b.spos)
-		# O = self.connector_b.mapRectToItem(self.connector_a, self.connector_b.rect())
 		self.update_end(O)
-		# self.update_end(QPoint(O.x()+O.width()/2, O.y()+O.height()/2))

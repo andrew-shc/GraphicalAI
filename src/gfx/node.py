@@ -7,9 +7,8 @@ from typing import List, Tuple, Dict
 from src.debug import *
 from src.constants import *
 
-from src.gfx.connector import Connector, nConnector, hConnector
+from src.gfx.connector import Connector
 from src.gfx.connection import Connection  # [WARN] diff between the import between src.gfx vs gfx
-from src.components.workspace.connector_type import ConnectorType as CT
 
 
 class Node(QGraphicsProxyWidget):
@@ -21,6 +20,11 @@ class Node(QGraphicsProxyWidget):
 
 		self.central = NodeInternal(view, pos, nd_cls, parent=None)
 		self.setWidget(self.central)
+
+	def __del__(self):
+		# removes all the connector referring to this Node class
+		[self.central.view.scene().removeItem(connc) for connc in self.central.connector]
+		del self.central.connector[:]  # removes all Connector except the attribute itself
 
 
 class NodeInternal(QWidget):
@@ -34,21 +38,20 @@ class NodeInternal(QWidget):
 	FIELD_OFSY = 6  # field's offset on the y-axis
 	MOUSE_OFS = (0, 0)  # position offset when mouse on trigger
 
-	def __init__(self, view, pos: Tuple[int, int], nd_cls, parent=None):
+	def __init__(self, view: QGraphicsView, pos: Tuple[int, int], nd_cls, parent=None):
 		super().__init__(parent=parent)
+		self.view = view
 
 		self.clicked = False
 		self.pos = pos
 		self.nd_cls = nd_cls
-		self.connector = []
-
-		self.view = view
+		self.connector: List[Connector] = []
 
 		self._inst_basic_ui(view)
 
 		self.setStyleSheet("background-color: #CCDDFF")
 
-	def _inst_basic_ui(self, view):
+	def _inst_basic_ui(self, view):  # graphics=Also instantiate/update graphical objects
 		title = QLabel(self.nd_cls.name, self)
 		title.setAlignment(Qt.AlignTop)
 		title.setFont(QtGui.QFont("courier", 10, QtGui.QFont.Bold))
@@ -63,7 +66,7 @@ class NodeInternal(QWidget):
 		out = QVBoxLayout()  # output area selection
 		[out.addWidget(QLabel(f[0])) for f in self.nd_cls.field["output"]]
 		out.addStretch()
-		print("====", self.nd_cls.field["constant"])
+		print([f[1] for f in self.nd_cls.field["constant"]])
 		usr = QFormLayout()  # user input area selection
 		[usr.addRow(QLabel(f[0]), f[1]) for f in self.nd_cls.field["constant"]]
 
@@ -82,31 +85,15 @@ class NodeInternal(QWidget):
 		self.setLayout(layout)
 		self.setGeometry(self.pos[0], self.pos[1], self.NODE_SIZE[0], self.NODE_SIZE[1])
 
-		# o = hConnector(CT.Matrix | CT.String, QPoint(-100, -100), TG_INPUT, [TG_OUTPUT], ("a", CT.Matrix | CT.String), view)
-		# view.scene().addItem(o)
-		# self.connector.append(o)
-		# print(view.items())
-
 		# NOTE: The following initializes the starting position of the connector, which effects how the position of
 		# the connector gets updated.
 		for ind, fld in enumerate(self.nd_cls.field["input"]):
-			# cnc = Connector((0, title.rect().height()+self.FIELD_PADY*ind+self.FIELD_OFSY, *self.CONNECTOR_SIZE),
-			#         TG_INPUT, [TG_OUTPUT], fld, view)
-			# self.connector.append(cnc)
-			# view.scene().addItem(cnc)
-
-			o = hConnector(QPoint(0, title.rect().height()+self.FIELD_PADY*ind+self.FIELD_OFSY),
+			o = Connector(QPoint(0, title.rect().height()+self.FIELD_PADY*ind+self.FIELD_OFSY),
 						   TG_INPUT, [TG_OUTPUT], fld, view)
 			self.connector.append(o)
 			view.scene().addItem(o)
 		for ind, fld in enumerate(self.nd_cls.field["output"]):
-			print("===", fld)
-			# cnc = Connector((0, title.rect().height()+self.FIELD_PADY*ind+self.FIELD_OFSY, *self.CONNECTOR_SIZE),
-			# 	    TG_OUTPUT, [TG_INPUT], fld, view)
-			# self.connector.append(cnc)
-			# view.scene().addItem(cnc)
-
-			o = hConnector(QPoint(0, title.rect().height()+self.FIELD_PADY*ind+self.FIELD_OFSY),
+			o = Connector(QPoint(0, title.rect().height()+self.FIELD_PADY*ind+self.FIELD_OFSY),
 						   TG_OUTPUT, [TG_INPUT], fld, view)
 			self.connector.append(o)
 			view.scene().addItem(o)

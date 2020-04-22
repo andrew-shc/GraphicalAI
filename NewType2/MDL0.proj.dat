@@ -1,58 +1,71 @@
 0:
   connector:
-  - 6
+  - 9
+  - 7
+  - 5
   - 3
-  nd_cls: CSVInput
+  constants: {}
+  nd_cls: LogisticRegressionREG
   pos:
-  - 436
-  - 251
-2:
+  - 766
+  - 338
+1:
   connector_a: 3
-  connector_b: 23
+  connector_b: 18
 3:
   connections:
-  - 2
+  - 1
   en:
   - inp
   field:
-  - y
+  - result
   - 193
   tag: out
 5:
-  connector_a: 6
-  connector_b: 25
-6:
-  connections:
-  - 5
+  connections: []
   en:
-  - inp
+  - out
   field:
-  - x
+  - test
   - 193
-  tag: out
+  tag: inp
 7:
-  connector:
-  - 9
-  nd_cls: CSVOutput
-  pos:
-  - 1097
-  - 331
+  connections: []
+  en:
+  - out
+  field:
+  - y
+  - 193
+  tag: inp
 9:
   connections: []
   en:
   - out
   field:
-  - data
+  - x
   - 193
   tag: inp
 10:
   connector:
   - 15
   - 12
+  constants:
+    file input:
+      single: true
+      text: MDL0.proj.dat
+      url:
+      - C:/Users/Andrew Shen/Desktop/ProjectEmerald/NewType2/MDL0.proj.dat
+    result column:
+      numerical: false
+      text: ''
+    result numerical:
+      checked: false
+    transpose:
+      checked: false
   nd_cls: CSVInput
   pos:
-  - 445
-  - 475
+  - 471
+  - 466
 12:
   connections: []
   en:
@@ -61,12 +74,12 @@
   - y
   - 193
   tag: out
-14:
+13:
   connector_a: 15
-  connector_b: 21
+  connector_b: 5
 15:
   connections:
-  - 14
+  - 13
   en:
   - inp
   field:
@@ -75,47 +88,72 @@
   tag: out
 16:
   connector:
-  - 25
-  - 23
-  - 21
-  - 19
-  nd_cls: LogisticRegressionREG
+  - 18
+  constants:
+    file output:
+      single: true
+      text: MDL0.exec.dat
+      url:
+      - C:/Users/Andrew Shen/Desktop/ProjectEmerald/NewType2/MDL0.exec.dat
+    seperator:
+      numerical: false
+      text: ',$#$'
+    transpose:
+      checked: true
+  nd_cls: CSVOutput
   pos:
-  - 763
-  - 347
-17:
-  connector_a: 19
-  connector_b: 9
+  - 1097
+  - 331
+18:
+  connections: []
+  en:
+  - out
+  field:
+  - data
+  - 193
+  tag: inp
 19:
+  connector:
+  - 25
+  - 22
+  constants:
+    file input:
+      single: true
+      text: project.yaml
+      url:
+      - C:/Users/Andrew Shen/Desktop/ProjectEmerald/NewType2/project.yaml
+    result column:
+      numerical: false
+      text: species
+    result numerical:
+      checked: false
+    transpose:
+      checked: false
+  nd_cls: CSVInput
+  pos:
+  - 472
+  - 234
+20:
+  connector_a: 22
+  connector_b: 7
+22:
   connections:
-  - 17
+  - 20
   en:
   - inp
   field:
-  - result
-  - 193
-  tag: out
-21:
-  connections: []
-  en:
-  - out
-  field:
-  - test
-  - 193
-  tag: inp
-23:
-  connections: []
-  en:
-  - out
-  field:
   - y
   - 193
-  tag: inp
+  tag: out
+23:
+  connector_a: 25
+  connector_b: 9
 25:
-  connections: []
+  connections:
+  - 23
   en:
-  - out
+  - inp
   field:
   - x
   - 193
-  tag: inp
+  tag: out

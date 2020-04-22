@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import *
-from PyQt5.Qt import QValidator, QIntValidator, QDoubleValidator
+from PyQt5.Qt import QIntValidator
 
 import os.path
 
@@ -45,7 +45,7 @@ class FileDialog(QPushButton):
 
 		self.clicked.connect(lambda checked: self.onClick(checked))
 
-		self.file_dialog = None
+		self.fl_dlg = None
 
 	def onClick(self, clicked):
 		self.configDialog()
@@ -55,13 +55,14 @@ class FileDialog(QPushButton):
 		self.wind.setWindowTitle("File Dialogue")
 		self.wind.setGeometry(0, 0, 1000, 400)
 
-		self.file_dialog = QFileDialog()
-		self.file_dialog.setFileMode(self.file_dialog.ExistingFile)
-		self.file_dialog.setViewMode(self.file_dialog.List)
+		self.fl_dlg = QFileDialog()
+		self.fl_dlg.setFileMode(self.fl_dlg.ExistingFile)
+		self.fl_dlg.setViewMode(self.fl_dlg.List)
 
-		self.file_dialog.filesSelected.connect(lambda url: self.setUrl(url))
+		self.fl_dlg.filesSelected.connect(lambda url: self.setUrl(url))
+		self.fl_dlg.finished.connect(lambda code: self.wind.close())
 
-		self.wind.setMenuWidget(self.file_dialog)
+		self.wind.setMenuWidget(self.fl_dlg)
 		self.wind.show()
 
 	def setUrl(self, url):
@@ -71,17 +72,18 @@ class FileDialog(QPushButton):
 
 	def value(self):
 		if hasattr(self, "file_dialog"):
-			if self.file_dialog is None: print("WARNING: NO FILES SELECTED")
-			elif len(self.file_dialog.selectedFiles()) == 0:
+			if self.fl_dlg is None: print("WARNING: NO FILES SELECTED")
+			elif len(self.fl_dlg.selectedFiles()) == 0:
 				print("WARNING: NO FILES SELECTED")
-			elif self.single and len(self.file_dialog.selectedFiles()) > 0:
-				return self.file_dialog.selectedFiles()[0]
+			elif self.single and len(self.fl_dlg.selectedFiles()) > 0:
+				return self.fl_dlg.selectedFiles()[0]
 			else:
-				return self.file_dialog.selectedFiles()
+				return self.fl_dlg.selectedFiles()
 		print("WARNING: NO FILES SELECTED")
 		return ""
 
 	def save(self):
+		print(self, self.single, self.url, self.text())
 		return {"single": self.single, "url": self.url, "text": self.text()}
 
 	@staticmethod

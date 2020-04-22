@@ -1,4 +1,13 @@
-## Indev 14.0 [April 19, 2020]
+## Indev 14.1 [April 22, 2020]
+* Serialization now is able to serialize constant field datas
+* New Optional Type (The last type we will implement for now)
+* Added another node, TrainNN, for training Neural Networks
+* Internal code clean-up
+* Fixed:
+  * The FileDialog in the nodes does not close when clicked [CANCEL]
+  * Loading project, then creating a new Workspace with new name causes an E001
+
+## Indev 14.0 [April 21, 2020]
 * Graphs Testing:
   * Linear Regression
 * Added few more node types:
