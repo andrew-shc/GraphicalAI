@@ -62,7 +62,7 @@ Add working menu bars
 Add status bars
 """
 
-VERSION = ("Indev", 13, 3)  # todo: future version; add strict versioning implementation
+VERSION = (0, 13, 3)  # todo: future version; add strict versioning implementation
 
 
 def main():

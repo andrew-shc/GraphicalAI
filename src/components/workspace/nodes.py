@@ -312,7 +312,7 @@ class OutputLayerNN(Nodes):
 	def create(view, pos, const=None):
 		cls = OutputLayerNN()
 		cls.field = {
-			"input": [("class", CT.Matrix | CT.Any), ("output nodes", CT.Matrix | CT.Any), ],
+			"input": [("output nodes", CT.Matrix | CT.Any), ("class", CT.Matrix | CT.Any), ],
 			"output": [("model", CT.Matrix | CT.Any),],
 			"constant": const if const is not None else [("nodes", LineInput(numerical=True))],
 		}
@@ -346,7 +346,7 @@ class HiddenLayerNN(Nodes):
 
 class TrainNN(Nodes):
 	title = "TrainNN"
-	name = "Training NN"
+	name = "Training NN's"
 
 	@staticmethod
 	def create(view, pos, const=None):

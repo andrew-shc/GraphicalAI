@@ -37,7 +37,10 @@ Things can try. __(At your own risk!)__
 - Add a pre-process normalize image node
 - Add read image node
 - Ask to save the project (if not saved) after the user decides to quit
-- Don't save model if the user hadnt click [save model]
+- Don't save model to the `project.yaml` if the user hadnt click [save model]
+- When adding new model, instead of always locating at the same position, choose diff. pos.
+- Add a tree to organize the nodes that is starting to get a lot
+- Add zooming and panning for bigger nodes
 
 #### Near Future (Ordered)
 - A better way to create nodes

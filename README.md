@@ -14,10 +14,12 @@ This project is built on Python 3.7 using PyQt5 for the front-end and
 Scikit-Learn for the model back-ends.
 
 ### Requirements
-* Python 3.7 Interpreter
-* Libraries Required
-    * PyQt5
-    * SkLearn (Scikit-Learn)
+##### Windows
+* Access single executables via <https://andrews236.github.io/>
+
+##### MacOS / Linux / etc.
+* Python 3.7 (x64) Interpreter; cannot be x86
+* Libraries Required via requirements.txt
 * Preferably use virtual-environment to execute your project
 
 ### Updates

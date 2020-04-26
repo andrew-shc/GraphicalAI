@@ -19,7 +19,7 @@ class VisualResult(QWidget):
         base.addWidget(QLabel("Graph Testing v0.1"))
         base.addStretch(2)
 
-        df = pd.read_csv("../MyModel/test/iris.csv")
+        df = pd.read_csv("iris.csv")
         df = df.drop("species", axis=1)
 
         cv = MplLinearReg(5, 5, dpi=100)

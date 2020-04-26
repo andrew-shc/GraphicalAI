@@ -1,12 +1,12 @@
 from src.debug import print
-from src.interface.project_file_interface import ProjectFI  # type: ignore
+from src.interface.project_file_interface import ProjectFI
 from src.constants import Null
 from src.components.workspace.connector_type import ConnectorType as CT
 
 import ast
 
-import pandas as pd  # type: ignore
-import numpy as np  # type: ignore
+import pandas as pd
+import numpy as np
 
 from typing import List
 

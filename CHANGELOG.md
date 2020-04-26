@@ -1,3 +1,14 @@
+## 0.15.0 [April 23, 2020] (LICENSE CHANGE)
+* **LICENSE CHANGED**
+  * Changed from Apache v2.0 to GPL v3.0 because of PyQt5 and PyInstaller.
+  * And since its an end-user product, I believe this is a suitable license to support open-source software
+  * This will be **permanent**
+  * (Did attempted to use fbs and PyInstaller and cx_Freeze)
+* Distribution is here!
+  * Using PyInstaller (developer version because of some hidden imports shenanigans)
+* Access distribution via <https://andrews236.github.io/>
+
+
 ## Indev 14.1 [April 22, 2020]
 * Serialization now is able to serialize constant field datas
 * New Optional Type (The last type we will implement for now)

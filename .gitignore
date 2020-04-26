@@ -12,3 +12,7 @@ __pycache__/
 # project internal
 old/
 proto/
+
+# project builds
+build/
+dist/
