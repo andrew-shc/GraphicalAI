@@ -1,10 +1,14 @@
-## 0.15.0 [April 23, 2020] (LICENSE CHANGE)
+## 0.15.1 [April 26, 2019]
+* Actual LICENSE file changed
+* Build optimization
+
+## 0.15.0 [April 26, 2020] (LICENSE CHANGE)
 * **LICENSE CHANGED**
   * Changed from Apache v2.0 to GPL v3.0 because of PyQt5 and PyInstaller.
   * And since its an end-user product, I believe this is a suitable license to support open-source software
   * This will be **permanent**
   * (Did attempted to use fbs and PyInstaller and cx_Freeze)
-* Distribution is here!
+* Binaries is here!
   * Using PyInstaller (developer version because of some hidden imports shenanigans)
 * Access distribution via <https://andrews236.github.io/>
 

@@ -7,6 +7,7 @@ from src.components.graphs import *
 
 import pandas as pd
 
+
 class VisualResult(QWidget):
     model: ModelWorkspace = None
 

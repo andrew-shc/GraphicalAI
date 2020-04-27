@@ -52,3 +52,9 @@ Things can try. __(At your own risk!)__
 
 #### Vision
 - Move codebase from Python to possibly C++/C, Rust
+- Canidates:
+  - Rust / 2D Rust Lib
+  - C Backend / Python
+  - C++ / Qt5
+  - Rust
+  - C++ & QML/JS
