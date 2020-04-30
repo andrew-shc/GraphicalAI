@@ -10,8 +10,7 @@ from sklearn.cluster import KMeans
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
 
-import tensorflow as tf
-import tensorflow.keras as keras
+from tensorflow.keras import models, layers, losses
 
 """
 class name suffix:
@@ -22,6 +21,10 @@ CLF - Classifier (a discrete (labeled) result)
 GRD - Gradient
 MTX - Matrix manipulator
 NN - Neural Network
+
+error types:
+Internal Error: Errors that is related to invalid Nodes (this error should be fixed as soon as possible)
+External Error: When a user executes an invalid input
 
 """
 
@@ -87,6 +90,32 @@ class NodeRev2(Nodes):
 		return out
 
 
+class NodeRev3(Nodes):
+	title = "#[Abstract]"
+	name = "#[Abstract]"
+
+	def inp(self, **kwargs): pass
+
+	def out(self, **kwargs): pass
+
+	def const(self, **kwargs): pass
+
+	def create(self, view, pos, **load_const):
+
+		# replace the underscore with space when users sees it
+		self.inp( x=CT.Any, x2=CT.Any, )
+		self.out( y=CT.Any, other=CT.Any, file_output=CT.Any, )
+		if load_const == {}: self.const( file_input=FileDialog() )
+		else: self.const( **load_const )
+
+		return self
+
+	@staticmethod
+	def execute(inp, const, out, inst) -> dict:
+		out.x = const.file_input()
+		return out
+
+
 class CSVInput(Nodes):
 	title = "CSVInput"
 	name = "Read CSV"
@@ -144,21 +173,23 @@ class CSVOutput(Nodes):
 			"input": [("data", CT.Matrix | CT.Any)],
 			"output": [],
 			"constant": const if const is not None else
-			[("file output", FileDialog()), ("transpose", CheckBox()), ("seperator", LineInput(","))],
+			[("file output", FileDialog()), ("transpose", CheckBox()), ("separator", LineInput(","))],
 		}
 		return Node(view, pos, cls)
 
 	@staticmethod
 	def execute(inp, const, out, inst):
-		if type(inp["data"]) in [set, dict, list, pd.DataFrame, np.ndarray]:
-			dat: pd.DataFrame = pd.DataFrame(inp["data"])  # convert all the listed above data types into pd.Dataframe
-			print(const)
-			if const["transpose"]: dat = dat.T
-
-			dat.to_csv(const["file output"], sep=const["seperator"])
+		if isinstance(inp["data"], pd.DataFrame):
+			if const["transpose"]: dat = inp["data"].T
+			else: dat = inp["data"]
+			dat.values.tofile(const["file output"], sep=const["separator"])
+		elif isinstance(inp["data"], np.ndarray):
+			if const["transpose"]: dat = inp["data"].T
+			else: dat = inp["data"]
+			dat.tofile(const["file output"], sep=const["separator"])
 		else:
-			print(
-				f"[NODE] [ERROR]: The input type <{type(inp['data'])}> is not part of [<{set}>, <{dict}>, <{list}>, <{pd.DataFrame}>, <{np.ndarray}>,]")
+			print("[Error]: The type is not supported. Only supports Numpy Arrays and Pandas Dataframe/Series")
+
 		return out
 
 
@@ -290,17 +321,20 @@ class InputLayerNN(Nodes):
 	def create(view, pos, const=None):
 		cls = InputLayerNN()
 		cls.field = {
-			"input": [("x", CT.Optional | CT.Matrix | CT.Any)],
-			"output": [("nodes", CT.Matrix | CT.Any), ],
+			"input": [("x", CT.Matrix | CT.Any)],
+			"output": [("model", CT.Matrix | CT.Any), ],
 			"constant": const if const is not None else
-			[("input number", LineInput(numerical=True))],
+			[("nodes", LineInput(numerical=True)),
+			 ("activation", Selector({"Linear": "linear", "Sigmoid": "sigmoid", "ReLU": "relu", "Softmax": "softmax"}))],
 		}
 		return Node(view, pos, cls)
 
 	@staticmethod
 	def execute(inp, const, out, inst):
-		print(inp["constant"])
-		out["input nodes"] = []
+		model = models.Sequential()
+		model.add(layers.Dense(const["nodes"], input_dim=len(inp["x"].columns), activation=const["activation"]))
+
+		out["model"] = model
 		return out
 
 
@@ -312,14 +346,27 @@ class OutputLayerNN(Nodes):
 	def create(view, pos, const=None):
 		cls = OutputLayerNN()
 		cls.field = {
-			"input": [("output nodes", CT.Matrix | CT.Any), ("class", CT.Matrix | CT.Any), ],
+			"input": [("model", CT.Matrix | CT.Any), ],
 			"output": [("model", CT.Matrix | CT.Any),],
-			"constant": const if const is not None else [("nodes", LineInput(numerical=True))],
+			"constant": const if const is not None else
+			[("loss", Selector({"MSE": "MSE", "MAE": "MAE", "Bin Cross Entropy": "BCE"})),
+			 ("optimizer", Selector({"SGD": "sgd", "Adam": "adam"})),
+			 ("metrics", Selector({"Accuracy": ["accuracy"]})),
+			 ],
 		}
 		return Node(view, pos, cls)
 
 	@staticmethod
 	def execute(inp, const, out, inst):
+		loss = {
+			"MSE": losses.mean_squared_error,
+			"MAE": losses.mean_absolute_error,
+			"BCE": losses.binary_crossentropy,
+		}[const["loss"]]
+
+		model = inp["model"]
+		model.compile(loss=loss, optimizer=const["optimizer"], metrics=const["metrics"])
+		out["model"] = model
 		return out
 
 
@@ -331,37 +378,62 @@ class HiddenLayerNN(Nodes):
 	def create(view, pos, const=None):
 		cls = HiddenLayerNN()
 		cls.field = {
-			"input": [("inp", CT.Matrix | CT.Any), ],
-			"output": [("out", CT.Matrix | CT.Any), ],
+			"input": [("model", CT.Matrix | CT.Any), ],
+			"output": [("model", CT.Matrix | CT.Any), ],
 			"constant": const if const is not None else
 			[("nodes", LineInput(numerical=True)),
-			 ("activation", Selector({"Linear": "linear", "ReLU": "ReLU", "Softmax": "softmax"}))],
+			 ("activation", Selector({"Linear": "linear", "Sigmoid": "sigmoid", "ReLU": "relu", "Softmax": "softmax"}))],
 		}
 		return Node(view, pos, cls)
 
 	@staticmethod
 	def execute(inp, const, out, inst):
+		model = inp["model"]
+		model.add(layers.Dense(const["nodes"], activation=const["activation"]))
+		out["model"] = model
 		return out
 
 
 class TrainNN(Nodes):
 	title = "TrainNN"
-	name = "Training NN's"
+	name = "Training NN"
 
 	@staticmethod
 	def create(view, pos, const=None):
-		cls = HiddenLayerNN()
+		cls = TrainNN()
 		cls.field = {
-			"input": [("model", CT.Matrix | CT.Any), ],
-			"output": [("classification", CT.Matrix | CT.Any), ],
+			"input": [("model", CT.Matrix | CT.Any), ("x", CT.Matrix | CT.Any), ("y", CT.Matrix | CT.Any), ("test x", CT.Matrix | CT.Any)],
+			"output": [("result", CT.Matrix | CT.Any), ],
 			"constant": const if const is not None else
-			[("nodes", LineInput(numerical=True)),
-			 ("loss", Selector({"...": "...",}))],
+			[("epochs", LineInput(numerical=True)),
+			 ("batch size", LineInput(numerical=True)),
+			 ("classify", CheckBox())],
 		}
 		return Node(view, pos, cls)
 
 	@staticmethod
 	def execute(inp, const, out, inst):
+		model: models.Sequential = inp["model"]
+
+		print(inp["x"], inp["y"], inp["test x"])
+		# casting pandas types to numpy types
+		x: np.ndarray = inp["x"].values if isinstance(inp["x"], pd.DataFrame) else inp["x"]
+		y: np.ndarray = inp["y"].values if isinstance(inp["y"], pd.Series) else inp["y"]
+		test_x: np.ndarray = inp["test x"].values if isinstance(inp["test x"], pd.DataFrame) else inp["test x"]
+		print(x.reshape((-1, 150)), y, test_x)
+
+		# when the output variable between the nodes and the dataset is incompatible
+		# print(model.layers[-1].output_shape[1], y.shape)
+		# if model.layers[-1].output_shape[1] != y.shape[1]:
+		# 	return "Error"
+
+		model.fit(x=x, y=y, epochs=const["epochs"], batch_size=const["batch size"])
+		# to evaluate the result
+		# mdl.evaluate()
+		if const["classify"]: res = model.predict_classes(test_x)
+		else: res = model.predict(test_x)
+
+		out["result"] = res
 		return out
 
 
@@ -403,3 +475,29 @@ class PoolingMTX(Nodes):
 	@staticmethod
 	def execute(inp, const, out, inst):
 		return out
+
+
+export = {
+	"File": [
+		CSVInput,
+		CSVOutput
+	],
+	"Generic": [
+		LinearRegressionREG,
+		LogisticRegressionREG,
+		KMeansCLF,
+		DecisionTreeCLF,
+		SupportVectorCLF,
+	],
+	"Neural Network": [
+		InputLayerNN,
+		OutputLayerNN,
+		HiddenLayerNN,
+		TrainNN,
+		ConvolutionalLayerMTX,
+		PoolingMTX,
+	],
+	"Pre-Processing": [
+
+	]
+}

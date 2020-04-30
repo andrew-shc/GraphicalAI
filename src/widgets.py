@@ -1,29 +1,54 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt, pyqtSignal, QPoint
+# from PyQt5.QtGui import QLine
 
+from src.debug import *
+from src.components.workspace.nodes import Nodes
+
+from typing import List, Dict, Optional
 import os
 
-class NodeSelector(QComboBox):
-	def __init__(self, py_module, view, parent=None):
-		super().__init__(parent)
-		self.view = view  # graphics view
 
-		self.mdl_typ = [py_module.__dict__[c] for c in py_module.__dir__()
-		                if type(py_module.__dict__[c]) == type
-		                if py_module.__dict__[c].__module__ == py_module.__name__
-		                ]
+class NodeMenu(QTreeWidget):
+	START_POS = [500, 200]
+	DIFF = (30, 10)  # move in what direction
+	MAX_DIFF = 5  # maximum amount of times before reset the counter
 
-		[self.addItem(c.name) for c in self.mdl_typ if c.name != "#[Abstract]"]
+	def __init__(self, view: QGraphicsView, menu_data: Dict[str, List[Nodes]], parent=None):
+		super().__init__(parent=parent)
+		self.view = view
+		self.inst_pos = NodeMenu.START_POS.copy()  # node instantiate position
+		self.counter = 0  # counting for # of times the user added the node; for the diff. node pos
 
-		self.textActivated.connect(lambda string: self.addModel(string))
+		self.nodes = {}  # node title to node class reference mapping
+		self.items: List[QTreeWidgetItem] = []
+		for cat in menu_data:
+			self.items.append(QTreeWidgetItem(self, [cat]))
+			self.items[-1].addChildren([
+				QTreeWidgetItem([nds.title])
+				for nds in menu_data[cat]
+			])
+			for nds in menu_data[cat]: self.nodes[nds.title] = nds
 
-	def addModel(self, string):
+		self.setHeaderHidden(True)
+		self.addTopLevelItems(self.items)
+
+		self.itemActivated.connect( lambda itm, col: self.addModel(self.nodes.get(itm.text(col))) )
+
+	def addModel(self, nd_cls: Optional[Nodes]):
 		# there should only be one model that have a unique name thus it should have only one item in the list
 		# and each item in the list must be model class meaning it has the method create()
 
-		for c in self.mdl_typ:
-			if string == c.name:
-				self.view.scene().addItem(c.create(self.view, (400, 200)))
+		if nd_cls is not None:
+			self.view.scene().addItem(nd_cls.create(self.view, self.inst_pos))
+
+			if self.counter > self.MAX_DIFF:
+				print(NodeMenu.START_POS)
+				self.inst_pos = NodeMenu.START_POS.copy()
+				self.counter = 0
+			self.inst_pos[0] += self.DIFF[0]
+			self.inst_pos[1] += self.DIFF[1]
+			self.counter += 1
 
 
 class ProjectRootEdit(QPushButton):

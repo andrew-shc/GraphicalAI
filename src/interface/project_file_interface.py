@@ -44,7 +44,6 @@ project.yaml
 from __future__ import annotations
 
 from PyQt5.QtCore import QPoint, Qt
-from PyQt5.QtWidgets import QGraphicsView, QGraphicsScene
 
 import yaml
 import os
@@ -54,6 +53,7 @@ from src.gfx.connection import Connection
 from src.gfx.connector import Connector
 from src.gfx.node import Node
 from src.constants import *
+from src.components.workspace.viewport import WorkspaceScene, WorkspaceView
 
 from typing import List, Optional, Union
 
@@ -103,6 +103,7 @@ def model_saver(items: List[Union[Node, Connector, Connection]]):  # TODO: Optim
 								cnc_cnctn.append(int_connc)
 				dat_tree[n][field] = (cnc_typ, fld_typ, cnc_cnctn)
 			else:  # constant field
+				print((skl_tree[n][field], FLD_CONST, skl_tree[n][field].value()))
 				dat_tree[n][field] = (FLD_CONST, skl_tree[n][field].value())
 
 	return _dat_file_saver(dat_tree, id_map)
@@ -117,6 +118,8 @@ def _dat_file_saver(model_tree, id_map):
 	id_map:
 		id: display name,
 	"""
+	print(model_tree)
+	print(id_map)
 
 	ln = []
 	tab = "    "
@@ -336,7 +339,7 @@ class ProjectFI:
 		else:
 			print("Error: Invalid key")
 
-	def read_mdl_proj(self, key: int) -> QGraphicsView:
+	def read_mdl_proj(self, key: int) -> WorkspaceView:
 		if self.valid_key(key):
 			# iterate through the list and then find any graphical parts
 			# that contains the current index of the current graphical parts
@@ -347,8 +350,8 @@ class ProjectFI:
 			with open(os.path.join(self.path, "MDL"+str(key)+self.mdl_proj), "r") as fbj:
 				fdt = yaml.safe_load(fbj)
 
-			scene = QGraphicsScene(0, 0, 1920, 1080)
-			view = QGraphicsView(scene)
+			scene = WorkspaceScene(0, 0, 1920, 1080)
+			view = WorkspaceView(scene)
 
 			# used in the eval()
 			from src.components.workspace import nodes

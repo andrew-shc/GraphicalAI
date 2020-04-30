@@ -67,6 +67,9 @@ VERSION = (0, 13, 3)  # todo: future version; add strict versioning implementati
 
 def main():
 	app = QApplication(sys.argv)
+	a_font = app.font()
+	a_font.setPointSize(9)  # using PointSize to prevent automatically change the text (in this case, too small)
+	app.setFont(a_font)
 
 	win = QMainWindow()
 	win.setWindowTitle("GUI AI Application")

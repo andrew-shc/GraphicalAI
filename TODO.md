@@ -8,8 +8,8 @@ Bugs go through the issue tracker. This is still under heavy-development,
 so small bugs no need to be issued *for now*.
 
 ##### Software
-[Desktop Platform (Win10, Linux:Gnome, MacOS, etc.)]  
-[Software Version (Indev 1.0, 0.2.1, etc.)]
+Platform:
+Version: (the software is not strictly following versions yet)
 
 ##### Effect
 What effect had it made on software or interfering external application?
@@ -20,7 +20,7 @@ What did you expect?
 ##### Things Attempted
 What things have you attempted?
 
-Things can try. __(At your own risk!)__
+Things you can try. __(At your own risk!)__
 * Force close the software
 * Re-install the software
 
@@ -30,17 +30,14 @@ Things can try. __(At your own risk!)__
 
 #### Next Release Candidates
 - Add an option "Load Empty" when the file failed to load
-- README.md: Add an installation info
-- ... we'll be using Cx_freeze for making executables for distribution
-- The text size changes on the QComboBox on the side of each Model Workspace
-- Add an delete button on top corners of each Node to delete the relative Node
+* The text size changes on the QComboBox on the side of each Model Workspace
+* Add an delete button on top corners of each Node to delete the relative Node
 - Add a pre-process normalize image node
 - Add read image node
 - Ask to save the project (if not saved) after the user decides to quit
-- Don't save model to the `project.yaml` if the user hadnt click [save model]
-- When adding new model, instead of always locating at the same position, choose diff. pos.
-- Add a tree to organize the nodes that is starting to get a lot
-- Add zooming and panning for bigger nodes
+- Update the status bar
+- Add grid-lines for workspace to diff. between moving view and discrete nodes
+- Executor check for checked errors
 
 #### Near Future (Ordered)
 - A better way to create nodes
@@ -49,6 +46,14 @@ Things can try. __(At your own risk!)__
 - Support circular reference for executing nodes (will implemented when needed)
 - Text break when the Model Workspace Title reach pass a limit
 - Add a boosting/bagging model
+- Reogranize internal nodes and executor functionality of nodes
+- Texture.data file of some sort for storing default textures/colors
+- Maybe merge neural network to matrix
+- Report unused variables per fields in nodes
+
+###### Nodes
+- The CSV Read nodes should able to hold multiple output (y-values) too
+- Uniform output (esp. Pandas needs be with Numpy's output format)
 
 #### Vision
 - Move codebase from Python to possibly C++/C, Rust

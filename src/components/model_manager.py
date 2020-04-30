@@ -1,7 +1,9 @@
-from typing import Optional
+from typing import Optional, List
 
 from src.widgets import *
-from components.workspace.executor import *
+from src.interface.project_file_interface import ProjectFI
+from src.components.workspace.executor import ModelExecutor
+from src.components.workspace.viewport import WorkspaceScene, WorkspaceView
 from constants import DEBUG__
 
 """
@@ -30,17 +32,19 @@ class ModelWorkspace(QWidget):
 
 	def inst_ui(self, view=None):
 		# Graphics Scene: Where the node will be selected
-		scene = QGraphicsScene(0, 0, 1920, 1080)
+		scene = WorkspaceScene(0, 0, 1920, 1080)
 
-		if view is None: self.view = QGraphicsView(scene)
+		if view is None: self.view = WorkspaceView(scene)
 		else: self.view = view
-		self.view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-		self.view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-		self.view.setDragMode(self.view.NoDrag)
+		# self.view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+		# self.view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+		# self.view.setDragMode(self.view.NoDrag)
 
 		from src.components.workspace import nodes
 
-		b_add_nd = NodeSelector(nodes, self.view)
+		m_label = QLabel("Select Nodes:")
+		m_node = NodeMenu(self.view, nodes.export)
+
 		self.b_name = QLabel(self.name)
 		name_fnt = self.b_name.font()
 		name_fnt.setPointSize(14)
@@ -59,19 +63,20 @@ class ModelWorkspace(QWidget):
 		intf_menu.addWidget(self.b_name)
 		intf_menu.addWidget(b_inp_nd)
 		intf_menu.addWidget(QHLine())
-		intf_menu.addWidget(b_add_nd)
 		intf_menu.addWidget(b_save_mdl)
 		intf_menu.addWidget(b_clear_mdl)
 		intf_menu.addWidget(b_exec_mdl)
+		intf_menu.addWidget(m_label)
+		intf_menu.addWidget(m_node)
 		intf_menu.addStretch()
 
 		insp_menu = QVBoxLayout()  # inspector menu
-		insp_menu.addWidget(QLabel("This is the Inspector Menu"))
+		insp_menu.addWidget(QLabel("This is the explanation menu"))
 
 		central = QHBoxLayout()
-		central.addLayout(intf_menu)
-		central.addWidget(self.view)
-		central.addLayout(insp_menu)
+		central.addLayout(intf_menu, 4)
+		central.addWidget(self.view, 30)
+		central.addLayout(insp_menu, 3)
 
 		self.setLayout(central)
 
@@ -91,7 +96,7 @@ class ModelWorkspace(QWidget):
 					print(f"[ERROR] The model name <{name}> is currently an active name; NO DUPLICATE NAMES")
 			else:
 				self.project.change_name(self.key, name)
-			self.project.save()
+				self.project.save()
 		else:
 			ErrorBox(**ErrorBox.E001).exec()
 
@@ -158,6 +163,7 @@ class ModelManager(QWidget):
 		upper_menu.addWidget(self.mdl_slctr)
 		upper_menu.addWidget(b_new_mdl)
 		upper_menu.addWidget(b_rem_mdl)
+		upper_menu.addStretch()
 		# upper_menu.addWidget(b_rfr_mdl)
 
 		self.cur_mdl = None if len(self.models) == 0 else self.models[self.mdl_slctr.currentIndex()]

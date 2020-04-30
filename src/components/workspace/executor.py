@@ -28,7 +28,7 @@ class ModelExecutor:
 	def __init__(self, proj: ProjectFI, key: int):
 		self.tree, self.id_map = proj.read_mdl_exec(key)
 		self.completed: List[dict] = []  # a list of index reference to the model in the tree that are FINISHED executing
-		print(self.tree)
+
 		from src.components.workspace import nodes
 
 		mdl_cls_ref = [nodes.__dict__[c] for c in nodes.__dir__()

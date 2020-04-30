@@ -1,0 +1,89 @@
+0
+    1 >> 65[16]
+    2 >> 65[]
+    3 == C:/Users/Andrew Shen/Desktop/GraphicalAI/MyModel/test/test.csv
+    4 == 
+    5 == False
+    6 == False
+7
+    8 << 65[]
+    9 == C:/Users/Andrew Shen/Desktop/GraphicalAI/MyModel/test/out.csv
+    10 == False
+    11 == ,
+12
+    13 << 65[]
+    14 << 65[]
+    15 << 65[]
+    16 << 65[]
+    17 >> 65[8]
+    18 == 150
+    19 == 10
+    20 == True
+21
+    22 >> 65[14,40]
+    23 >> 65[15]
+    24 == C:/Users/Andrew Shen/Desktop/GraphicalAI/MyModel/test/iris.csv
+    25 == species
+    26 == False
+    27 == False
+28
+    29 << 65[]
+    30 >> 65[13]
+    31 == MSE
+    32 == adam
+    33 == ['accuracy']
+34
+    35 << 65[]
+    36 >> 65[29]
+    37 == 1
+    38 == linear
+39
+    40 << 65[]
+    41 >> 65[35]
+    42 == 8
+    43 == linear
+namespace
+    0 CSVInput
+    1 x
+    2 y
+    3 file input
+    4 result column
+    5 transpose
+    6 result numerical
+    7 CSVOutput
+    8 data
+    9 file output
+    10 transpose
+    11 separator
+    12 TrainNN
+    13 model
+    14 x
+    15 y
+    16 test x
+    17 result
+    18 epochs
+    19 batch size
+    20 classify
+    21 CSVInput
+    22 x
+    23 y
+    24 file input
+    25 result column
+    26 transpose
+    27 result numerical
+    28 OutputLayerNN
+    29 model
+    30 model
+    31 loss
+    32 optimizer
+    33 metrics
+    34 HiddenLayerNN
+    35 model
+    36 model
+    37 nodes
+    38 activation
+    39 InputLayerNN
+    40 x
+    41 model
+    42 nodes
+    43 activation

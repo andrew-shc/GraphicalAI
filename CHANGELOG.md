@@ -1,3 +1,15 @@
+## 0.16.0 [April 30, 2020]
+* Fully functioning basic Neural Network nodes
+* Reorganized `README.md`
+* Draggable (panning) workspace
+* Project will not save the reference to a null workspace file
+* Fixed a bug: the constant model `Selector` stores the correct internal data,
+but does not get updated onto the UI on deserialization
+* Repurposed the inspection menu into hopefully a helpful little wiki
+* Replaced the list nodes with a tree view as the list starts to congest
+* In parallel to the congestion, created a new way of placing new nodes continuously
+* The text sizing issue each time you open again should be fized
+
 ## 0.15.1 [April 26, 2019]
 * Actual LICENSE file changed
 * Build optimization

@@ -71,7 +71,8 @@ class FileDialog(QPushButton):
 		self.wind.close()  # closes the window
 
 	def value(self):
-		if hasattr(self, "file_dialog"):
+		if self.fl_dlg is not None:
+			print(self.fl_dlg.selectedFiles())
 			if self.fl_dlg is None: print("WARNING: NO FILES SELECTED")
 			elif len(self.fl_dlg.selectedFiles()) == 0:
 				print("WARNING: NO FILES SELECTED")
@@ -79,11 +80,12 @@ class FileDialog(QPushButton):
 				return self.fl_dlg.selectedFiles()[0]
 			else:
 				return self.fl_dlg.selectedFiles()
+		elif self.url != []:
+			return self.url[0]
 		print("WARNING: NO FILES SELECTED")
 		return ""
 
 	def save(self):
-		print(self, self.single, self.url, self.text())
 		return {"single": self.single, "url": self.url, "text": self.text()}
 
 	@staticmethod
@@ -97,22 +99,26 @@ class FileDialog(QPushButton):
 class Selector(QComboBox):
 	def __init__(self, tags: dict, default=None):
 		super().__init__(parent=None)
-		self.tag = ""
-		self.tags = tags
-		self.default = default
+		self.tag = ""  # the internal name selected
+		self.tags = tags  # a list of dict for mapping external names to internally selected names
+		self.default = default  # the default external names used
 
-		[self.addItem(self.tags[t]) for t in self.tags]
+		[self.addItem(t) for t in self.tags]
 
-		if self.default is not None:
-			self.tag = self.tags[self.default]
+		if self.default is not None: self.setTag(self.default, change=True)
+		elif len(self.tags) > 0: self.setTag(next(iter(self.tags)), change=True)  # retrieves the first item from the tags
+		else: print("[Error]: There are no tags to be used!")
 
 		self.textActivated.connect(lambda s: self.setTag(s))
 
-	def setTag(self, s):
+	def setTag(self, s, change=False):
+		# key=True: means if the value is a key from the tag, or False if its a direct value
+		# change=False: means the text does not change from the UI, or True if you want to change it
 		self.tag = s
+		if change: self.setCurrentText(s)
 
 	def value(self):
-		return self.tag
+		return self.tags[self.tag]
 
 	def save(self):
 		return {"tag": self.tag, "tags": self.tags, "default": self.default}
@@ -120,7 +126,7 @@ class Selector(QComboBox):
 	@staticmethod
 	def load(dat):
 		obj = Selector(dat["tags"], default=dat["default"])
-		obj.tag = dat["tag"]
+		if dat["tag"] != "": obj.setTag(dat["tag"], change=True)
 		return obj
 
 

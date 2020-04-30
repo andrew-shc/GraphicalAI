@@ -1,5 +1,5 @@
 from PyQt5 import QtGui
-from PyQt5.QtCore import Qt, QPoint
+from PyQt5.QtCore import Qt, QPoint, QMarginsF, QMargins
 from PyQt5.QtWidgets import *
 
 from typing import List, Tuple, Dict
@@ -55,8 +55,8 @@ class NodeInternal(QWidget):
 		title = QLabel(self.nd_cls.name, self)
 		title.setAlignment(Qt.AlignTop)
 		title.setFont(QtGui.QFont("courier", 10, QtGui.QFont.Bold))
-		title.setStyleSheet("background-color: #CCF0FF")
 		title.setAlignment(Qt.AlignCenter)
+		title.setStyleSheet("background-color: #CCF0FF")
 
 		# === FIELD CREATION === #
 		inp = QVBoxLayout()  # input area selection
@@ -66,7 +66,7 @@ class NodeInternal(QWidget):
 		out = QVBoxLayout()  # output area selection
 		[out.addWidget(QLabel(f[0])) for f in self.nd_cls.field["output"]]
 		out.addStretch()
-		print([f[1] for f in self.nd_cls.field["constant"]])
+
 		usr = QFormLayout()  # user input area selection
 		[usr.addRow(QLabel(f[0]), f[1]) for f in self.nd_cls.field["constant"]]
 
@@ -76,8 +76,14 @@ class NodeInternal(QWidget):
 		data_selector.addStretch()
 		data_selector.addLayout(out)
 
-		layout = QBoxLayout(QBoxLayout.TopToBottom)
-		layout.addWidget(title)
+		top = QHBoxLayout()
+		top.addWidget(title)
+		# top.addWidget(QPushButton("[x]"))
+		# top.setGeometry(QRect(0,0,100,100))
+
+
+		layout = QVBoxLayout()
+		layout.addLayout(top)
 		layout.addLayout(data_selector)
 		layout.addLayout(usr)
 		layout.addStretch()
@@ -130,12 +136,10 @@ class NodeInternal(QWidget):
 	def updPosConnector(self):
 		new_pos = QPoint(self.geometry().x(), self.geometry().y())
 		for c in self.connector:
-			if c.field in self.nd_cls.field["input"]:
+			if c.tag == TG_INPUT:
 				c.setPos(QPoint(new_pos.x()-self.CONNECTOR_SIZE[0]/2, new_pos.y()))
-			elif c.field in self.nd_cls.field["output"]:
+			elif c.tag == TG_OUTPUT:
 				c.setPos(QPoint(new_pos.x()-self.CONNECTOR_SIZE[0]/2+self.width(), new_pos.y()))
-			elif c.field in self.nd_cls.field["constant"]:
-				pass
 			else:
 				print("[MODEL] [ERROR] The node field is not in the model's field")
 
