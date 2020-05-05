@@ -40,7 +40,7 @@ class LineInput(QLineEdit):
 class FileDialog(QPushButton):
 	def __init__(self, *args, single=True):
 		super().__init__(*args)
-		self.url = ""
+		self.url: list = []
 		self.single = single  # store only a single file's directory url
 
 		self.clicked.connect(lambda checked: self.onClick(checked))

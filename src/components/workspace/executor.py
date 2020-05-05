@@ -35,6 +35,7 @@ class ModelExecutor:
 		           if type(nodes.__dict__[c]) == type
 		           if nodes.__dict__[c].__module__ == nodes.__name__
 		           ]
+
 		self.mdl_map = {o.title: o for o in mdl_cls_ref}
 
 		self.instance = {

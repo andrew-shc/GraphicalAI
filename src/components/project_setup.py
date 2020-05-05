@@ -31,7 +31,7 @@ class ProjectSetup(QWidget):
         proj_dscrp.addRow(QLabel("Project Name: "), self.proj_name)
 
         proj_new = NewProject("New Project")
-        proj_new.inputSelected.connect(lambda nm, dir: self.new_proj(nm, dir))
+        proj_new.inputSelected.connect(lambda path, name: self.new_proj(name, path))
 
         proj_ld = LoadProject("Load Project")
         proj_ld.inputSelected.connect(lambda dir: self.load_project(dir))
@@ -52,13 +52,16 @@ class ProjectSetup(QWidget):
         self.setLayout(base)
 
     def new_proj(self, name: str, path: str):
-        self.project = ProjectFI(name=name, path=path)
-        self.projectCreated.emit(self.project)
+        try:
+            self.project = ProjectFI(name=name, path=path)
+            self.projectCreated.emit(self.project)
 
-        self.proj_name.setText("<b>"+name+"</b>")
-        p: QPalette = self.proj_name.palette()
-        p.setColor(QPalette.WindowText, QColor(0, 0, 200))
-        self.proj_name.setPalette(p)
+            self.proj_name.setText("<b>" + name + "</b>")
+            p: QPalette = self.proj_name.palette()
+            p.setColor(QPalette.WindowText, QColor(0, 0, 200))
+            self.proj_name.setPalette(p)
+        except FileExistsError:
+            ErrorBox(**ErrorBox.E009).exec()
 
     def load_project(self, dir: str):
         try:
@@ -80,6 +83,7 @@ class ProjectSetup(QWidget):
 
     def save_proj(self):
         if self.project is not None:
+            self.project.setup()
             self.project.save()
         else:
             ErrorBox(**ErrorBox.E001).exec()

@@ -1,3 +1,10 @@
+## 0.16.1 [May 5, 2020]
+* Major bug fixes
+* Protect against writing a new project from existing directories (crashes)
+* Project file saves after the user clicks [SAVE PROJECT]
+* A new [New Project] dialog
+* Updated the stat bar
+
 ## 0.16.0 [April 30, 2020]
 * Fully functioning basic Neural Network nodes
 * Reorganized `README.md`

@@ -6,7 +6,15 @@ from src.debug import *
 from src.components.workspace.nodes import Nodes
 
 from typing import List, Dict, Optional
+from pathlib import Path
 import os
+
+
+def row(widget_a, widget_b):
+	section = QHBoxLayout()
+	section.addWidget(widget_a)
+	section.addWidget(widget_b)
+	return section
 
 
 class NodeMenu(QTreeWidget):
@@ -51,42 +59,6 @@ class NodeMenu(QTreeWidget):
 			self.counter += 1
 
 
-class ProjectRootEdit(QPushButton):
-	def __init__(self, start=os.path.expanduser("~")):
-		super().__init__()
-		self.dir = ""
-		self.lastText = start  # starting directory; start with the *start* directory
-
-		self.setText(start)
-
-		self.clicked.connect(lambda checked: self.onClick())
-
-	def onClick(self):
-		""" creates the file dialogue """
-		self.wind = QMainWindow()
-		self.wind.setWindowTitle("File Dialogue")
-		self.wind.setGeometry(0, 0, 1000, 400)
-
-		self.file_dialog = QFileDialog()
-		self.file_dialog.setFileMode(self.file_dialog.DirectoryOnly)
-		self.file_dialog.setViewMode(self.file_dialog.List)
-
-		self.file_dialog.fileSelected.connect(lambda dir: self.set_dir(dir))
-		self.file_dialog.finished.connect(lambda code: self.finished(code))
-
-		self.wind.setMenuWidget(self.file_dialog)
-		self.wind.show()
-
-	def set_dir(self, url):
-		self.dir = url+"/"
-		self.setText(self.dir)
-		self.wind.close()  # closes the window\
-
-	def finished(self, code: int):
-		print("---", code)
-		self.wind.close()
-
-
 class InputDialog(QPushButton):
 	inputSelected = pyqtSignal(str)
 
@@ -116,61 +88,102 @@ class InputDialog(QPushButton):
 		self.inputSelected.emit(s)
 
 
+class PrjPathDialog(QDialog):
+	BACK = ".."
+
+	accepted = pyqtSignal(str, str)  # accept(path, project name)
+	canceled = pyqtSignal()  # cancel
+
+	def __init__(self, parent=None, default="C:/Users/"):
+		self.USERNAME = os.getlogin()
+		self.dir = default+self.USERNAME
+
+		super().__init__(parent=parent)
+		self.icon = QFileIconProvider().icon(QFileIconProvider.Folder)
+		self.dirs = QListWidget()
+		self.dirs.itemActivated.connect(lambda itm: self.set_dir(itm.text()))
+		self.dirs.itemClicked.connect(lambda itm: self.dirs.setCurrentItem(itm))
+
+		b_cancel = QPushButton("Cancel")
+		b_accept = QPushButton("Accept")
+		b_cancel.clicked.connect(lambda checked: self.canceled.emit())
+
+		self.i_path = QLineEdit()
+		self.i_path.returnPressed.connect(lambda: self.set_dir(self.i_path.text()))
+
+		i_name = QLineEdit()
+
+		b_accept.clicked.connect(lambda checked: self.accepted.emit(self.i_path.text(), i_name.text()))
+
+		inp = QFormLayout()
+		inp.addRow(QLabel("Path: "), self.i_path)
+		inp.addRow(QLabel("Name"), i_name)
+
+		submit = QHBoxLayout()
+		submit.addStretch(1)
+		submit.addWidget(b_cancel)
+		submit.addWidget(b_accept)
+
+		central = QVBoxLayout()
+		central.addWidget(self.dirs, 5)
+		central.addLayout(inp, 1)
+		central.addLayout(submit, 1)
+
+		self.setLayout(central)
+		self.set_dir(None)
+
+	def set_dir(self, selected: Optional[str]):
+		if selected is not None:
+			if selected == PrjPathDialog.BACK:
+				self.dir = str(Path(self.dir).parent)
+			else:
+				self.dir = os.path.join(self.dir, selected)
+
+		if os.path.exists(self.dir):
+			self.dirs.clear()
+			self.dirs.addItem(QListWidgetItem(self.icon, PrjPathDialog.BACK))
+			for folder in os.listdir(self.dir):
+				if os.path.isdir(os.path.join(self.dir, folder)):
+					self.dirs.addItem(QListWidgetItem(self.icon, folder))
+		else:
+			self.dir = str(Path(self.dir).parent)
+			ErrorBox(**ErrorBox.E011).exec()
+		self.i_path.setText(self.dir)
+
+
 class NewProject(QPushButton):  # todo: a mess of code; revisit for some aesthetic & maintenance issue
-	inputSelected = pyqtSignal(str, str)
+	inputSelected = pyqtSignal(str, str)  # inputSelected(path, name)
 
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
-		self.name: str = ""
-		self.dir: str = ""
+		self.name: Optional[str] = None
+		self.path: Optional[str] = None
 
 		self.clicked.connect(lambda checked: self.on_click())
 
 	def on_click(self):
 		self.wind = QMainWindow(parent=self)
-		self.wind.setWindowTitle("Select Directory")
+		self.wind.setWindowTitle("New Project")
 
 		pos: QPoint = self.wind.mapToGlobal(QPoint(100, 300))
-		self.wind.setGeometry(pos.x(), pos.y(), 300, 100)  # todo: GLOBAL POSITION; may not position it correctly
+		self.wind.setGeometry(pos.x(), pos.y(), 400, 500)  # todo: GLOBAL POSITION; may not position it correctly
 
 		self.wind.setWindowModality(Qt.WindowModal)
 
-		def row(widget_a, widget_b):
-			section = QHBoxLayout()
-			section.addWidget(widget_a)
-			section.addWidget(widget_b)
-			return section
+		inp_dlg = PrjPathDialog()
+		# inp_dlg.setGeometry(0, 0, 400, 500)
+		inp_dlg.accepted.connect(lambda path, name: self.set_txt(path, name))
+		inp_dlg.canceled.connect(lambda: self.wind.close())
 
-		self.inp_dialog = QDialog()
-
-		b_ok = QPushButton("OK")
-		b_ok.clicked.connect(lambda checked: self.inp_dialog.accept())
-
-		result = QHBoxLayout()
-		result.addStretch()
-		result.addWidget(b_ok)
-
-		prj_edit = QLineEdit()
-		prj_dir = ProjectRootEdit()
-
-		central = QVBoxLayout()
-		central.addLayout(row(QLabel("Project Name: "), prj_edit))
-		central.addWidget(prj_dir)
-		central.addLayout(result)
-
-		self.inp_dialog.accepted.connect(lambda: self.set_txt(prj_edit.text(), prj_dir.dir))
-		self.inp_dialog.setLayout(central)
-
-		self.wind.setMenuWidget(self.inp_dialog)
+		self.wind.setCentralWidget(inp_dlg)
 		self.wind.show()
 
-	def set_txt(self, name: str, dir: str):
+	def set_txt(self, path: str, name: str):
 		self.wind.close()
 		self.name = name
-		self.dir = dir
+		self.path = path
 
-		if name == "" or dir == "": print("Error: Some values have not been selected yet")
-		else: self.inputSelected.emit(name, dir)
+		self.inputSelected.emit(path, name)
 
 
 class LoadProject(QPushButton):
@@ -209,6 +222,7 @@ class QHLine(QFrame):
 		if not visible: self.setLineWidth(-1)
 		self.setFrameShadow(QFrame.Sunken)
 
+
 class QVLine(QFrame):
 	def __init__(self, visible=True):
 		super().__init__()
@@ -218,15 +232,23 @@ class QVLine(QFrame):
 
 
 class ErrorBox(QMessageBox):
+	I = QMessageBox.Information
+	W = QMessageBox.Warning
+	C = QMessageBox.Critical
+
 	# once the error is created, it can not be removed from the list unless it was removed before a commit
-	E000 = {"code": "E000", "level": QMessageBox.Information, "title": "No Title", "txt": "No Text"}
-	E001 = {"code": "E001", "level": QMessageBox.Critical, "title": "Project", "txt": "The project directory has not been set."}
-	E002 = {"code": "E002", "level": QMessageBox.Warning, "title": "Project", "txt": "Invalid project file"}
-	E003 = {"code": "E003", "level": QMessageBox.Warning, "title": "Project", "txt": "Invalid project directory"}
-	E004 = {"code": "E004", "level": QMessageBox.Warning, "title": "Project", "txt": "Invalid project key\n(You have not set the model name)"}
-	E005 = {"code": "E005", "level": QMessageBox.Critical, "title": "Executor", "txt": "Runtime Error"}
-	E006 = {"code": "E006", "level": QMessageBox.Critical, "title": "Project", "txt": "Executor file failed to load"}
-	E007 = {"code": "E007", "level": QMessageBox.Critical, "title": "Project", "txt": "Model file failed to load"}
+	E000 = {"code": "E000", "level": I, "title": "No Title","txt": "No Text"}
+	E001 = {"code": "E001", "level": C, "title": "Application", "txt": "The project directory has not been set."}
+	E002 = {"code": "E002", "level": W, "title": "Project", "txt": "Invalid project file"}
+	E003 = {"code": "E003", "level": W, "title": "Project", "txt": "Invalid project directory"}
+	E004 = {"code": "E004", "level": W, "title": "Project", "txt": "Invalid project key\n(You have not set the model name)"}
+	E005 = {"code": "E005", "level": C, "title": "Executor","txt": "Runtime Error"}
+	E006 = {"code": "E006", "level": C, "title": "Project", "txt": "Executor file failed to load"}
+	E007 = {"code": "E007", "level": C, "title": "Project", "txt": "Model file failed to load"}
+	E008 = {"code": "E008", "level": W, "title": "Application", "txt": "A model name is required"}
+	E009 = {"code": "E009", "level": C, "title": "Project", "txt": "The directory is not empty"}
+	E010 = {"code": "E010", "level": C, "title": "Application", "txt": "Missing input"}
+	E011 = {"code": "E011", "level": W, "title": "Application", "txt": "Invalid directory"}
 
 	def __init__(self, code="E000", title="No Title", level=QMessageBox.Information, txt="No Text"):
 		super().__init__()

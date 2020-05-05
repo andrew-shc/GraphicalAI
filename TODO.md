@@ -30,26 +30,30 @@ Things you can try. __(At your own risk!)__
 
 #### Next Release Candidates
 - Add an option "Load Empty" when the file failed to load
-* The text size changes on the QComboBox on the side of each Model Workspace
 * Add an delete button on top corners of each Node to delete the relative Node
 - Add a pre-process normalize image node
 - Add read image node
 - Ask to save the project (if not saved) after the user decides to quit
-- Update the status bar
+- #Update the status bar
 - Add grid-lines for workspace to diff. between moving view and discrete nodes
 - Executor check for checked errors
+- Maybe merge neural network to matrix (reogranize name)
+- Changed all the Sklearn backend to Tensorflow (resulting smaller binaries)
 
 #### Near Future (Ordered)
+- Error suite:
+  - show red border (or other symbols) to signify where the error occured in the node
+  - show console of where the error is instead of showing a Dialogue Box
+  - be descriptive
+  - Report unused variables per fields in nodes (internal)
+
 - A better way to create nodes
 - Serializing Constant Field based on objects instead of relying on names (possible duplicate names)
-- More descriptive errors
-- Support circular reference for executing nodes (will implemented when needed)
+
 - Text break when the Model Workspace Title reach pass a limit
 - Add a boosting/bagging model
-- Reogranize internal nodes and executor functionality of nodes
 - Texture.data file of some sort for storing default textures/colors
-- Maybe merge neural network to matrix
-- Report unused variables per fields in nodes
+- Support circular reference for executing nodes (will implemented when needed)
 
 ###### Nodes
 - The CSV Read nodes should able to hold multiple output (y-values) too

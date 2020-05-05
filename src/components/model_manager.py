@@ -84,6 +84,8 @@ class ModelWorkspace(QWidget):
 
 	def set_name(self, name: str, label: QLabel):
 		if self.project is not None:
+			self.project.setup()
+
 			self.name = name
 			label.setText(name)
 			self.nameChanged.emit(name)
@@ -107,6 +109,7 @@ class ModelWorkspace(QWidget):
 				self.project.save_mdl_proj(self.key, self.view.items())
 				self.project.save()
 			else:
+				ErrorBox(**ErrorBox.E008).exec()
 				print("Error: Project File Interface key is empty")
 		else:
 			ErrorBox(**ErrorBox.E001).exec()

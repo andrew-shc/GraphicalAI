@@ -90,30 +90,33 @@ class NodeRev2(Nodes):
 		return out
 
 
-class NodeRev3(Nodes):
-	title = "#[Abstract]"
-	name = "#[Abstract]"
-
-	def inp(self, **kwargs): pass
-
-	def out(self, **kwargs): pass
-
-	def const(self, **kwargs): pass
-
-	def create(self, view, pos, **load_const):
-
-		# replace the underscore with space when users sees it
-		self.inp( x=CT.Any, x2=CT.Any, )
-		self.out( y=CT.Any, other=CT.Any, file_output=CT.Any, )
-		if load_const == {}: self.const( file_input=FileDialog() )
-		else: self.const( **load_const )
-
-		return self
-
-	@staticmethod
-	def execute(inp, const, out, inst) -> dict:
-		out.x = const.file_input()
-		return out
+# TODO: executor does not read from export, still reads from the usual names here
+# class Binding:
+# 	Null = None
+# 	Constant = None
+#
+#
+# def inp(**kwargs): pass
+# def out(**kwargs): pass
+# def cns(**kwargs): pass
+#
+# def node(*args, **kwargs): return node
+# class NodeRev3(Nodes):
+# 	title = "#[Abstract]"
+# 	name = "#[Abstract]"
+#
+# 	def __getitem__(self, item, **kwargs):
+# 		pass
+#
+# 	def __init__(self, view, pos, **load_const):
+# 		self.fieldname = self[inp, CT.Matrix | CT.Int, Binding.Null]
+# 		self.fieldname = self[out, CT.Matrix | CT.Any, Binding.Null]
+# 		self.constants = self[cns, CT.Any, Binding.Constant]
+#
+# 	@staticmethod
+# 	def execute(inp, const, out, inst) -> dict:
+# 		out.x = const.file_input()
+# 		return out
 
 
 class CSVInput(Nodes):

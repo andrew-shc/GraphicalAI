@@ -198,15 +198,17 @@ class ProjectFI:
 	prj_file = "project.yaml"
 
 	def __init__(self, *, name: str, path: str):  # name: valid directory name
+		self.name = name
+		print(os.path.exists(path), path)
 		if os.path.exists(path):
-			self.path = os.path.join(path, name)
+			if os.path.exists(os.path.join(path, self.name)):
+				raise FileExistsError
+			else:
+				self.path = os.path.join(path, self.name)
 		else:
-			print("Error: path name <", path, "> is not a valid pathname or non-existing directory")
-			raise
+			raise OSError("Error: path name <", path, "> is not a valid pathname or non-existing directory")
 
-		self.setup(name)
-
-	def setup(self, name: str):
+	def setup(self):
 		""" sets-up the project directory
 		"""
 		existed = False
@@ -224,7 +226,7 @@ class ProjectFI:
 				"author": None,
 				"created": None,
 				"updated": None,
-				"name": name,
+				"name": self.name,
 				"model": {
 					"index": 0,
 					"tag": {},  # model name: {id_name:model_name}
@@ -237,7 +239,7 @@ class ProjectFI:
 			if not os.path.exists(os.path.join(self.path, dir)): os.mkdir(os.path.join(self.path, dir))
 			else: existed = True
 
-		if existed: print("Some or all of the files/directories exists in the source path")
+		if existed: print("[Warning] Some or all of the files/directories exists in the source path")
 
 	def save(self):
 		""" Loads project data to the memory except model files and related.
