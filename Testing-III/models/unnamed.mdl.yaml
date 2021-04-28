@@ -1,0 +1,180 @@
+0:
+  connection: null
+1:
+  connection: null
+2:
+  connection: null
+3:
+  cdat: <None>
+  ctag: MultiComboBox
+4:
+  cdat: <None>
+  ctag: VariableSelector
+5:
+  cdat: <None>
+  ctag: CheckBox
+6:
+  cdat: <None>
+  ctag: ComboBox
+7:
+  cdat: <None>
+  ctag: LineInput
+8:
+  cdat: <None>
+  ctag: IntLineInput
+9:
+  connc:
+  - 14
+  - 13
+  - 12
+  - 11
+  - 10
+  const:
+  - 8
+  - 7
+  - 6
+  - 5
+  - 4
+  - 3
+  pos:
+  - -63.0
+  - 228.0
+  tag: XXXX1
+10:
+  ct: 386
+  pc:
+  - 0
+  sc: []
+11:
+  ct: 386
+  pc:
+  - 1
+  sc: []
+12:
+  ct: 385
+  pc: []
+  sc: []
+13:
+  ct: 385
+  pc: []
+  sc: []
+14:
+  ct: 385
+  pc:
+  - 2
+  sc: []
+15:
+  cdat: <None>
+  ctag: ComboBox
+16:
+  connc:
+  - 19
+  - 18
+  - 17
+  const:
+  - 15
+  pos:
+  - 352.0
+  - 50.0
+  tag: OutDT
+17:
+  ct: 386
+  pc: []
+  sc: []
+18:
+  ct: 386
+  pc: []
+  sc: []
+19:
+  ct: 385
+  pc: []
+  sc:
+  - 37
+  - 35
+20:
+  cdat: <None>
+  ctag: LineInput
+21:
+  cdat: <None>
+  ctag: ComboBox
+22:
+  cdat: <None>
+  ctag: LineInput
+23:
+  cdat: <None>
+  ctag: ComboBox
+24:
+  connc:
+  - 29
+  - 28
+  - 27
+  - 26
+  - 25
+  const:
+  - 23
+  - 22
+  - 21
+  - 20
+  pos:
+  - 146.0
+  - 188.0
+  tag: XXXX0
+25:
+  ct: 386
+  pc: []
+  sc: []
+26:
+  ct: 386
+  pc:
+  - 35
+  sc: []
+27:
+  ct: 385
+  pc: []
+  sc:
+  - 0
+28:
+  ct: 385
+  pc: []
+  sc:
+  - 1
+29:
+  ct: 385
+  pc: []
+  sc:
+  - 36
+30:
+  cdat: <None>
+  ctag: ComboBox
+31:
+  connc:
+  - 34
+  - 33
+  - 32
+  const:
+  - 30
+  pos:
+  - -301.0
+  - 97.0
+  tag: InpDT
+32:
+  ct: 386
+  pc: []
+  sc:
+  - 2
+33:
+  ct: 386
+  pc:
+  - 37
+  - 36
+  sc: []
+34:
+  ct: 385
+  pc: []
+  sc: []
+35:
+  connection: null
+36:
+  connection: null
+37:
+  connection: null

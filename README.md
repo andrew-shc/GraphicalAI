@@ -53,7 +53,7 @@ some the rusty, messy, early development of this software.
 
 An example of ML in GUI using Linear Regression on iris.csv.
 
-![Example 1](ref/[EXMP]ML_LinearRegression.png)
+![Example 1](old/ref/[EXMP]ML_LinearRegression.png)
 
 ### Installing
 ##### Windows

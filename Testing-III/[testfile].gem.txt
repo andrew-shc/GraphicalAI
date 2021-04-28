@@ -1,0 +1,5 @@
+[the model is]<model name>[multiple input UID][multiple input UID reference within a single output; another set of input UID to reference from the 2nd output][constval]
+[ID]ModelName[InpID;][InpID;][ConstVal;]
+
+0 OutputData[][1,2;4,5;][]
+6
