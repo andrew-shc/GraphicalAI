@@ -28,6 +28,8 @@ class CT:
     T_INT       = 0b000000001000_0000
     T_FLOAT     = 0b000000010000_0000
 
+    REQR_CONNCT = None  # todo: warns the execution or something else that this connector requires a connection
+
 
 class InputField:
     def __init__(self, name, dtyp):

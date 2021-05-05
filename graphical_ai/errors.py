@@ -27,8 +27,12 @@ class ProjectFileAppError(AppBaseException):
     FILE_GEM_INVALID = 6
 
 
-class ModelExecutionAppError(AppBaseException):
-    pass
+class ModelExecutionRuntimeError(AppBaseException):
+    ERROR = 1
+
+
+class ModelExecutionError(AppBaseException):
+    DEBUG_ERROR = 1
 
 
 class ModelRuntimeAppError(AppBaseException):

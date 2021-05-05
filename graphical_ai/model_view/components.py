@@ -2,6 +2,8 @@ from PySide6.QtWidgets import *
 from PySide6.QtCore import QRectF, QSize, Qt
 from PySide6.QtGui import QPalette, QIntValidator
 
+import math
+
 
 class InteractiveComponent(QGraphicsProxyWidget):
     def __init__(self, wx: QWidget, size: tuple, parent=None):
@@ -29,11 +31,13 @@ class InteractiveComponent(QGraphicsProxyWidget):
     def deserialize(self, dt):
         self.wx.deserialize(dt)
 
-    def bin_serialize(self):
-        return self.wx.bin_serialize()
+    def bin_serialize(self) -> bytes:
+        sdt = self.wx.bin_serialize()
+        if type(sdt) == bytes: return sdt
+        else:
+            print("debug:", self.wx)
+            raise TypeError("debug: binary serialization expected to return bytes")
 
-    def bin_deserialize(self, bdt):
-        self.wx.bin_deserialize(bdt)
 
 # def boundingRect(self) -> QRectF:
 # 	return QRectF()
@@ -48,22 +52,24 @@ class IntLineInput(QLineEdit):
         super().__init__(parent=parent)
         self.setValidator(QIntValidator())
 
-        self.num: int = default
+        self.default_num: int = default
+        self.setText(str(self.default_num))
 
     def value(self):
-        return 0
+        return int(self.text())
 
     def serialize(self):
-        return "<None>"
+        return self.text()
 
     def deserialize(self, dt):
-        print(dt)
+        self.setText(dt)
 
     def bin_serialize(self):
-        return b"\x00Null"
+        return int(self.text()).to_bytes(int(math.log2(int(self.text()))//8 + 1), "big")
 
-    def bin_deserialize(self, bdt):
-        print(bdt)
+    @staticmethod
+    def bin_deserialize(bdt):
+        return int.from_bytes(bdt, "big")
 
 
 class LineInput(QLineEdit):
@@ -74,23 +80,26 @@ class LineInput(QLineEdit):
     def __init__(self, default: str, parent=None):
         super().__init__(parent=parent)
 
-        self.text: str = default
-        self.setText(self.text)
+        self.default: str = default
+        self.setText(self.default)
 
     def value(self):
-        return 0
+        return self.text()
 
     def serialize(self):
-        return "<None>"
+        return self.text()
 
     def deserialize(self, dt):
-        print(dt)
+        self.setText(dt)
 
     def bin_serialize(self):
-        return b"\x00Null"
+        if len(self.text()) != 0: return self.text().encode("ASCII")
+        else: return b"\x05"  # to signify the input field is empty
 
-    def bin_deserialize(self, bdt):
-        print(bdt)
+    @staticmethod
+    def bin_deserialize(bdt):
+        if bdt != b"\x05": return bdt.decode("ASCII")
+        else: return ""
 
 
 class ComboBox(QComboBox):
@@ -105,20 +114,21 @@ class ComboBox(QComboBox):
         for s in self.selc:
             self.addItem(s)
 
-    def value(self):
+    def value(self):  # just useless
         return 0
 
     def serialize(self):
-        return "<None>"
+        return self.currentText()
 
     def deserialize(self, dt):
-        print(dt)
+        self.setCurrentText(dt)
 
     def bin_serialize(self):
-        return b"\x00Null"
+        return self.currentText().encode("ASCII")
 
-    def bin_deserialize(self, bdt):
-        print(bdt)
+    @staticmethod
+    def bin_deserialize(bdt):
+        return bdt.decode("ASCII")
 
 
 class CheckBox(QCheckBox):
@@ -137,16 +147,19 @@ class CheckBox(QCheckBox):
         return 0
 
     def serialize(self):
-        return "<None>"
+        return self.checkState() == Qt.Checked
 
     def deserialize(self, dt):
-        print(dt)
+        if dt: self.setCheckState(Qt.Checked)
+        else: self.setCheckState(Qt.Unchecked)
 
     def bin_serialize(self):
-        return b"\x00Null"
+        return b"\xff" if self.checkState() == Qt.Checked else b"\x00"
 
-    def bin_deserialize(self, bdt):
-        print(bdt)
+    @staticmethod
+    def bin_deserialize(bdt):
+        if bdt == b"\xff": return True
+        else: return False
 
 
 class VariableSelector(QComboBox):
@@ -169,8 +182,10 @@ class VariableSelector(QComboBox):
     def bin_serialize(self):
         return b"\x00Null"
 
-    def bin_deserialize(self, bdt):
+    @staticmethod
+    def bin_deserialize(bdt):
         print(bdt)
+        return bdt
 
 
 class MultiComboBox(QComboBox):
@@ -193,6 +208,8 @@ class MultiComboBox(QComboBox):
     def bin_serialize(self):
         return b"\x00Null"
 
-    def bin_deserialize(self, bdt):
+    @staticmethod
+    def bin_deserialize(bdt):
         print(bdt)
+        return bdt
 

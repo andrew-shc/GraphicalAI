@@ -1,10 +1,15 @@
 from node_graph.nodes import node_class_ref, NodeState
+from errors import ModelExecutionRuntimeError, ModelExecutionError
+
+import copy
 
 
 class ModelExecutor():
+    # TODO: executor will need info about variable selection, variable specifier, etc.
+
     def __init__(self, model_exec_data):
         # each individual nodes are labelled with an id based on its index in the model exec data list
-        self.mdl_ref_dt = model_exec_data.copy()  # mapper between node-exec id and the actual node data
+        self.mdl_ref_dt = copy.deepcopy(model_exec_data)  # mapper between node-exec id and the actual node data
         self.inp_ref_nd = {}  # mapper between input id to its respective node (through node id) and its name
         self.node_anchors = []
 
@@ -20,6 +25,8 @@ class ModelExecutor():
                 out_fld = [j for i in out_nd["out"] for j in i]
                 if len(nd["inp"]+out_fld) > len(set(nd["inp"]) | set(out_fld)):
                     self.node_adj_list[out_nid].append(nid)
+            for const_nm in nd["const"]:
+                nd["const"][const_nm] = nd["%%class"].field_data["constant"][const_nm].bin_deserialize(nd["const"][const_nm])
             if nd["%%class"].state == NodeState.INPUT:
                 self.node_anchors.append(nid)
             # print("FIELD APPENDING", nd["inp"], nd["out"])
@@ -29,11 +36,12 @@ class ModelExecutor():
         """
         executes the model node graph
         """
-        print("ATTEMPT TO EXECUTE")
-        print("MAPPER", self.mdl_ref_dt)
-        print("INPREF", self.inp_ref_nd)
-        print("ANCHOR", self.node_anchors)
-        print("ADJLST", self.node_adj_list)
+        print("model execution begin")
+
+        # print("MAPPER", self.mdl_ref_dt)
+        # print("INPREF", self.inp_ref_nd)
+        # print("ANCHOR", self.node_anchors)
+        # print("ADJLST", self.node_adj_list)
 
         # this is a modified breadth-first search where there are no visited queue, because first time you visit
         # Node A, it might not be ready till all the other connected nodes assigns the values to Node A's input.
@@ -52,8 +60,9 @@ class ModelExecutor():
             for nd_ref in self.node_adj_list[first]:
                 queue.append(nd_ref)
 
-            print("STATE:", nd_dt["%%class"].state)
-            print("FIELD:", fld_meta)
+            # print("STATE:", nd_dt["%%class"].state)
+            # print("FIELD:", fld_meta)
+            # print("ND DT:", nd_dt)
 
             # per each node executed
             # ----------------------
@@ -68,9 +77,6 @@ class ModelExecutor():
             # 6. Fill the referenced input field with the data from output
             # --- done ---
 
-            print(first, self.node_adj_list[first])
-            print(nd_dt)
-
             if nd_dt["%%class"].state != NodeState.INPUT:
                 # print("INP", nd_dt["%%class"].inp)
                 valid_inp = True
@@ -78,11 +84,20 @@ class ModelExecutor():
                     if ifld_nm not in nd_dt["%%class"].inp:
                         valid_inp = False
                         break
-                if valid_inp is False: print("warning: incomplete input")
+                if valid_inp is False:
+                    print("warning: incomplete input")
+                    continue
 
-            # nd_dt["%%class"].const = 0
-            print(fld_meta["constant"], nd_dt)
-            nd_dt["%%class"].execute(instance)
+            # NOTE: retrieving value directly from the constant widget object itself rather than deserializing
+            #   binary data is not garunteed to have the same value as the user specified, as this class strives
+            #   to be independent from node data. Only from the read binary data.
+            nd_dt["%%class"].const = nd_dt["const"]  # {k:fld_meta["constant"][k].value() for k in fld_meta["constant"]}
+            try:
+                nd_dt["%%class"].execute(instance)
+            except ModelExecutionRuntimeError as e:
+                raise e
+            except BaseException as e:
+                raise ModelExecutionError(msg=e, code=ModelExecutionError.DEBUG_ERROR)
 
             if nd_dt["%%class"].state != NodeState.OUTPUT:
                 # print("OUT", nd_dt["%%class"].out)
@@ -96,3 +111,12 @@ class ModelExecutor():
                         ext_node = self.mdl_ref_dt[self.inp_ref_nd[inp_ref][0]]
                         ext_node["%%class"].inp[self.inp_ref_nd[inp_ref][1]] = nd_dt["%%class"].out[ofld_nm]
                 # print(nd_dt["%%class"].out)
+
+            # TODO: create a diagram why we do this instead of using visited list
+            # this is it removes any additional occurrences of the current <first> node presently from the queue, as to
+            # not repeat, while also allow loops with at least 2 different node instance it has to loop through
+            # (or else it just directly refers back to the queue and get removed instantly and its unreadable
+            # w/ a single node instance loop)
+            queue = [n for n in queue if n != first]
+
+        print("model execution finished")

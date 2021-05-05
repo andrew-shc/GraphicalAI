@@ -3,6 +3,8 @@ import yaml
 
 from errors import *
 from node_graph.execution import ModelExecutor
+from node_graph.nodes import node_class_ref
+
 
 class ReferencedFileHandler:
     """
@@ -70,10 +72,11 @@ class ProjectFileHandler:
     Used to load files from the project directory to the workspace.
     """
 
-    def __init__(self, root_file, root, dat, models, exec_models):
-        (self.path, self.name) = os.path.split(root)
+    def __init__(self, root_file, path, dat, models, exec_models):
+        self.path = path
+        self.name = dat["name"]
         self.root_file = root_file
-        self.root = root
+        self.root = os.path.join(path, self.name)
         self.dat = dat
         self.models: dict = models  # dict of model data (dict of dict {mdl_id:{mdl_data}})
         self.exec_models: dict = exec_models  # dict of model data ready to be executed in project
@@ -81,14 +84,14 @@ class ProjectFileHandler:
         # self.gem_models: dict = models  # dict of model data ready to be executed independently
 
     @classmethod
-    def create_project(cls, root):
+    def create_project(cls, path: str, name: str):
         print("creating project")
 
         dat = {
             "version": 0,  # file version
             "writes": 0,  # how many times the project file has been saved, since last project path changed
             "reads": 0,  # how many times the project file has been loaded, since last project path changed
-            "name": "",
+            "name": name,
             "mdl_id_counter": 0,
             "mdl_ids": {},  # {mdl_id: mdl_name}
         }
@@ -96,7 +99,7 @@ class ProjectFileHandler:
         models = {}  # model datas are stored in here
         exec_models = {}
 
-        return cls(None, root, dat, models, exec_models)
+        return cls(None, path, dat, models, exec_models)
 
     @classmethod
     def load_project(cls, root_file):
@@ -262,27 +265,31 @@ class ProjectFileHandler:
                                 # it properly converts into a further subarray of connected referenced inputs within a
                                 # single output connector
                                 fld_const.append(int.from_bytes(cbuf, "big"))
-
                                 mode = "const"
                                 cbuf = nd[i:i+1]
                             elif len(cbuf) == fld_const[-1] and mode == "const":
                                 fld_const[-1] = cbuf
-
                                 if const_size > 0: mode = "const_dt_sizes"
                                 else: mode = None  # end
                                 cbuf = nd[i:i+1]
+                            elif fld_const[-1] == 0 and mode == "const":
+                                del fld_const[-1]
+                                if const_size > 0: mode = "const_dt_sizes"
+                                else: mode = None  # end
+                                cbuf += nd[i:i+1]
                             else:
                                 cbuf += nd[i:i+1]
                         node_exec_dt = {}
                         node_exec_dt["ndtg"] = ndnm
                         node_exec_dt["inp"] = fld_inp
                         node_exec_dt["out"] = fld_out[1:]
+                        # TODO: optimization: maybe directly set the object instead of trashing the field data
                         node_exec_dt["const"] = {name:val for (name, val) in zip(node_class_ref[ndnm]().field_data["constant"], fld_const[1:])}
                         model_exec_data.append(node_exec_dt)
                 print(f"loading project <{ref_mdl_id[mdl_name]}>: model-exec data", model_exec_data)
                 exec_models[ref_mdl_id[mdl_name]] = model_exec_data
 
-        return cls(root_file, root, dat, models, exec_models)
+        return cls(root_file, os.path.split(root)[0], dat, models, exec_models)
 
     def save_project(self):
         print("saving project")
@@ -345,8 +352,12 @@ class ProjectFileHandler:
                     [(len(i).to_bytes(_COLLC_SIZE, "big")+b"".join([uid.to_bytes(GEM_UIDSIZE, "big") for uid in i]))
                      for i in node["out"]])
                 )
+                # TODO: optimization: maybe using the optimization from earlier, and directly use the "cached" fld data
+                nd_const_ordered = node_class_ref[node["ndtg"]]._field_data()["constant"]
+                # using nd_const_ordered instead of directly iterating through the constant ordered from the node dict,
+                # because using field data's order of the constant provides standardization of the ordering of the dict
                 node_bdt.extend(b"".join(
-                    [(len(node["const"][i]).to_bytes(_CONST_COLLC_SIZE, "big")+node["const"][i]) for i in node["const"]])
+                    [(len(node["const"][i]).to_bytes(_CONST_COLLC_SIZE, "big")+node["const"][i]) for i in nd_const_ordered])
                 )
                 node_bdt.extend(b"\n")
                 node_bdt = bytearray(len(node_bdt).to_bytes(_NODE_SIZE, "big"))+node_bdt
@@ -509,7 +520,6 @@ class ProjectFileHandler:
 
                 mdl_exec_dt.append(exec_ndt)
 
-        print(f"saving model <{mdl_id}>: model-exec data", mdl_exec_dt)
         self.exec_models[mdl_id] = mdl_exec_dt
 
     def delete_model(self, mdl_id: int):

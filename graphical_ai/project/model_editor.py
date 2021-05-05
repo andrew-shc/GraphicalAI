@@ -188,8 +188,10 @@ class ModelPage(QWidget):
 
     @Slot(int)
     def sl_add_new_mdl(self, index: int):
-        if self.wtw_mdl_tabs.count() == index + 1:
-            self.wtw_mdl_tabs.insertTab(index, ModelWorkspace("unnamed", parent=self.wtw_mdl_tabs), "unnamed")
+        if self.wtw_mdl_tabs.count() == index+1:
+            (mdl_txt, ok) = QInputDialog.getText(self, "Enter Model Name", "Mode Name:")
+            if ok and len(mdl_txt) != 0:
+                self.wtw_mdl_tabs.insertTab(index, ModelWorkspace(mdl_txt, parent=self.wtw_mdl_tabs), mdl_txt)
 
     @Slot()
     def sl_save_cur_mdl(self):

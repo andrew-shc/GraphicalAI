@@ -88,21 +88,6 @@ class LoadProject(QWidget):
         self.setAutoFillBackground(True)
         self.setPalette(pal)
 
-        # wtw_proj = QTableWidget(parent=self)
-        # wtw_proj.setRowCount(3)  # will be defined by the length from lfhndl
-        # wtw_proj.setColumnCount(2)
-        # wtw_proj.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        #
-        # wtw_proj.setHorizontalHeaderItem(0, QTableWidgetItem("Name"))
-        # wtw_proj.setHorizontalHeaderItem(1, QTableWidgetItem("Location"))
-        #
-        # wtw_proj.setItem(0, 0, QTableWidgetItem("a1"))
-        # wtw_proj.setItem(0, 1, QTableWidgetItem("a2"))
-        # wtw_proj.setItem(1, 0, QTableWidgetItem("b1"))
-        # # wtw.setItem(1, 1, QTableWidgetItem("b2"))
-        # wtw_proj.setItem(2, 0, QTableWidgetItem("c1"))
-        # wtw_proj.setItem(2, 1, QTableWidgetItem("c2"))
-
         self.wlw_proj = QListWidget(parent=self)
         self.wlw_proj.itemDoubleClicked.connect(self.sl_load_proj)
 
@@ -169,28 +154,46 @@ class NewProject(QWidget):
         # wb_next = QPushButton("Create a New Project!")
         # wb_next.clicked.connect(self.sl_np_submit)
 
-        qb_loc_name = QPushButton("New Project")
-        qb_loc_name.clicked.connect(self.sl_create_proj)
-        font: QFont = qb_loc_name.font()
-        font.setPointSize(12)
-        qb_loc_name.setFont(font)
+        self.qle_name = QLineEdit("")
+        self.qb_path = QPushButton("<Empty>")
+        self.qb_path.clicked.connect(lambda _checked: self.sl_open_file_dir())
 
-        qb_create = QPushButton("Create")
+        qfl_creation = QFormLayout()
+        qfl_creation.addRow("Project Name:", self.qle_name)
+        qfl_creation.addRow("Project Path:", self.qb_path)
+
+        # qb_loc_name = QPushButton("New Project")
+        # qb_loc_name.clicked.connect(self.sl_create_proj)
+        # font: QFont = qb_loc_name.font()
+        # font.setPointSize(12)
+        # qb_loc_name.setFont(font)
+
+        qb_create = QPushButton("Create Project")
+        qb_create.clicked.connect(lambda _checked: self.sl_create_proj())
         font: QFont = qb_create.font()
         font.setPointSize(12)
         qb_create.setFont(font)
 
         lyt_main = QVBoxLayout()
-        lyt_main.addWidget(qb_loc_name)
-        lyt_main.addWidget(QLabel("Project creation settings"))
+        # lyt_main.addWidget(qb_loc_name)
+        # lyt_main.addWidget(QLabel("Project creation settings"))
+        lyt_main.addLayout(qfl_creation)
         lyt_main.addWidget(qb_create)
 
         self.setLayout(lyt_main)
 
-    @Slot(bool)
-    def sl_create_proj(self, _checked):
-        (proj_path, _filter) = QFileDialog.getSaveFileName(parent=None, caption="New Project Directory")
-        self.sg_np_submitted.emit(ProjectFileHandler.create_project(proj_path))
+    @Slot()
+    def sl_create_proj(self):
+        self.sg_np_submitted.emit(
+            ProjectFileHandler.create_project(self.qb_path.text(), self.qle_name.text())
+        )
+
+    @Slot()
+    def sl_open_file_dir(self):
+        proj_path = QFileDialog.getExistingDirectory(parent=None, caption="New Project Location")
+        if proj_path != "":
+            self.qb_path.setText(proj_path)
+
 
 
 class LoadExecProject(QWidget):

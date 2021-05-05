@@ -1,6 +1,8 @@
 import sys
 from PySide6.QtCore import Slot
 from PySide6.QtWidgets import QApplication, QLabel, QMainWindow
+import numpy as np
+np.set_printoptions(threshold=3)  # np.inf
 
 import main_window
 
