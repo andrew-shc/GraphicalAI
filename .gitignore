@@ -9,6 +9,12 @@ __pycache__/
 .mypy_cache/
 .pytest_cache/
 
+# flutter workspace
+end_user_app/android/
+end_user_app/ios/
+end_user_app/test/
+end_user_app/web/
+
 # project internal
 old/
 proto/

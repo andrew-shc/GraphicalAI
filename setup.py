@@ -3,6 +3,6 @@ from Cython.Build import cythonize
 
 setup(
     name="Application",
-    ext_modules=cythonize(["main.pyx","libs.pyx"]),
+    ext_modules=cythonize(["main.py","libs.pyx"]),
     zip_safe=False,
 )

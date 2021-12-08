@@ -1,0 +1,13 @@
+exec-proj: {}
+proj:
+  C:/Users/Andrew Shen/Desktop/GraphicalAI-II/Testing-III\project.yaml: Testing-III
+  C:/Users/Andrew Shen/Desktop/GraphicalAI-II/Testing-II\project.yaml: Testing-II
+  C:/Users/Andrew Shen/Desktop/GraphicalAI-II/Testing-IV\project.yaml: Testing-IV
+  C:/Users/Andrew Shen/Desktop/GraphicalAI-II/Testing-V/project.yaml: Testing-V
+  C:/Users/Andrew Shen/Desktop/GraphicalAI-II/Testing-VI/project.yaml: Testing-VI
+  C:/Users/Andrew Shen/Desktop/GraphicalAI-II/graphical_ai\Testing-VII\project.yaml: Testing-VII
+  C:/Users/Andrew Shen/Desktop/GraphicalAI-II/name/project.yaml: name
+  C:/Users/Andrew Shen/Desktop/GraphicalAI-II\TestProject\project.yaml: TestProject
+  C:/Users/Andrew Shen/Desktop/GraphicalAI-II\Testing-IX\project.yaml: Testing-IX
+  C:/Users/Andrew Shen/Desktop/GraphicalAI-II\Testing-VIII\project.yaml: Testing-VIII
+  C:/Users/Andrew Shen/Desktop/GraphicalAI-II\test\project.yaml: test

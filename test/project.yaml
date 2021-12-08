@@ -1,7 +1,7 @@
 mdl_id_counter: 1
 mdl_ids:
   0: unnamed
-name: TestProject
-reads: 6
+name: test
+reads: 0
 version: 0
-writes: 9
+writes: 1

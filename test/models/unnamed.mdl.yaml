@@ -1,0 +1,49 @@
+0:
+  connection: null
+1:
+  cdat: ./e.txt
+  ctag: LineInput
+2:
+  connc:
+  - 3
+  const:
+  - 1
+  pos:
+  - 150.0
+  - -20.0
+  tag: OutCV
+3:
+  ct: 385
+  pc: []
+  sc:
+  - 0
+4:
+  cdat: ./project.yaml
+  ctag: LineInput
+5:
+  cdat: true
+  ctag: CheckBox
+6:
+  cdat: ''
+  ctag: LineInput
+7:
+  connc:
+  - 9
+  - 8
+  const:
+  - 6
+  - 5
+  - 4
+  pos:
+  - -316.0
+  - 20.0
+  tag: InpCV
+8:
+  ct: 386
+  pc: []
+  sc: []
+9:
+  ct: 386
+  pc:
+  - 0
+  sc: []
