@@ -1,0 +1,42 @@
+0:
+  cdat: filename
+  ctag: LineInput
+1:
+  connc:
+  - 2
+  const:
+  - 0
+  pos:
+  - -614.0
+  - -29.0
+  tag: OutCV
+2:
+  ct: 385
+  pc: []
+  sc: []
+3:
+  cdat: F
+  ctag: ComboBox
+4:
+  connc:
+  - 7
+  - 6
+  - 5
+  const:
+  - 3
+  pos:
+  - -410.0
+  - -225.0
+  tag: InpDT
+5:
+  ct: 386
+  pc: []
+  sc: []
+6:
+  ct: 386
+  pc: []
+  sc: []
+7:
+  ct: 385
+  pc: []
+  sc: []

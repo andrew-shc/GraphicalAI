@@ -4,238 +4,162 @@ Model Instance
 """
 
 from PySide6.QtGui import *
-from PySide6.QtCore import Signal, Slot
+from PySide6.QtCore import Signal, Slot, QObject, QEvent, QPoint
 
 from model_view.components import *
 from node_graph.nodes import export, NodeExec
 import errors
 
 
-class ModelSideMenu(QWidget):
-    sg_node_selc = Signal(str, str)
-    sg_save_mdl = Signal()
-    sg_del_mdl = Signal()
-    sg_exec_mdl = Signal()
-    sg_clear_mdl = Signal()
-    sg_rename_mdl = Signal()
+class StaticView(QGraphicsView):
+    def __init__(self, qscene: QGraphicsScene, view_size: int, parent=None):
+        super().__init__(qscene, parent=parent)
 
-    def __init__(self, model_name, parent=None):
-        super().__init__(parent=parent)
+        self.shift = False  # if True, it will scroll left and right instead of top and down
 
-        self.model_name = model_name
-
-        wtw_nodes_selc = QTreeWidget(parent=self)
-        wtw_nodes_selc.itemDoubleClicked.connect(self.sl_node_selc)
-        wtw_nodes_selc.setHeaderHidden(True)
-        wtw_nodes_selc.setIndentation(10)
-
-        for top in export:
-            wx_top = QTreeWidgetItem([top])
-            for inner in export[top]:
-                _wx_inner = QTreeWidgetItem(wx_top, [inner])
-            wtw_nodes_selc.addTopLevelItem(wx_top)
-
-        self.wl_mdl_name = QLabel(model_name)
-        ql_font: QFont = self.wl_mdl_name.font()
-        ql_font.setPointSize(48)
-        ql_font.setBold(True)
-        self.wl_mdl_name.setFont(ql_font)
-
-        wb_mdl_saved = QPushButton("Save Model")
-        wb_mdl_saved.clicked.connect(lambda _checked: self.sg_save_mdl.emit())
-        wb_mdl_clear = QPushButton("Clear Model")
-        wb_mdl_clear.clicked.connect(lambda _checked: self.sg_clear_mdl.emit())
-        wb_mdl_exec = QPushButton("Execute Model")
-        wb_mdl_exec.clicked.connect(lambda _checked: self.sg_exec_mdl.emit())
-        wb_mdl_rename = QPushButton("Rename Model")
-        wb_mdl_rename.clicked.connect(lambda _checked: self.sg_rename_mdl.emit())
-        wb_mdl_del = QPushButton("Delete Model")
-        wb_mdl_del.clicked.connect(lambda _checked: self.sg_del_mdl.emit())
-
-        lyt_main = QVBoxLayout()
-        lyt_main.addWidget(self.wl_mdl_name)
-        lyt_main.addWidget(wb_mdl_saved)
-        lyt_main.addWidget(wb_mdl_clear)
-        lyt_main.addWidget(wb_mdl_exec)
-        lyt_main.addWidget(wb_mdl_rename)
-        lyt_main.addWidget(wb_mdl_del)
-        lyt_main.addWidget(wtw_nodes_selc)
-
-        self.setLayout(lyt_main)
-
-    # @Slot(str)
-    # def sl_change_mdl_name(self, name):
-    #     self.wl_mdl_name.setText(name)
-
-    @Slot(object, int)
-    def sl_node_selc(self, item, _column):
-        if item.parent() is not None:  # check if item is child, not top-level
-            self.sg_node_selc.emit(item.parent().text(0), item.text(0))
-
-
-class ModelWorkspace(QGraphicsView):
-    def __init__(self, model_name: str, parent=None):
-        super().__init__(parent=parent)
-        self.model_name = model_name
-        self.view_size = 10000  # as large as possible
-        self.exec_node_dt = []  # list of exec node class
-
-        self.qscene = QGraphicsScene(parent=self)
-        # self.qscene.setItemIndexMethod(QGraphicsScene.NoIndex)
-        self.qscene.addText(model_name)
-        # o = FasterNode(self.qscene, "Node Title", ["inp field A"], ["out field A", "out field B"], ["const field A"], pos=(-100,0))
-        # self.qscene.addItem(o)
-        # self.qscene.addItem(Connector("type", pos=(200, 200)))
-        # for i in range(0,40):
-        # self.qscene.addItem(Node(pos=(i*8-300,i*8-300)))
-        # nd = FasterNode(
-        # 	self.qscene, "Node Title",
-        # 	[InputField("inp field A", CT.ANY)],
-        # 	[OutputField("out field A", CT.ANY), OutputField("out field B", CT.ANY)],
-        # 	[ConstantField("const field A", ComboBox())],
-        # 	pos=(300, 300)  #(i*8-300,i*8-300)
-        # )
-        # self.qscene.addItem(nd)
-        # nd.add_const_wx(self.qscene)
-
-        self.setScene(self.qscene)
-
-        # self = QGraphicsView(self.qscene, parent=self)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.setSceneRect(QRectF(-self.view_size, -self.view_size, self.view_size * 2, self.view_size * 2))
-        # dprint(self.size(), self.width(), self.height())
-        # self.centerOn(QPointF(self.size().width(), self.size().height()))
-        # self.view.setOptimizationFlag(QGraphicsView.DontAdjustForAntialiasing, False)
-        # self.view.setBackgroundBrush(QBrush(QColor("#101010")))
+        self.setSceneRect(QRectF(-view_size, -view_size, view_size*2, view_size*2))
+        self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
+        self.setForegroundBrush(QBrush(QColor(100, 100, 100, 50), Qt.BrushStyle.Dense1Pattern))
+        self.show()
+        #
+        # self.setResizeAnchor(QGraphicsView.AnchorViewCenter)
+
+        # TODO: (literally gave up on this) how to center the origin to the center; currently the left-most model
+        #   wont center through the self.centerOn()
+        self.centerOn(self.scene().items()[-1])
+        # dprint(self.scene().items())
+        # self.unsetCursor()
+
+        # self.verticalScrollBar().setValue(0)
+        # self.horizontalScrollBar().setValue(0)
+        # dprint("VSB", self.verticalScrollBar().value())
+        # dprint("HSB", self.horizontalScrollBar().value())
+        # dprint("VPX", self.viewport().x())
+        # dprint("VPY", self.viewport().y())
+        # dprint("VPW", self.viewport().width())
+        # dprint("VPH", self.viewport().height())
+        # dprint("VPR", self.mapToScene(self.viewport().rect()).boundingRect())
+        # dprint("GVT", self.transform())
+        # origin = self.mapToScene(QPoint(0,0))
+        # dprint(origin)
+        # self.horizontalScrollBar().setValue(self.mapToScene(int(self.viewport().width()/2)))
+        # self.verticalScrollBar().setValue(self.mapToScene(int(self.viewport().height()/2)))
+        # self.horizontalScrollBar().setValue(0)
+        # self.verticalScrollBar().setValue(0)
+        # self.horizontalScrollBar().setValue(origin.x())
+        # self.verticalScrollBar().setValue(origin.y())
+        # self.translate(0,0)
+
+        # origin = self.mapToScene(QPoint(int(self.viewport().rect().width()/2), int(self.viewport().rect().height()/2)))
+        # dprint("O", origin)
+        # self.horizontalScrollBar().setValue(-origin.x())
+        # self.verticalScrollBar().setValue(-origin.y())
+
+        # self.centerOn(self.mapToScene(QPoint(-int(self.viewport().rect().width()/2), -int(self.viewport().rect().height()/2))))
+
+        # origin2 = self.mapToScene(QPoint(int(self.viewport().rect().width() / 2), int(self.viewport().rect().height() / 2)))
+        # dprint("O", origin2)
+
+    def keyPressEvent(self, event: QKeyEvent) -> None:
+        # super().keyPressEvent(event)
+        if event.key() == Qt.Key_Shift:
+            self.shift = True
+
+    def keyReleaseEvent(self, event: QKeyEvent) -> None:
+        # super().keyReleaseEvent(event)
+        if event.key() == Qt.Key_Shift:
+            self.shift = False
+
+    # disabling mouse interaction
+
+    def mousePressEvent(self, event:QMouseEvent) -> None:
+        # dprint(event.pos(), self.mapToScene(event.pos()))
+        # origin = self.mapToScene(QPoint(int(self.viewport().rect().width()/2), int(self.viewport().rect().height()/2)))
+        # dprint(origin)
+        # dprint("S", self.mapFromScene(QPoint(0,0)))
+        # self.horizontalScrollBar().setValue(-origin.x())
+        # self.verticalScrollBar().setValue(-origin.y())
+        #
+        # origin3 = self.mapToScene(QPoint(-int(self.viewport().rect().width()/2), -int(self.viewport().rect().height()/2)))
+        # dprint(origin3)
+        #
+        #
+        # origin4 = self.mapToScene(
+        #     self.mapFromParent(QPoint(-int(self.viewport().rect().width()/2), -int(self.viewport().rect().height()/2)))
+        # )
+        # dprint(origin4)
+        # self.horizontalScrollBar().setValue(-int(origin4.x()))
+        # self.verticalScrollBar().setValue(-int(origin4.y()))
+        pass
+
+    def mouseReleaseEvent(self, event:QMouseEvent) -> None:
+        pass
+
+    def mouseDoubleClickEvent(self, event:QMouseEvent) -> None:
+        pass
+
+
+class ActiveView(QGraphicsView):
+    def __init__(self, qscene: QGraphicsScene, view_size: int, parent=None):
+        super().__init__(qscene, parent=parent)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setSceneRect(QRectF(-view_size, -view_size, view_size*2, view_size*2))
         self.setViewportUpdateMode(QGraphicsView.BoundingRectViewportUpdate)
         self.show()
 
-    # self.view.fitInView(QRectF(-10, -20, 10, 20))
-    # self.view.setAlignment(Qt.AlignRight)
-    # self.view.centerOn(QPointF(0,0))
-
-    # lyt_main = QHBoxLayout()
-    # lyt_main.addWidget(self.view)
-    #
-    # self.setLayout(lyt_main)
-
-    def add_node(self, cat, nd_name):
-        # nd = FasterNode(
-        # 	self.qscene, "Node Title",
-        # 	[InputField("inp field A", CT.ANY)],
-        # 	[OutputField("out field A", CT.ANY), OutputField("out field B", CT.ANY)],
-        # 	[ConstantField("const field A", ComboBox())],
-        # 	pos=(i*8-300, i*8-300)
-        # )
-        wx_node_cls: NodeExec = export[cat][nd_name]()  # class reference
-        self.exec_node_dt.append(wx_node_cls)
-        wx_node = wx_node_cls.interface(self.qscene, (0, 0))
-        self.qscene.addItem(wx_node)
-        wx_node.add_const_wx(self.qscene)
-
-    def keyPressEvent(self, event: QKeyEvent):
-        super().keyPressEvent(event)
-        if event.key() == Qt.Key_Shift:
-            self.setDragMode(QGraphicsView.ScrollHandDrag)
-
-    def keyReleaseEvent(self, event: QKeyEvent):
-        super().keyReleaseEvent(event)
-        if event.key() == Qt.Key_Shift:
-            self.setDragMode(QGraphicsView.NoDrag)
+        self.centerOn(self.scene().items()[-1])
 
 
-class Model(QWidget):
-    sg_save_mdl = Signal()
-    sg_del_mdl = Signal()
-    sg_exec_mdl = Signal()
-    sg_rename_mdl = Signal(str)
+class Model(QGraphicsScene):
+    sg_model_temp_rename = Signal(str)
 
-    def __init__(self, model_name: str, workspace=None, parent=None):
+    def __init__(self, name: str, parent=None):
         super().__init__(parent=parent)
 
-        self.name = model_name
-        self.__workspace: ModelWorkspace = ModelWorkspace(model_name, parent=self) if workspace is None else workspace
-        self.__side_menu: ModelSideMenu = ModelSideMenu(model_name, parent=self)
+        self.name = name
+        self.view_size = 10000  # as large as possible
+        self.exec_node_dt = []  # list of exec node class
+        self.has_model_id = False  # whether the Model has a model ID after saving for the first time from file handler
+        self.saved = False  # whether the Model has been saved after the creation or update of the model
 
-        self.side_menu.sg_node_selc.connect(self.sl_add_node)  # wx_first_mdl.sl_add_node)
-        self.side_menu.sg_save_mdl.connect(self.sl_save_model)
-        self.side_menu.sg_del_mdl.connect(self.sl_del_model)
-        self.side_menu.sg_exec_mdl.connect(self.sl_exec_model)
-        self.side_menu.sg_clear_mdl.connect(self.sl_clear_model)
-        self.side_menu.sg_rename_mdl.connect(self.sl_rename_model)
-
-        lyt_main = QHBoxLayout()
-        lyt_main.addWidget(self.side_menu, 15)
-        lyt_main.addWidget(self.workspace, 70)
-        lyt_main.addWidget(QLabel("Minimizable \n Inspection page"), 10)
-
-        self.setLayout(lyt_main)
-
-    @property
-    def workspace(self):
-        return self.__workspace
-
-    @property
-    def side_menu(self):
-        return self.__side_menu
-
-    @Slot(str, str)
-    def sl_add_node(self, cat, nd_name):
-        self.workspace.add_node(cat, nd_name)
+        center_txt = QGraphicsTextItem(self.name)
+        self.addItem(center_txt)
 
     @Slot()
-    def sl_save_model(self):  # TODO: RELAY
-        # this method will be relayed through here because the model may need to do something here before saving
+    def sl_add_node(self, cat: str, nd_name: str):
+        self.saved = False
+        self.sg_model_temp_rename.emit("*"+self.name)
 
-        self.sg_save_mdl.emit()
+        wx_node_cls: NodeExec = export[cat][nd_name]()  # class reference
+        self.exec_node_dt.append(wx_node_cls)
+        wx_node = wx_node_cls.interface(self, (0, 0))
+        self.addItem(wx_node)
+        wx_node.add_const_wx(self)
 
-        # mdl_workspace: ModelWorkspace = self.wtw_mdl_tabs.widget(self.wtw_mdl_tabs.currentIndex())
-        # try:
-        #     self.fhndl.save_model(self.fhndl.get_mdl_id(mdl_workspace.model_name), mdl_workspace)
-        # except errors.ProjectFileAppError as e:
-        #     if e.code == errors.ProjectFileAppError.MDL_NAME_NON_EXISTENT:
-        #         self.fhndl.save_model(self.fhndl.new_mdl_id(mdl_workspace.model_name), mdl_workspace)
-        #     else:
-        #         raise e
+    def get_active_view(self, parent=None) -> QGraphicsView:
+        """
+        Creates and returns a graphic view of this scene that is active and interactable
+        """
 
-    @Slot()
-    def sl_del_model(self):  # TODO: RELAY
-        # this method will be relayed through here to the ModelPage class because cleaning up Qt objects may be needed
-        # independently within the model
+        return ActiveView(self, self.view_size, parent=parent)
 
-        dprint("Deleting model does nothing right now")
+    def get_static_view(self, parent=None):
+        """
+        Creates and returns a graphic view of this scene that is disabled and immutable
+        """
 
-        self.sg_del_mdl.emit()
+        return StaticView(self, self.view_size, parent=parent)
 
-    @Slot()
-    def sl_exec_model(self):  # TODO: RELAY
-        # this method will be relayed to the ModelPage class because it requires file handler
-
-        self.sg_exec_mdl.emit()
-
-        # mdl_workspace: ModelWorkspace = self.wtw_mdl_tabs.widget(self.wtw_mdl_tabs.currentIndex())
-        # self.fhndl.execute_model(self.fhndl.get_mdl_id(mdl_workspace.model_name))
+    @classmethod
+    def name_check(cls, name: str) -> bool:
+        return str.isalnum(name)
 
     @Slot()
     def sl_clear_model(self):
-        self.workspace.scene().clear()
+        self.saved = False
+        self.sg_model_temp_rename.emit("*"+self.name)
 
-    @Slot()
-    def sl_rename_model(self):  # TODO: RELAY: will probably need to relay event to the model_editor for tab name
-        (model_new_name, ok) = QInputDialog.getText(self, "Enter Model Name", "Mode Name:", QLineEdit.EchoMode.Normal)
-        if ok:
-            if len(model_new_name) > 0 and Model.model_name_check(model_new_name):
-                self.name = model_new_name
-                self.workspace.model_name = model_new_name
-                self.side_menu.model_name = model_new_name
-                self.side_menu.wl_mdl_name.setText(model_new_name)
-                self.sg_rename_mdl.emit(model_new_name)
-            elif len(model_new_name) > 0 and not Model.model_name_check(model_new_name):
-                raise errors.ProjectUIError(msg="", code=errors.ProjectUIError.MDL_NAME_BAD_CHAR)
-            else:
-                raise errors.ProjectUIError(msg="", code=errors.ProjectUIError.MDL_NAME_EMPTY)
-
-    @classmethod
-    def model_name_check(cls, name: str) -> bool:
-        return str.isalnum(name)
+        self.clear()

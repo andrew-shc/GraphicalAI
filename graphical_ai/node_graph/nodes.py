@@ -8,6 +8,7 @@ from model_view.node import *
 from model_view.components import *
 from node_graph.backend import *
 from errors import ModelExecutionRuntimeError
+from node_graph.training_weights import WeightRef, NodeWeights
 
 
 class NodeState(Enum):
@@ -17,9 +18,10 @@ class NodeState(Enum):
 
 
 class NodeExec:
-    ndtg = None  # node tag for internal representation; must have 5 characters in length
-    name = None  # node name
-    state = None  # node state {INPUT, OUTPUT, MEDIUM}
+    ndtg: str = None  # node tag for internal representation; must have 5 characters in length
+    name: str = None  # node name
+    state: NodeState = None  # node state {INPUT, OUTPUT, MEDIUM}
+    weights: NodeWeights = None  # collection of weights nodes contains
 
     def __init__(self):
         # values for each field at runtime
@@ -42,9 +44,10 @@ class NodeExec:
         """
         raise NotImplementedError()
 
-    def execute(self, inst):
+    def execute(self, cycle):
         """
         the node's execution supplied with necessary inputs, outputs, constants, and project instance state.
+        the project instance state can change between each execution cycles.
         """
         raise NotImplementedError()
 
@@ -56,6 +59,7 @@ class InputDataND(NodeExec):
     ndtg = "InpDT"
     name = "Input Data"
     state = NodeState.INPUT
+    weights = None
 
     @staticmethod
     def _field_data(): return {
@@ -64,14 +68,15 @@ class InputDataND(NodeExec):
             "constant": {"const field A": ComboBox(["F", "Xssss"])},
         }
 
-    def execute(self, inst):
-        dprint("EXECUTE!!!", self.inp, self.out, self.const, inst)
+    def execute(self, cycle):
+        dprint("EXECUTE!!!", self.inp, self.out, self.const, cycle)
 
 
 class OutputDataND(NodeExec):
     ndtg = "OutDT"
     name = "Output Data"
     state = NodeState.OUTPUT
+    weights = None
 
     @staticmethod
     def _field_data(): return {
@@ -88,6 +93,7 @@ class InputCSV(NodeExec):
     ndtg = "InpCV"
     name = "Input CSV"
     state = NodeState.INPUT
+    weights = None
 
     @staticmethod
     def _field_data(): return {
@@ -96,7 +102,7 @@ class InputCSV(NodeExec):
             "constant": {"fname": LineInput("filename"), "has depn. var": CheckBox(default=True), "dependent var": LineInput("")}
         }
 
-    def execute(self, inst):
+    def execute(self, cycle):
         dprint("input execution")
         df = pd.read_csv(self.const["fname"])
         dprint("???", self.const["has depn. var"])
@@ -121,6 +127,7 @@ class OutputCSV(NodeExec):
     ndtg = "OutCV"
     name = "Output CSV"
     state = NodeState.OUTPUT
+    weights = None
 
     @staticmethod
     def _field_data(): return {
@@ -129,7 +136,7 @@ class OutputCSV(NodeExec):
             "constant": {"fname": LineInput("filename")}
         }
 
-    def execute(self, inst):
+    def execute(self, cycle):
         dprint("output execution")
 
         with open(self.const["fname"], "w") as fbo:
@@ -140,6 +147,7 @@ class TrainMDL(NodeExec):
     ndtg = "TRMDL"
     name = "Train Model"
     state = NodeState.MEDIUM
+    weights = None
 
     @staticmethod
     def _field_data(): return {
@@ -148,7 +156,7 @@ class TrainMDL(NodeExec):
             "constant": {"epochs": IntLineInput(100), "rate": LineInput(str(0.01))}
         }
 
-    def execute(self, inst):
+    def execute(self, cycle):
         dprint("training execution")
 
         try:
@@ -157,15 +165,16 @@ class TrainMDL(NodeExec):
         except ValueError:
             raise ModelExecutionRuntimeError(msg="", code=ModelExecutionRuntimeError.ERROR)
 
-        self.inp["model"][0].train(self.inp["model"][1], self.inp["y"], self.const["epochs"], learning_rate=res)
-
-        self.out["result"] = self.inp["model"][0].pred(self.inp["test"])
+        # self.inp["model"][0].train(self.inp["model"][1], self.inp["y"], self.const["epochs"], learning_rate=res)
+        #
+        # self.out["result"] = self.inp["model"][0].pred(self.inp["test"])
 
 
 class LinearRegressionMDL(NodeExec):
     ndtg = "LRMDL"
     name = "Linear Regression"
     state = NodeState.MEDIUM
+    weights = NodeWeights(WeightRef("coef"), WeightRef("bias"))
 
     @staticmethod
     def _field_data(): return {
@@ -174,10 +183,16 @@ class LinearRegressionMDL(NodeExec):
             "constant": {}
         }
 
-    def execute(self, inst):
+    def execute(self, cycle):
         dprint("linear regression execution")
-        dprint(len(self.inp["x"]), len(self.inp["x"][0]))
+        # dprint(len(self.inp["x"]), len(self.inp["x"][0]))
         linreg = ModelLinearReg(4)
+        if cycle["first"]:
+            self.weights["coef"].format_value((4,))
+            self.weights["bias"].format_value(None)
+        else:
+            # execute this for every other cycle other than the first cycle
+            pass
 
         # linreg.train(self.inp["data"][0], self.inp["data"][1], 50)
         self.out["result"] = (linreg, self.inp["x"])
@@ -187,6 +202,7 @@ class LogisticRegressionMDL(NodeExec):
     ndtg = "LGMDL"
     name = "Logistic Regression"
     state = NodeState.MEDIUM
+    weights = NodeWeights(WeightRef("unknown"))
 
     @staticmethod
     def _field_data(): return {
@@ -195,7 +211,7 @@ class LogisticRegressionMDL(NodeExec):
             "constant": {}
         }
 
-    def execute(self, inst):
+    def execute(self, cycle):
         dprint("linear regression execution")
         linreg = ModelLogisticReg()  # TODO: add multiple independent variables
 
@@ -203,59 +219,61 @@ class LogisticRegressionMDL(NodeExec):
         # self.out["result"] = (linreg.bias, linreg.coef)
 
 
-class _TESTND_LongConst(NodeExec):
-    ndtg = "XXXX0"
-    name = "Testing Long Const"
-    state = NodeState.MEDIUM
-
-    @staticmethod
-    def _field_data(): return {
-            "input": {"inp field A": CT.T_ANY, "inp field B": CT.T_ANY, "inp field C": CT.T_ANY},
-            "output": {"out field A": CT.T_ANY, "out field B": CT.T_ANY},
-            "constant": {"const field A": ComboBox(["None"]), "const field B": LineInput("default?"),
-                         "const field C": ComboBox(["None"]), "const field D": LineInput("")},
-        }
-
-    def execute(self, inst):
-        dprint("EXECUTE!!!", self.inp, self.out, self.const, inst)
-
-
-class _TESTND_AllConst(NodeExec):
-    ndtg = "XXXX1"
-    name = "Testing All Const"
-    state = NodeState.MEDIUM
-
-    @staticmethod
-    def _field_data(): return {
-            "input": {"inp field A": CT.T_ANY, "inp field B": CT.T_ANY, "inp field C": CT.T_ANY},
-            "output": {"out field A": CT.T_ANY, "out field B": CT.T_ANY},
-            "constant": {"const field A": IntLineInput(40), "const field B": LineInput("texxt"),
-                         "const field C": ComboBox(["a", "b", "c"]), "CHECKKKK BOX----": CheckBox(),
-                         "var selc": VariableSelector(), "multibox": MultiComboBox()},
-    }
-
-    def execute(self, inst):
-        dprint("EXECUTE!!!", self.inp, self.out, self.const, inst)
-
+# class _TESTND_LongConst(NodeExec):
+#     ndtg = "XXXX0"
+#     name = "Testing Long Const"
+#     state = NodeState.MEDIUM
+#     weights = False
+#
+#     @staticmethod
+#     def _field_data(): return {
+#             "input": {"inp field A": CT.T_ANY, "inp field B": CT.T_ANY, "inp field C": CT.T_ANY},
+#             "output": {"out field A": CT.T_ANY, "out field B": CT.T_ANY},
+#             "constant": {"const field A": ComboBox(["None"]), "const field B": LineInput("default?"),
+#                          "const field C": ComboBox(["None"]), "const field D": LineInput("")},
+#         }
+#
+#     def execute(self, inst):
+#         dprint("EXECUTE!!!", self.inp, self.out, self.const, inst)
+#
+#
+# class _TESTND_AllConst(NodeExec):
+#     ndtg = "XXXX1"
+#     name = "Testing All Const"
+#     state = NodeState.MEDIUM
+#     weights = False
+#
+#     @staticmethod
+#     def _field_data(): return {
+#             "input": {"inp field A": CT.T_ANY, "inp field B": CT.T_ANY, "inp field C": CT.T_ANY},
+#             "output": {"out field A": CT.T_ANY, "out field B": CT.T_ANY},
+#             "constant": {"const field A": IntLineInput(40), "const field B": LineInput("texxt"),
+#                          "const field C": ComboBox(["a", "b", "c"]), "CHECKKKK BOX----": CheckBox(),
+#                          "var selc": VariableSelector(), "multibox": MultiComboBox()},
+#     }
+#
+#     def execute(self, inst):
+#         dprint("EXECUTE!!!", self.inp, self.out, self.const, inst)
+#
 
 
 export = {
     "core": {
         "input data": InputDataND,
         "output data": OutputDataND,
-        "T input csv": InputCSV,
-        "T output csv": OutputCSV,
+        "Input CSV": InputCSV,
+        "Output CSV": OutputCSV,
         "T training model": TrainMDL,
-        "T linear regression": LinearRegressionMDL,
+        "Linear Regression": LinearRegressionMDL,
     },
     "single": {
     },
     "neural network": {
     },
-    "old": {
-        "long const": _TESTND_LongConst,
-        "all const": _TESTND_AllConst,
-    }
+    # "old": {
+    #     "long const": _TESTND_LongConst,
+    #     "all const": _TESTND_AllConst,
+    # }
 }
 
 __nd_cls = {i: export[s][i] for s in export for i in export[s]}

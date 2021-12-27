@@ -1,5 +1,6 @@
 import 'package:end_user_app/model_execute.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 
 class ModelEntry extends StatefulWidget {
@@ -11,6 +12,11 @@ class ModelEntry extends StatefulWidget {
 
 class _ModelEntryState extends State<ModelEntry> {
   final _formKey = GlobalKey<FormState>();
+  String testMessage = "Empty Data";
+
+  Future<http.Response> fetchExampleData() {
+    return http.get(Uri.parse('http://127.0.0.1:5000/'));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,16 +37,20 @@ class _ModelEntryState extends State<ModelEntry> {
             key: _formKey,
             child: Column(
               children: <Widget>[
-                TextFormField(
-                  decoration: InputDecoration(
-                    hintText: "Model ID",
-                  ),
-                  validator: (String? value) {
-                    if(value == null || value.isEmpty) {
-                      return "Please enter some text";
-                    }
-                    return null;
-                  },
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 200.0),
+                  padding: const EdgeInsets.all(10.0),
+                  child: TextFormField(
+                    decoration: InputDecoration(
+                      hintText: "Model ID",
+                    ),
+                    validator: (String? value) {
+                      if(value == null || value.isEmpty) {
+                        return "Please enter some text";
+                      }
+                      return null;
+                    },
+                  )
                 ),
                 ElevatedButton(
                     onPressed: () {
@@ -55,7 +65,26 @@ class _ModelEntryState extends State<ModelEntry> {
                       }
                     },
                     child: Text("Submit"),
-                )
+                ),
+                Text(
+                  "$testMessage"
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    http.Response resp = await http.get(
+                        Uri.parse('http://127.0.0.1:5000/'),
+                        headers: {
+                          "Access-Control-Allow-Origin": "*"
+                        }
+                    );
+
+                    setState(() {
+                      testMessage = resp.body;
+                    });
+                    print(testMessage);
+                  },
+                  child: Text("Submit"),
+                ),
               ]
             ),
           ),

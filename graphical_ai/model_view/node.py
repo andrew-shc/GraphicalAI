@@ -236,7 +236,7 @@ class Connector(QGraphicsPolygonItem):
 
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent):
         # note: calling super().mousePressEvent() will cause the view to pan and disable of properly dragging the connection
-        dprint("generated new temp connc")
+        # dprint("generated new temp connc")
         scene: QGraphicsScene = self.scene()
         # logical_pos = (self.x()+self.cpos[0]+Connector.SIZE/2, self.y()+self.cpos[1]+Connector.SIZE/2)
         self.temp_connct = TempConnection(
@@ -250,14 +250,14 @@ class Connector(QGraphicsPolygonItem):
 
     def mouseReleaseEvent(self, event: QGraphicsSceneMouseEvent):
         if self.temp_connct is not None:
-            dprint("deleted temp connc", self.temp_connct)
+            # dprint("deleted temp connc", self.temp_connct)
             scene: QGraphicsScene = self.scene()
             scene.removeItem(self.temp_connct)
             del self.temp_connct
             self.temp_connct = None
 
             for i in scene.items(event.scenePos()):
-                dprint(i)
+                # dprint(i)
                 if isinstance(i, Connector):
                     # checks whether the selected item vs. the current item is different in IO type
                     if (self.ct ^ i.ct) & 0b11 == 0b11:

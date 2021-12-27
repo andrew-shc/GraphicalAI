@@ -41,3 +41,8 @@ class ModelExecutionRuntimeError(AppBaseException):
 class ModelExecutionError(AppBaseException):
     DEBUG_ERROR = 1
 
+
+class ModelTrainingError(AppBaseException):
+    WEIGHT_REF_NOT_ACTIVATED = 1
+    WEIGHT_VALUE_FORMATTED_TWICE = 2
+

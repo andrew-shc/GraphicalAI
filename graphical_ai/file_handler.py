@@ -3,8 +3,9 @@ import os
 import yaml
 
 from errors import *
-from node_graph.execution import ModelExecutor
+from node_graph.execution import ModelPredictor, ModelTrainer
 from node_graph.nodes import node_class_ref
+from project.model_component import Model
 
 
 class ReferencedFileHandler:
@@ -24,7 +25,7 @@ class ReferencedFileHandler:
                     self.refs = {"proj": {}, "exec-proj": {}}
         else:  # if file does not exist
             self.refs = {"proj": {}, "exec-proj": {}}
-        dprint(self.refs)
+        # dprint(self.refs)
 
     def save(self):
         with open(self.FILE_LOC, "w") as fbo:
@@ -142,8 +143,8 @@ class ProjectFileHandler:
         # TODO: instead of going through the directory to find the model file needed,
         #  list the models that must have a model file present
 
-        dprint(dat)
-        dprint(ref_mdl_id)
+        # dprint(dat)
+        # dprint(ref_mdl_id)
 
         for mdl_name in ref_mdl_id:
             try:
@@ -385,11 +386,10 @@ class ProjectFileHandler:
             with open(os.path.join(MODELS_PATH, f"{self.dat['mdl_ids'][mdl_id]}.gem"), "wb") as fbo:
                 fbo.writelines(fdt)
 
-    def load_model(self, mdl_id: int, parent=None):
+    def load_model(self, mdl_id: int, parent=None) -> Model:
         if not self._valid_model_id(mdl_id): raise ProjectFileAppError(msg="", code=ProjectFileAppError.MDL_ID_INVALID)
 
         from PySide6.QtCore import QPointF
-        from project.model_component import ModelWorkspace, Model
         from model_view.node import FasterNode
         from model_view.connection import Connection
         from model_view.components import InteractiveComponent
@@ -397,7 +397,8 @@ class ProjectFileHandler:
 
         dprint(f"loading model <{mdl_id}:{self.dat['mdl_ids'][mdl_id]}>")
 
-        model_wkrspc = ModelWorkspace(self.dat["mdl_ids"][mdl_id], parent=parent)
+        model_wkrspc = Model(self.dat["mdl_ids"][mdl_id], parent=parent)
+        model_wkrspc.has_model_id = True
         exec_node_dt = []
 
         dto = self.models[mdl_id].copy()
@@ -409,7 +410,7 @@ class ProjectFileHandler:
             compn = dto[cid]
             if "connection" in compn:  # connection
                 dto[cid] = Connection(QPointF(0, 0), QPointF(0, 0))
-                model_wkrspc.qscene.addItem(dto[cid])
+                model_wkrspc.addItem(dto[cid])
             elif "ctag" in compn:  # interactive components
                 dto[cid] = compn["cdat"]
 
@@ -421,7 +422,7 @@ class ProjectFileHandler:
             if "tag" in compn:  # node
                 node: NodeExec = node_class_ref[compn["tag"]]()
                 exec_node_dt.append(node)
-                wx_node: FasterNode = node.interface(model_wkrspc.qscene, (0,0))
+                wx_node: FasterNode = node.interface(model_wkrspc, (0,0))
                 wx_node.setPos(QPointF(compn["pos"][0], compn["pos"][1]))
 
                 # and then we add the connections to each of the connectors
@@ -437,13 +438,13 @@ class ProjectFileHandler:
                 for ind, c in enumerate(wx_node.fd_wx_consts):
                     c.deserialize(dto[compn["const"][ind]])
 
-                model_wkrspc.qscene.addItem(wx_node)
+                model_wkrspc.addItem(wx_node)
                 wx_node.update_connc()
-                wx_node.add_const_wx(model_wkrspc.qscene)
+                wx_node.add_const_wx(model_wkrspc)
 
-        return Model(model_wkrspc.model_name, workspace=model_wkrspc, parent=parent)
+        return model_wkrspc
 
-    def save_model(self, mdl_id: int, model):
+    def save_model(self, mdl_id: int, workspace: Model):
         if not self._valid_model_id(mdl_id): raise ProjectFileAppError(msg="", code=ProjectFileAppError.MDL_ID_INVALID)
 
         from model_view.components import InteractiveComponent
@@ -456,10 +457,8 @@ class ProjectFileHandler:
         mdl_dt = {}
         itm_id = 0
 
-        workspace = model.workspace
-
         # indexing object reference to the temporary id reference
-        for o in workspace.scene().items():
+        for o in workspace.items():
             if isinstance(o, (InteractiveComponent, Connection, FasterNode, Connector)):
                 tmp_id_ref[itm_id] = o
                 tmp_id_ref_rev[o] = itm_id
@@ -497,7 +496,7 @@ class ProjectFileHandler:
 
         dprint(f"saving executable model <{mdl_id}:{self.dat['mdl_ids'][mdl_id]}>")
 
-        scene_itms = workspace.scene().items()
+        scene_itms = workspace.items()
         mdl_exec_dt = []
         obj_ref_id = {i:(ind+1) for (ind, i) in
                       enumerate(filter( lambda obj: isinstance(obj, (FasterNode, Connection, Connector)), scene_itms ))}
@@ -546,16 +545,26 @@ class ProjectFileHandler:
     def delete_model(self, mdl_id: int):
         if not self._valid_model_id(mdl_id): raise ProjectFileAppError(msg="", code=ProjectFileAppError.MDL_ID_INVALID)
 
-        dprint(f"deleting model <{mdl_id}:{self.dat['mdl_ids'][mdl_id]}>")
+        dprint(f"deleting model <{mdl_id}:{self.dat['mdl_ids'][mdl_id]}> [NOT IMPLEMENTED]")
 
-    def execute_model(self, mdl_id: int):
+    def predict_model(self, mdl_id: int):
         if not self._valid_model_id(mdl_id): raise ProjectFileAppError(msg="", code=ProjectFileAppError.MDL_ID_INVALID)
 
-        dprint(f"executing model <{mdl_id}:{self.dat['mdl_ids'][mdl_id]}>")
-
+        dprint(f"predicting model <{mdl_id}:{self.dat['mdl_ids'][mdl_id]}>")
         dprint("model exec data", self.exec_models[mdl_id])
-        executor = ModelExecutor(self.exec_models[mdl_id])
+
+        executor = ModelPredictor(self.exec_models[mdl_id])
         executor.execute(None)
+
+    def train_model(self, mdl_id: int):
+        if not self._valid_model_id(mdl_id): raise ProjectFileAppError(msg="", code=ProjectFileAppError.MDL_ID_INVALID)
+
+        dprint(f"training model <{mdl_id}:{self.dat['mdl_ids'][mdl_id]}>")
+        dprint("model exec data", self.exec_models[mdl_id])
+
+        trainer = ModelTrainer(self.exec_models[mdl_id])
+        trainer.execute(None)
+        # executor.execute(None)
 
     def get_mdl_refs(self) -> dict:
         return self.dat["mdl_ids"]
@@ -584,7 +593,7 @@ class ProjectFileHandler:
         self.dat["mdl_ids"][mdl_id] = mdl_new_name
         dprint(self.dat["mdl_ids"])
 
-    def _valid_model_id(self, mdl_id: int):
+    def _valid_model_id(self, mdl_id: int) -> bool:
         return mdl_id in self.dat["mdl_ids"]
 
 

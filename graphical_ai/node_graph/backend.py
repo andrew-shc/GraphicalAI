@@ -9,8 +9,8 @@ def objv_mse(ypred, y):
 
 class ModelLinearReg():
     def __init__(self, independent_var):
-        self.coef = tf.Variable([1.0 for _ in range(0, independent_var)])
-        self.bias = tf.Variable(0.0)
+        self.coef = tf.Variable(tf.constant(0.0, shape=(independent_var)))
+        self.bias = tf.Variable(tf.constant(0.0, shape=None))
 
     def pred(self, x):
         # x.shape() == (_, features)
@@ -23,14 +23,14 @@ class ModelLinearReg():
 
         dprint("loss: ", loss)
 
-        dy_dm = g.gradient(loss, self.coef)
-        dy_db = g.gradient(loss, self.bias)
+        dl_dm = g.gradient(loss, self.coef)
+        dl_db = g.gradient(loss, self.bias)
 
         # dprint(dy_dm)
         # dprint(dy_db)
 
-        self.coef.assign_sub(learning_rate * dy_dm)
-        self.bias.assign_sub(learning_rate * dy_db)
+        self.coef.assign_sub(learning_rate * dl_dm)
+        self.bias.assign_sub(learning_rate * dl_db)
 
     def train(self, x, y, epochs, learning_rate=0.01):
         for i in range(epochs):
@@ -54,20 +54,103 @@ class ModelLogisticReg():
 
         dprint("loss: ", loss)
 
-        dy_dl = g.gradient(loss, self.l)
-        dy_dk = g.gradient(loss, self.k)
-        dy_dx0 = g.gradient(loss, self.x0)
+        dl_dl = g.gradient(loss, self.l)
+        dl_dk = g.gradient(loss, self.k)
+        dl_dx0 = g.gradient(loss, self.x0)
 
         # dprint(dy_dm)
         # dprint(dy_db)
 
-        self.l.assign_sub(learning_rate*dy_dl)
-        self.k.assign_sub(learning_rate*dy_dk)
-        self.x0.assign_sub(learning_rate*dy_dx0)
+        self.l.assign_sub(learning_rate*dl_dl)
+        self.k.assign_sub(learning_rate*dl_dk)
+        self.x0.assign_sub(learning_rate*dl_dx0)
 
     def train(self, x, y, epochs, learning_rate=0.01):
         for i in range(epochs):
             # dprint("Epoch: ", i)
 
             self.update(x, y, learning_rate)
+
+
+import pandas as pd
+if __name__ == '__main__':  # TODO: TESTING CODE
+
+    # TODO --- TEST DIFFERENT SOURCE DIMENSIONS
+    # linreg = ModelLinearReg(4)
+    #
+    # df = pd.read_csv("../../Testing-X/resources/iris.csv", header=None)
+    # x = df.drop(4, axis=1).to_numpy()
+    # y = df[4].apply(lambda s: {"Iris-setosa": 0, "Iris-versicolor": 1, "Iris-virginica": 2}[s]).to_numpy()
+    # dprint(x)
+    # dprint(y)
+    #
+    # dprint(linreg.pred(x))
+    # dprint(objv_mse(linreg.pred(x), y))
+    #
+    # for i in range(100):
+    #     with tf.GradientTape(persistent=True) as g2:
+    #         loss = objv_mse(linreg.pred(x), y)
+    #
+    #     # note: we can format the source parameter and get a return value like that
+    #     [dl_dw2, dl_db2] = g2.gradient(loss, [linreg.coef, linreg.bias])
+    #     print("LS", float(loss))
+    #     print("G2", dl_dw2.numpy(), dl_db2.numpy())
+    #     print("CP", linreg.coef.numpy(), linreg.bias.numpy())
+    #
+    #     learning_rate = 0.007
+    #     linreg.coef.assign_sub(learning_rate * dl_dw2)
+    #     linreg.bias.assign_sub(learning_rate * dl_db2)
+    #
+    #
+    # print("LINREG PRED", linreg.pred(x))
+    # n = 0
+    # for pred, expc in zip(linreg.pred(x).numpy().round(), y):
+    #     print(pred, expc, pred == expc)
+    #     if pred != expc: n+=1
+    # print("FALSED", n)
+
+    # CONCLUSION: A VECTOR OF WEIGHTS IS POSSIBLE, BUT THE EXECUTION OF THESE FUNCTIONS THEN MUST BE TRACKED BY
+    #   THE GRADIENT TAPE
+    linreg1 = ModelLinearReg(4)
+    linreg2 = ModelLinearReg(1)
+
+    df = pd.read_csv("../../Testing-X/resources/iris.csv", header=None)
+    x = df.drop(4, axis=1).to_numpy()
+    y = df[4].apply(lambda s: {"Iris-setosa": 0, "Iris-versicolor": 1, "Iris-virginica": 2}[s]).to_numpy()
+    dprint(x)
+    dprint(y)
+
+    dprint("S1", linreg1.pred(x))
+    xt = tf.transpose([linreg1.pred(x)])  # to convert output format back into input format
+    dprint("S1B", linreg2.pred(xt))
+    dprint("MSE", objv_mse(linreg2.pred(xt), y))
+
+    for i in range(300):
+        with tf.GradientTape(persistent=True) as g1:
+            loss = objv_mse(
+                linreg2.pred(
+                    tf.transpose(
+                        [linreg1.pred(x)]
+                    )
+                ),
+                y
+            )
+
+        [dl_dw1, dl_db1, dl_dw2, dl_db2] = g1.gradient(loss, [linreg1.coef, linreg1.bias, linreg2.coef, linreg2.bias])
+        print("LS", float(loss))
+        # print("G2", dl_dw1.numpy(), dl_db1.numpy(), dl_dw2.numpy(), dl_db2.numpy())
+        # print("CP", linreg1.coef.numpy(), linreg1.bias.numpy(), linreg2.coef.numpy(), linreg2.bias.numpy())
+
+        learning_rate = 0.02
+        linreg1.coef.assign_sub(learning_rate * dl_dw1)
+        linreg1.bias.assign_sub(learning_rate * dl_db1)
+        linreg2.coef.assign_sub(learning_rate * dl_dw2)
+        linreg2.bias.assign_sub(learning_rate * dl_db2)
+
+    print("LINREG PRED", linreg2.pred(tf.transpose([linreg1.pred(x)])))
+    n = 0
+    for pred, expc in zip(linreg2.pred(tf.transpose([linreg1.pred(x)])).numpy().round(), y):
+        print(pred, expc, pred == expc)
+        if pred != expc: n+=1
+    print("FALSED", n)
 

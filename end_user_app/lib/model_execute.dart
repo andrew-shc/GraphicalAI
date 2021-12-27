@@ -21,45 +21,74 @@ class _ModelExecuteState extends State<ModelExecute> {
         key: _formKey,
         child: Column(
           children: <Widget>[
-            Row(
-              children: <Widget>[
-                Expanded(
-                  child: Column(
-                    children: <Widget>[
-                      const Text("Input attributes and fields"),
-                      TextFormField(
-                        decoration: const InputDecoration(
-                          hintText: "Input Field (Could be text, file, or other source of input)",
-                        ),
-                        validator: (String? value) {
-                          if(value == null || value.isEmpty) {
-                            return "Please enter some text";
-                          }
-                          return null;
-                        },
+            IntrinsicHeight(
+              child: Row(
+                children: <Widget>[
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Column(
+                        children: <Widget>[
+                          const Text(
+                            "Input/Source Location(s)",
+                            style: TextStyle(
+                              fontSize: 24,
+                            ),
+                          ),
+                          TextFormField(
+                            decoration: const InputDecoration(
+                              labelText: "Dataset <file>",
+                              floatingLabelBehavior: FloatingLabelBehavior.always,
+                            ),
+                            validator: (String? value) {
+                              if(value == null || value.isEmpty) {
+                                return "Please enter some text";
+                              }
+                              return null;
+                            },
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: Column(
-                    children: <Widget>[
-                      const Text("Output locations and fields"),
-                      TextFormField(
-                        decoration: const InputDecoration(
-                          hintText: "Output Field (Could be file location, console output, or other collector of output)",
-                        ),
-                        validator: (String? value) {
-                          if(value == null || value.isEmpty) {
-                            return "Please enter some text";
-                          }
-                          return null;
-                        },
+                  Container(
+                    width: 20,
+                    child: VerticalDivider(
+                      color: Colors.black,
+                      thickness: 3,
+                      indent: 10.0,
+                      endIndent: 10.0,
+                    ),
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Column(
+                        children: <Widget>[
+                          const Text(
+                            "Output/Destination Location(s)",
+                            style: TextStyle(
+                              fontSize: 24,
+                            ),
+                          ),
+                          TextFormField(
+                            decoration: const InputDecoration(
+                              labelText: "Results <file>",
+                              floatingLabelBehavior: FloatingLabelBehavior.always,
+                            ),
+                            validator: (String? value) {
+                              if(value == null || value.isEmpty) {
+                                return "Please enter some text";
+                              }
+                              return null;
+                            },
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
             ElevatedButton(
                 onPressed: () {

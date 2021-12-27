@@ -1,0 +1,26 @@
+0:
+  cdat: F
+  ctag: ComboBox
+1:
+  connc:
+  - 4
+  - 3
+  - 2
+  const:
+  - 0
+  pos:
+  - 0.0
+  - 0.0
+  tag: InpDT
+2:
+  ct: 386
+  pc: []
+  sc: []
+3:
+  ct: 386
+  pc: []
+  sc: []
+4:
+  ct: 385
+  pc: []
+  sc: []

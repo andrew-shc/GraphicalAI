@@ -1,0 +1,102 @@
+0:
+  cdat: F
+  ctag: ComboBox
+1:
+  connc:
+  - 4
+  - 3
+  - 2
+  const:
+  - 0
+  pos:
+  - -339.0
+  - -124.0
+  tag: InpDT
+2:
+  ct: 386
+  pc: []
+  sc: []
+3:
+  ct: 386
+  pc: []
+  sc: []
+4:
+  ct: 385
+  pc: []
+  sc: []
+5:
+  connection: null
+6:
+  cdat: filename
+  ctag: LineInput
+7:
+  connc:
+  - 8
+  const:
+  - 6
+  pos:
+  - 0.0
+  - 0.0
+  tag: OutCV
+8:
+  ct: 385
+  pc: []
+  sc:
+  - 5
+9:
+  connection: null
+10:
+  cdat: Vrrr
+  ctag: ComboBox
+11:
+  connc:
+  - 14
+  - 13
+  - 12
+  const:
+  - 10
+  pos:
+  - -267.0
+  - 31.0
+  tag: OutDT
+12:
+  ct: 386
+  pc: []
+  sc: []
+13:
+  ct: 386
+  pc:
+  - 5
+  sc: []
+14:
+  ct: 385
+  pc: []
+  sc:
+  - 9
+15:
+  cdat: F
+  ctag: ComboBox
+16:
+  connc:
+  - 19
+  - 18
+  - 17
+  const:
+  - 15
+  pos:
+  - -561.0
+  - 20.0
+  tag: InpDT
+17:
+  ct: 386
+  pc: []
+  sc: []
+18:
+  ct: 386
+  pc:
+  - 9
+  sc: []
+19:
+  ct: 385
+  pc: []
+  sc: []

@@ -50,7 +50,7 @@ class _HomePageState extends State<HomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             const FlutterLogo(
-              size: 500,
+              size: 300,
             ),
             const Text(
               "Welcome to GraphicalAI!",
