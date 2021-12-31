@@ -1,26 +1,21 @@
 0:
-  cdat: F
-  ctag: ComboBox
+  cdat: <None>
+  ctag: AttributeSelector
 1:
   connc:
-  - 4
   - 3
   - 2
   const:
   - 0
   pos:
-  - 0.0
-  - 0.0
-  tag: InpDT
+  - 221.0
+  - -11.0
+  tag: ATTRS
 2:
   ct: 386
   pc: []
   sc: []
 3:
-  ct: 386
-  pc: []
-  sc: []
-4:
   ct: 385
   pc: []
   sc: []

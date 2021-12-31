@@ -17,6 +17,7 @@ class CT:
     3. Its Data Type => {ANY, SCALAR, MATRIX, TENSOR, INT, STRING, BOOL, ...}
     0. Special Type => {NULL} to signify its useless and the connector is a placeholder
     """
+
     NULL        = 0b0000
     INPUT       = 0b0001
     OUTPUT      = 0b0010
@@ -55,15 +56,16 @@ class ConstantField:
 
 
 class FasterNode(QGraphicsItemGroup):
-    def __init__(self, scene: QGraphicsScene, cls, fld_dt: dict, pos=None):
+    def __init__(self, scene: QGraphicsScene, ndtg: str, name: str, has_weights: bool, fld_dt: dict, pos=None):
         super().__init__(parent=None)
         self.setFlag(QGraphicsItem.ItemIsMovable, True)
 
         # a dict of three keys (input, output, constant) storing the field data of the node
         self.fld_dt = fld_dt
 
-        self.ndtg = cls.ndtg
-        self.title = cls.name
+        self.ndtg = ndtg
+        self.title = name
+        self.has_weights = has_weights
         self.fd_input = [InputField(name, ct) for (name, ct) in zip(self.fld_dt["input"].keys(), self.fld_dt["input"].values())]
         self.fd_output = [OutputField(name, ct) for (name, ct) in zip(self.fld_dt["output"].keys(), self.fld_dt["output"].values())]
         self.fd_constant = [ConstantField(name, wxo) for (name, wxo) in zip(self.fld_dt["constant"].keys(), self.fld_dt["constant"].values())]
@@ -161,11 +163,17 @@ class FasterNode(QGraphicsItemGroup):
 
         gr_base = QGraphicsRectItem(self.size[0], self.size[1]+gt_title_rect.height(), self.size[2],
                                     self.size[3]-gt_title_rect.height(), parent=self)
-        gr_base.setBrush(QBrush(QColor("#CCDDFF")))
+        if not self.has_weights:
+            gr_base.setBrush(QBrush(QColor("#CCDDFF")))
+        else:  # to have nodes with actual trainable weights with different color (cause there special smh)
+            gr_base.setBrush(QBrush(QColor("#DDCCFF")))
         gr_base.setPen(QPen(QColor("transparent")))
 
         gr_title_base = QGraphicsRectItem(self.size[0], self.size[1], self.size[2], gt_title_rect.height(), parent=self)
+        # if not self.has_weights:
         gr_title_base.setBrush(QBrush(QColor("#CCF0FF")))
+        # else:
+        #     gr_title_base.setBrush(QBrush(QColor("#F0CCFF")))
         gr_title_base.setPen(QPen(QColor("transparent")))
 
         gr_base.setZValue(10)

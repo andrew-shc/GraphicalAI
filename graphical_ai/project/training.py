@@ -6,6 +6,8 @@ from PySide6.QtCore import Slot, Signal
 from PySide6.QtGui import QFont
 
 from file_handler import ProjectFileHandler
+from model_view.components import AttributeSelector
+from node_state import NodeState
 from project import Model
 from project.sidemenu_components import ModelIOConfigurator, ConsoleIO
 
@@ -27,11 +29,13 @@ class TrainingSideMenu(QWidget):
         qpb_train = QPushButton("Train")
         qpb_train.pressed.connect(lambda: self.sg_model_train.emit())
 
+        self.wx_io_config = ModelIOConfigurator()
+
         lyt_left_menu = QVBoxLayout()
         lyt_left_menu.addWidget(self.wl_mdl_name, 1)
         lyt_left_menu.addWidget(qpb_train, 1)
         lyt_left_menu.addWidget(QLabel("Model I/O configurator"), 1)
-        lyt_left_menu.addWidget(ModelIOConfigurator(), 8)
+        lyt_left_menu.addWidget(self.wx_io_config, 8)
         lyt_left_menu.addWidget(QLabel("Console I/O"), 1)
         lyt_left_menu.addWidget(ConsoleIO(), 8)
 
@@ -43,12 +47,14 @@ class TrainingPage(QWidget):
     Execution page is where you are allow to execute the specified model. It has Model I/O configurator and
     in-app console I/O if the model specifies it.
     """
-    def __init__(self, fhndl: ProjectFileHandler, models: List[Model], parent=None):
+
+    def __init__(self, fhndl: ProjectFileHandler, models: List[Model], io_configs: List[ModelIOConfigurator], parent=None):
         super().__init__(parent=parent)
 
         self.fhndl = fhndl
         self.training_sidemenus: List[TrainingSideMenu] = []
         self.models = models
+        self.io_configs = io_configs
         self.wtw_static_tabs = QTabWidget()
 
         lyt_main = QHBoxLayout()
@@ -64,6 +70,7 @@ class TrainingPage(QWidget):
         for model in self.models:
             sidemenu = TrainingSideMenu(model.name, parent=self)
             sidemenu.sg_model_train.connect(self.sl_model_train)
+            sidemenu.wx_io_config.sg_attrs_updated.connect(self.sl_attr_selcs_update)
 
             wx_model = QWidget()
 
@@ -74,7 +81,21 @@ class TrainingPage(QWidget):
             wx_model.setLayout(lyt_model)
 
             self.training_sidemenus.append(sidemenu)
+            self.io_configs.append(sidemenu.wx_io_config)
             self.wtw_static_tabs.addTab(wx_model, model.name)
+
+    @Slot()
+    def sl_attr_selcs_update(self):
+        input_names = self.training_sidemenus[self.wtw_static_tabs.currentIndex()].wx_io_config.get_attr_inp_names()
+        output_names = self.training_sidemenus[self.wtw_static_tabs.currentIndex()].wx_io_config.get_attr_out_names()
+
+        attr_selc: AttributeSelector
+        for attr_selc in self.models[self.wtw_static_tabs.currentIndex()].attr_selcs:
+            if attr_selc.type == NodeState.INPUT:
+                attr_selc.update_attr_lists(input_names)
+            elif attr_selc.type == NodeState.OUTPUT:
+                attr_selc.update_attr_lists(output_names)
+
 
     @Slot()
     def sl_model_train(self):

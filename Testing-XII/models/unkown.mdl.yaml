@@ -1,102 +1,119 @@
 0:
-  cdat: F
-  ctag: ComboBox
-1:
   connc:
-  - 4
-  - 3
   - 2
-  const:
-  - 0
+  - 1
+  const: []
   pos:
-  - -339.0
-  - -124.0
-  tag: InpDT
-2:
+  - 83.0
+  - -14.0
+  tag: LRMDL
+1:
   ct: 386
+  pc: []
+  sc: []
+2:
+  ct: 385
   pc: []
   sc: []
 3:
-  ct: 386
-  pc: []
-  sc: []
-4:
-  ct: 385
-  pc: []
-  sc: []
-5:
-  connection: null
-6:
-  cdat: filename
-  ctag: LineInput
-7:
-  connc:
-  - 8
-  const:
-  - 6
-  pos:
-  - 0.0
-  - 0.0
-  tag: OutCV
-8:
-  ct: 385
-  pc: []
-  sc:
-  - 5
-9:
-  connection: null
-10:
-  cdat: Vrrr
-  ctag: ComboBox
-11:
-  connc:
-  - 14
-  - 13
-  - 12
-  const:
-  - 10
-  pos:
-  - -267.0
-  - 31.0
-  tag: OutDT
-12:
-  ct: 386
-  pc: []
-  sc: []
-13:
-  ct: 386
-  pc:
-  - 5
-  sc: []
-14:
-  ct: 385
-  pc: []
-  sc:
-  - 9
-15:
   cdat: F
   ctag: ComboBox
-16:
+4:
   connc:
-  - 19
-  - 18
-  - 17
+  - 7
+  - 6
+  - 5
   const:
-  - 15
+  - 3
   pos:
-  - -561.0
-  - 20.0
+  - -207.0
+  - -125.0
   tag: InpDT
-17:
+5:
   ct: 386
   pc: []
   sc: []
-18:
+6:
   ct: 386
-  pc:
-  - 9
+  pc: []
   sc: []
-19:
+7:
   ct: 385
   pc: []
   sc: []
+8:
+  cdat: filename
+  ctag: LineInput
+9:
+  connc:
+  - 10
+  const:
+  - 8
+  pos:
+  - 48.0
+  - 100.0
+  tag: OutCV
+10:
+  ct: 385
+  pc: []
+  sc:
+  - 21
+11:
+  cdat: Vrrr
+  ctag: ComboBox
+12:
+  connc:
+  - 15
+  - 14
+  - 13
+  const:
+  - 11
+  pos:
+  - -205.0
+  - 124.0
+  tag: OutDT
+13:
+  ct: 386
+  pc: []
+  sc: []
+14:
+  ct: 386
+  pc:
+  - 21
+  sc: []
+15:
+  ct: 385
+  pc: []
+  sc:
+  - 22
+16:
+  cdat: F
+  ctag: ComboBox
+17:
+  connc:
+  - 20
+  - 19
+  - 18
+  const:
+  - 16
+  pos:
+  - -429.0
+  - 26.0
+  tag: InpDT
+18:
+  ct: 386
+  pc: []
+  sc: []
+19:
+  ct: 386
+  pc:
+  - 22
+  sc: []
+20:
+  ct: 385
+  pc: []
+  sc: []
+21:
+  connection: null
+22:
+  connection: null

@@ -111,7 +111,7 @@ class ModelTabs(QTabWidget):
         load kwarg means whether the model being added has been loaded from file or it is newly created model.
         """
 
-        model.sg_model_temp_rename.connect(self.current_model_tab_rename)  # when updated, adds the asterisk
+        model.sg_temp_rename.connect(self.current_model_tab_rename)  # when updated, adds the asterisk
 
         sidemenu = ModelSideMenu(model.name, parent=self)
         sidemenu.sg_node_selc.connect(model.sl_add_node)  # wx_first_mdl.sl_add_node)

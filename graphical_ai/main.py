@@ -25,7 +25,7 @@ def main():
     a_font.setPointSize(9)  # using PointSize to prevent automatically change the text (in this case, too small)
     app.setFont(a_font)
 
-    win = main_window.MainWindow("GraphicalAI", "v0.17.0-alpha02")
+    win = main_window.MainWindow("GraphicalAI", "v0.18.0-alpha1")
 
     win.show()
     sys.exit(app.exec_())

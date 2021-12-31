@@ -114,7 +114,7 @@ class ActiveView(QGraphicsView):
 
 
 class Model(QGraphicsScene):
-    sg_model_temp_rename = Signal(str)
+    sg_temp_rename = Signal(str)
 
     def __init__(self, name: str, parent=None):
         super().__init__(parent=parent)
@@ -125,19 +125,27 @@ class Model(QGraphicsScene):
         self.has_model_id = False  # whether the Model has a model ID after saving for the first time from file handler
         self.saved = False  # whether the Model has been saved after the creation or update of the model
 
+        self.attr_selcs = []  # a list of object reference to the model in the graphics view
+
         center_txt = QGraphicsTextItem(self.name)
         self.addItem(center_txt)
 
     @Slot()
     def sl_add_node(self, cat: str, nd_name: str):
         self.saved = False
-        self.sg_model_temp_rename.emit("*"+self.name)
+        self.sg_temp_rename.emit("*" + self.name)
 
         wx_node_cls: NodeExec = export[cat][nd_name]()  # class reference
         self.exec_node_dt.append(wx_node_cls)
         wx_node = wx_node_cls.interface(self, (0, 0))
         self.addItem(wx_node)
         wx_node.add_const_wx(self)
+
+        attr_selcs = wx_node_cls.field_data["constant"]
+        for attr_selc in list(attr_selcs.values()):
+            if isinstance(attr_selc, AttributeSelector):
+                self.attr_selcs.append(attr_selc)
+
 
     def get_active_view(self, parent=None) -> QGraphicsView:
         """
@@ -160,6 +168,7 @@ class Model(QGraphicsScene):
     @Slot()
     def sl_clear_model(self):
         self.saved = False
-        self.sg_model_temp_rename.emit("*"+self.name)
+        self.sg_temp_rename.emit("*" + self.name)
 
         self.clear()
+        self.attr_selcs.clear()

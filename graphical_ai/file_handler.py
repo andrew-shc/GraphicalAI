@@ -3,6 +3,7 @@ import os
 import yaml
 
 from errors import *
+from model_view.components import AttributeSelector
 from node_graph.execution import ModelPredictor, ModelTrainer
 from node_graph.nodes import node_class_ref
 from project.model_component import Model
@@ -425,6 +426,12 @@ class ProjectFileHandler:
                 wx_node: FasterNode = node.interface(model_wkrspc, (0,0))
                 wx_node.setPos(QPointF(compn["pos"][0], compn["pos"][1]))
 
+                # to load all the AttributeSelector objects from save file
+                attr_selcs = wx_node.fld_dt["constant"]
+                for attr_selc in list(attr_selcs.values()):
+                    if isinstance(attr_selc, AttributeSelector):
+                        model_wkrspc.attr_selcs.append(attr_selc)
+
                 # and then we add the connections to each of the connectors
                 for i in range(0, len(wx_node.fd_input)):
                     wx_node.connectors[i].prim_connct = [dto[c] for c in dto[compn["connc"][i]]["pc"]]
@@ -553,7 +560,7 @@ class ProjectFileHandler:
         dprint(f"predicting model <{mdl_id}:{self.dat['mdl_ids'][mdl_id]}>")
         dprint("model exec data", self.exec_models[mdl_id])
 
-        executor = ModelPredictor(self.exec_models[mdl_id])
+        executor = ModelPredictor(self.exec_models[mdl_id], None, None)
         executor.execute(None)
 
     def train_model(self, mdl_id: int):
@@ -562,7 +569,7 @@ class ProjectFileHandler:
         dprint(f"training model <{mdl_id}:{self.dat['mdl_ids'][mdl_id]}>")
         dprint("model exec data", self.exec_models[mdl_id])
 
-        trainer = ModelTrainer(self.exec_models[mdl_id])
+        trainer = ModelTrainer(self.exec_models[mdl_id], None)
         trainer.execute(None)
         # executor.execute(None)
 

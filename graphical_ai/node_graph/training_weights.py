@@ -66,3 +66,6 @@ class NodeWeights:
         else:
             raise TypeError("invalid index type... must be string")
 
+    def __len__(self):
+        return len(self.collection)
+

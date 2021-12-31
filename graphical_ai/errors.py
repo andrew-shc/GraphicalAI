@@ -46,3 +46,8 @@ class ModelTrainingError(AppBaseException):
     WEIGHT_REF_NOT_ACTIVATED = 1
     WEIGHT_VALUE_FORMATTED_TWICE = 2
 
+
+class IOAttributeError(AppBaseException):
+    ATTR_NAME_BAD_CHAR = 1
+    ATTR_NAME_EMPTY = 2
+

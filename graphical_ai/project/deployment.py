@@ -6,6 +6,7 @@ from PySide6.QtWidgets import *
 from PySide6.QtCore import Slot, Signal
 from PySide6.QtGui import *
 
+from file_handler import ProjectFileHandler
 from project import Model
 from project.sidemenu_components import ModelIOConfigurator, ConsoleIO
 
@@ -13,6 +14,7 @@ import requests
 
 
 class DeploymentSideMenu(QWidget):
+    sg_model_predict = Signal()
     sg_model_deploy = Signal()
 
     def __init__(self, model_name, parent=None):
@@ -42,8 +44,13 @@ class DeploymentSideMenu(QWidget):
         lyt_id.addWidget(qle_model_id_label)
         lyt_id.addWidget(self.qle_model_id)
 
+        qpb_predict = QPushButton("Predict")
+        qpb_predict.released.connect(lambda: self.sg_model_predict.emit())
+
         qpb_deploy = QPushButton("Deploy")
-        qpb_deploy.pressed.connect(lambda: self.sg_model_deploy.emit())
+        qpb_deploy.released.connect(lambda: self.sg_model_deploy.emit())
+
+        self.wx_io_config = ModelIOConfigurator()
 
         lyt_left_menu = QVBoxLayout()
         lyt_left_menu.addWidget(self.wl_mdl_name, 1)
@@ -51,7 +58,7 @@ class DeploymentSideMenu(QWidget):
         lyt_left_menu.addLayout(lyt_url, 1)
         lyt_left_menu.addLayout(lyt_id, 1)
         lyt_left_menu.addWidget(QLabel("Model I/O configurator"), 1)
-        lyt_left_menu.addWidget(ModelIOConfigurator(), 7)
+        lyt_left_menu.addWidget(self.wx_io_config, 7)
         lyt_left_menu.addWidget(QLabel("Console I/O"), 1)
         lyt_left_menu.addWidget(ConsoleIO(), 7)
 
@@ -59,11 +66,13 @@ class DeploymentSideMenu(QWidget):
 
 
 class DeploymentPage(QWidget):
-    def __init__(self, models: List[Model], parent=None):
+    def __init__(self, fhndl: ProjectFileHandler, models: List[Model], io_configs: List[ModelIOConfigurator], parent=None):
         super().__init__(parent=parent)
 
+        self.fhndl = fhndl
         self.deployment_sidemenus: List[DeploymentSideMenu] = []
         self.models = models
+        self.io_configs = io_configs
         self.wtw_static_tabs = QTabWidget()
 
         lyt_main = QHBoxLayout()
@@ -76,8 +85,9 @@ class DeploymentPage(QWidget):
         self.wtw_static_tabs.clear()
         self.deployment_sidemenus.clear()
 
-        for model in self.models:
+        for ind, model in enumerate(self.models):
             sidemenu = DeploymentSideMenu(model.name, parent=self)
+            sidemenu.sg_model_predict.connect(self.sl_model_predict)
             sidemenu.sg_model_deploy.connect(self.sl_model_deploy)
 
             wx_model = QWidget()
@@ -88,8 +98,17 @@ class DeploymentPage(QWidget):
 
             wx_model.setLayout(lyt_model)
 
+            # syncs up between either io_configs in the same corresponding model
+            self.io_configs[ind].sg_sync.connect(sidemenu.wx_io_config.create_new_attr)
+            sidemenu.wx_io_config.sg_sync.connect(self.io_configs[ind].create_new_attr)
+
             self.deployment_sidemenus.append(sidemenu)
             self.wtw_static_tabs.addTab(wx_model, model.name)
+
+    @Slot()
+    def sl_model_predict(self):
+        dprint("PREDICTING MODEL")
+
 
     @Slot()
     def sl_model_deploy(self):

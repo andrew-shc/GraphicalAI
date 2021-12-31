@@ -196,7 +196,6 @@ class NewProject(QWidget):
             self.qb_path.setText(proj_path)
 
 
-
 class LoadExecProject(QWidget):
     def __init__(self, lfhndl: ReferencedFileHandler, parent=None):
         super().__init__(parent=parent)
