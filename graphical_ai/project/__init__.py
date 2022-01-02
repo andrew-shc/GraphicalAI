@@ -21,14 +21,20 @@ class Project(QWidget):
     def __init__(self, fhndl: ProjectFileHandler, lfhndl: ReferencedFileHandler, parent=None):
         super().__init__(parent)
 
+        # TODO: create a shared state class?
         self.fhndl = fhndl
         self.lfhndl = lfhndl
         self.models: List[Model] = []
-        self.io_configs: List[ModelIOConfigurator] = []
+        self.io_configs_train: List[ModelIOConfigurator] = []
+        self.io_configs_pred: List[ModelIOConfigurator] = []
+        self.model_weights: list = []  # TODO: add mechanism to invalid the weights once the models are procedurally modified
 
-        self.wx_model_page = ModelPage(self.fhndl, self.models, parent=self)
-        self.wx_training_page = TrainingPage(self.fhndl, self.models, self.io_configs, parent=self)
-        self.wx_deployment_page = DeploymentPage(self.fhndl, self.models, self.io_configs, parent=self)
+        # TODO: a class to better handle the shared states of fhndl, models, io_configs, etc...
+        #   and also better sync'ing mechanism
+        self.wx_model_page = ModelPage(self.fhndl, self.models, self.io_configs_train, self.io_configs_pred, parent=self)
+        # TODO: currently the training and deployment page is assuming the io_configs have been filled upon initiation
+        self.wx_training_page = TrainingPage(self.fhndl, self.models, self.io_configs_train, self.model_weights, parent=self)
+        self.wx_deployment_page = DeploymentPage(self.fhndl, self.models, self.io_configs_train, self.io_configs_pred, self.model_weights, parent=self)
         self.wx_model_page.model_tabs.sg_model_list_refresh.connect(self.wx_training_page.sl_model_list_refresh)
         self.wx_model_page.model_tabs.sg_model_list_refresh.connect(self.wx_deployment_page.sl_model_list_refresh)
 
@@ -58,6 +64,9 @@ class Project(QWidget):
 
         # to refresh other pages for models loaded from disk
         self.wx_model_page.model_tabs.sg_model_list_refresh.emit()
+        # only the training io configs emits this... since its only updating the model and we assume
+        # the attributes are to be the same with the deployment io configs
+        [ioct.sg_attrs_updated.emit() for ioct in self.io_configs_train]
 
 
     def __del__(self):  # adds auto-save before the project object gets deleted

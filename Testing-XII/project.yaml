@@ -1,11 +1,12 @@
-mdl_id_counter: 5
+mdl_id_counter: 6
 mdl_ids:
   0: TestA
   1: TestB
   2: TestC
   3: unkown
   4: TestX
+  5: TrainingTest
 name: Testing-XII
-reads: 19
+reads: 26
 version: 0
-writes: 23
+writes: 32

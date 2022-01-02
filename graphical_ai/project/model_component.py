@@ -130,23 +130,6 @@ class Model(QGraphicsScene):
         center_txt = QGraphicsTextItem(self.name)
         self.addItem(center_txt)
 
-    @Slot()
-    def sl_add_node(self, cat: str, nd_name: str):
-        self.saved = False
-        self.sg_temp_rename.emit("*" + self.name)
-
-        wx_node_cls: NodeExec = export[cat][nd_name]()  # class reference
-        self.exec_node_dt.append(wx_node_cls)
-        wx_node = wx_node_cls.interface(self, (0, 0))
-        self.addItem(wx_node)
-        wx_node.add_const_wx(self)
-
-        attr_selcs = wx_node_cls.field_data["constant"]
-        for attr_selc in list(attr_selcs.values()):
-            if isinstance(attr_selc, AttributeSelector):
-                self.attr_selcs.append(attr_selc)
-
-
     def get_active_view(self, parent=None) -> QGraphicsView:
         """
         Creates and returns a graphic view of this scene that is active and interactable
@@ -164,6 +147,22 @@ class Model(QGraphicsScene):
     @classmethod
     def name_check(cls, name: str) -> bool:
         return str.isalnum(name)
+
+    @Slot()
+    def sl_add_node(self, cat: str, nd_name: str):
+        self.saved = False
+        self.sg_temp_rename.emit("*" + self.name)
+
+        wx_node_cls: NodeExec = export[cat][nd_name]()  # class reference
+        self.exec_node_dt.append(wx_node_cls)
+        wx_node = wx_node_cls.interface(self, (0, 0))
+        self.addItem(wx_node)
+        wx_node.add_const_wx(self)
+
+        attr_selcs = wx_node_cls.field_data["constant"]
+        for attr_selc in list(attr_selcs.values()):
+            if isinstance(attr_selc, AttributeSelector):
+                self.attr_selcs.append(attr_selc)
 
     @Slot()
     def sl_clear_model(self):

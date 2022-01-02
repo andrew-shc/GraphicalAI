@@ -9,6 +9,7 @@ from PySide6.QtGui import *
 from file_handler import ProjectFileHandler
 from model_view.components import *
 from node_graph.nodes import export
+from project import ModelIOConfigurator
 from project.model_component import Model
 import errors
 
@@ -17,7 +18,7 @@ class ModelSideMenu(QWidget):
     sg_node_selc = Signal(str, str)
     sg_save_mdl = Signal()
     sg_del_mdl = Signal()
-    sg_exec_mdl = Signal()
+    # sg_exec_mdl = Signal()
     sg_clear_mdl = Signal()
     sg_rename_mdl = Signal()
 
@@ -47,8 +48,8 @@ class ModelSideMenu(QWidget):
         wb_mdl_saved.clicked.connect(lambda _checked: self.sg_save_mdl.emit())
         wb_mdl_clear = QPushButton("Clear Model")
         wb_mdl_clear.clicked.connect(lambda _checked: self.sg_clear_mdl.emit())
-        wb_mdl_exec = QPushButton("Execute Model")
-        wb_mdl_exec.clicked.connect(lambda _checked: self.sg_exec_mdl.emit())
+        # wb_mdl_exec = QPushButton("Execute Model")
+        # wb_mdl_exec.clicked.connect(lambda _checked: self.sg_exec_mdl.emit())
         wb_mdl_rename = QPushButton("Rename Model")
         wb_mdl_rename.clicked.connect(lambda _checked: self.sg_rename_mdl.emit())
         wb_mdl_del = QPushButton("Delete Model")
@@ -58,7 +59,7 @@ class ModelSideMenu(QWidget):
         lyt_main.addWidget(self.wl_mdl_name)
         lyt_main.addWidget(wb_mdl_saved)
         lyt_main.addWidget(wb_mdl_clear)
-        lyt_main.addWidget(wb_mdl_exec)
+        # lyt_main.addWidget(wb_mdl_exec)
         lyt_main.addWidget(wb_mdl_rename)
         lyt_main.addWidget(wb_mdl_del)
         lyt_main.addWidget(wtw_nodes_selc)
@@ -77,11 +78,13 @@ class ModelTabs(QTabWidget):
     """
     sg_model_list_refresh = Signal()
 
-    def __init__(self, fhndl: ProjectFileHandler, ref_models_list: List[Model], parent=None):
+    def __init__(self, fhndl: ProjectFileHandler, ref_models_list: List[Model], io_configs_train: List[ModelIOConfigurator], io_configs_pred: List[ModelIOConfigurator], parent=None):
         super().__init__(parent=parent)
 
         self.fhndl = fhndl
         self.models = ref_models_list
+        self.io_configs_train = io_configs_train
+        self.io_configs_pred = io_configs_pred
         self.model_sidemenus: List[ModelSideMenu] = []
 
         self.setMovable(True)
@@ -93,7 +96,14 @@ class ModelTabs(QTabWidget):
 
         if len(self.fhndl.get_mdl_refs()) > 0:
             for mdl_id in self.fhndl.get_mdl_refs():
-                model: Model = self.fhndl.load_model(mdl_id, parent=self)
+                model, io_train, io_pred = self.fhndl.load_model(mdl_id, parent=self)
+
+                # syncs up between either io_configs in the same corresponding model
+                io_train.sg_sync.connect(io_pred.create_new_attr)
+                io_pred.sg_sync.connect(io_train.create_new_attr)
+
+                self.io_configs_train.insert(0, io_train)
+                self.io_configs_pred.insert(0, io_pred)
                 self.add_model(model, load=True)
 
         if self.count() == 0:  # if there are no models loaded, then add a default unnamed model
@@ -117,7 +127,7 @@ class ModelTabs(QTabWidget):
         sidemenu.sg_node_selc.connect(model.sl_add_node)  # wx_first_mdl.sl_add_node)
         sidemenu.sg_save_mdl.connect(self.sl_save_cur_model)
         sidemenu.sg_del_mdl.connect(self.sl_del_cur_model)
-        sidemenu.sg_exec_mdl.connect(self.sl_exec_cur_model)
+        # sidemenu.sg_exec_mdl.connect(self.sl_exec_cur_model)
         sidemenu.sg_clear_mdl.connect(model.sl_clear_model)
         sidemenu.sg_rename_mdl.connect(self.sl_rename_cur_model)
 
@@ -169,6 +179,16 @@ class ModelTabs(QTabWidget):
         if ok:
             if len(model_txt) > 0 and Model.name_check(model_txt):
                 self.add_model(Model(model_txt, parent=self))
+
+                io_train = ModelIOConfigurator()
+                io_pred = ModelIOConfigurator()
+
+                io_train.sg_sync.connect(io_pred.create_new_attr)
+                io_pred.sg_sync.connect(io_train.create_new_attr)
+
+                self.io_configs_train.insert(0, io_train)
+                self.io_configs_pred.insert(0, io_pred)
+
             elif len(model_txt) > 0 and not Model.name_check(model_txt):
                 raise errors.ProjectUIError(msg="", code=errors.ProjectUIError.MDL_NAME_BAD_CHAR)
             else:
@@ -182,11 +202,11 @@ class ModelTabs(QTabWidget):
         self.current_model_tab_rename(model.name)  # removes the asterisk
         dprint("saving current model:", model.name, model, self.currentIndex())
         try:
-            self.fhndl.save_model(self.fhndl.get_mdl_id(model.name), model)
+            self.fhndl.save_model(self.fhndl.get_mdl_id(model.name), model, self.io_configs_train[self.currentIndex()], self.io_configs_pred[self.currentIndex()])
         except errors.ProjectFileAppError as e:
             if e.code == errors.ProjectFileAppError.MDL_NAME_NON_EXISTENT:
                 model.has_model_id = True
-                self.fhndl.save_model(self.fhndl.new_mdl_id(model.name), model)
+                self.fhndl.save_model(self.fhndl.new_mdl_id(model.name), model, self.io_configs_train[self.currentIndex()], self.io_configs_pred[self.currentIndex()])
             else:
                 raise e
 
@@ -195,10 +215,10 @@ class ModelTabs(QTabWidget):
         dprint("Deleting model does nothing right now")
         self.sg_model_list_refresh.emit()
 
-    @Slot()
-    def sl_exec_cur_model(self):
-        model = self.current_model()
-        self.fhndl.predict_model(self.fhndl.get_mdl_id(model.name))
+    # @Slot()
+    # def sl_exec_cur_model(self):
+    #     model = self.current_model()
+    #     self.fhndl.predict_model(self.fhndl.get_mdl_id(model.name))
 
     @Slot(str)
     def sl_rename_cur_model(self):
@@ -232,11 +252,11 @@ class ModelPage(QWidget):
     This page allows you to edit, create, delete models and use individual nodes to customize your models.
     """
 
-    def __init__(self, fhndl: ProjectFileHandler, ref_models_list: List[Model], parent=None):
+    def __init__(self, fhndl: ProjectFileHandler, ref_models_list: List[Model], io_configs_train: List[ModelIOConfigurator], io_configs_pred: List[ModelIOConfigurator], parent=None):
         super().__init__(parent=parent)
 
         self.fhndl = fhndl
-        self.model_tabs = ModelTabs(self.fhndl, ref_models_list)
+        self.model_tabs = ModelTabs(self.fhndl, ref_models_list, io_configs_train, io_configs_pred)
 
         # TODO: since the sidemenu changes for each different model, find a way to change the widgets in the layout
         lyt_main = QHBoxLayout()

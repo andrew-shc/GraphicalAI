@@ -26,7 +26,7 @@ class NodeExec:
         """
         the GUI frontend code of the nodes
         """
-        return FasterNode(scene, self.ndtg, self.name, len(self.weights) > 0, self.field_data, pos=pos)
+        return FasterNode(scene, self.ndtg, self.name, self.state, len(self.weights) > 0, self.field_data, pos=pos)
 
     @staticmethod
     def _field_data():
@@ -90,28 +90,29 @@ class InputCSV(NodeExec):
     def _field_data(): return {
             "input": {},
             "output": {"x": CT.T_ANY, "y": CT.T_ANY},
-            "constant": {"fname": LineInput("filename"), "has depn. var": CheckBox(default=True), "dependent var": LineInput("")}
+            "constant": {"fname": AttributeSelector(NodeState.INPUT), "has depn. var": CheckBox(default=True), "dependent var": LineInput("")}
         }
 
     def execute(self, cycle):
-        dprint("input execution")
-        df = pd.read_csv(self.const["fname"])
-        dprint("???", self.const["has depn. var"])
-        if self.const["has depn. var"]:
-            y = df[self.const["dependent var"]]
-            ydt = y.map(
-                {k: v for (v, k) in enumerate(y.unique().tolist())}
-            ).to_numpy()
+        if cycle["inp"][self.const["fname"]][0] == "file":
+            df = pd.read_csv(cycle["inp"][self.const["fname"]][1])
+            if self.const["has depn. var"] and not cycle["predicting?"]:
+                y = df[self.const["dependent var"]]  # TODO: SEPARATE THIS FUNCTIONALITY (EACH COL. DONT HAVE TO BE #)
+                ydt = y.map(
+                    {k: v for (v, k) in enumerate(y.unique().tolist())}
+                ).to_numpy()
 
-            x = df.drop(self.const["dependent var"], axis=1)
-            xdt = x.to_numpy()
+                x = df.drop(self.const["dependent var"], axis=1)
+                xdt = x.to_numpy()
 
-            self.out["x"] = xdt
-            self.out["y"] = ydt
+                self.out["x"] = xdt
+                self.out["y"] = ydt
+            else:
+                xdt = df.to_numpy()
+                self.out["x"] = xdt
+                self.out["y"] = None
         else:
-            xdt = df.to_numpy()
-            self.out["x"] = xdt
-            self.out["y"] = None
+            raise Exception()
 
 
 class OutputCSV(NodeExec):
@@ -124,41 +125,42 @@ class OutputCSV(NodeExec):
     def _field_data(): return {
             "input": {"data": CT.T_ANY},
             "output": {},
-            "constant": {"fname": LineInput("filename")}
+            "constant": {"fname": AttributeSelector(NodeState.OUTPUT)}
         }
 
     def execute(self, cycle):
-        dprint("output execution")
+        if not cycle["first"]:
+            if cycle["out"][self.const["fname"]][0] == "file":
+                pd.DataFrame(self.inp["data"].numpy()).to_csv(cycle["out"][self.const["fname"]][1])
+            else:
+                raise Exception()
 
-        with open(self.const["fname"], "w") as fbo:
-            fbo.write(str(self.inp["data"]))
 
-
-class TrainMDL(NodeExec):
-    ndtg = "TRMDL"
-    name = "Train Model"
-    state = NodeState.MEDIUM
-    weights = NodeWeights()
-
-    @staticmethod
-    def _field_data(): return {
-            "input": {"model": CT.T_ANY, "y": CT.T_ANY, "test": CT.T_ANY},
-            "output": {"result": CT.T_ANY},
-            "constant": {"epochs": IntLineInput(100), "rate": LineInput(str(0.01))}
-        }
-
-    def execute(self, cycle):
-        dprint("training execution")
-
-        try:
-            dprint("~~~", self.const["rate"])
-            res = float(self.const["rate"])
-        except ValueError:
-            raise ModelExecutionRuntimeError(msg="", code=ModelExecutionRuntimeError.ERROR)
-
-        # self.inp["model"][0].train(self.inp["model"][1], self.inp["y"], self.const["epochs"], learning_rate=res)
-        #
-        # self.out["result"] = self.inp["model"][0].pred(self.inp["test"])
+# class TrainMDL(NodeExec):
+#     ndtg = "TRMDL"
+#     name = "Train Model"
+#     state = NodeState.MEDIUM
+#     weights = NodeWeights()
+#
+#     @staticmethod
+#     def _field_data(): return {
+#             "input": {"model": CT.T_ANY, "y": CT.T_ANY, "test": CT.T_ANY},
+#             "output": {"result": CT.T_ANY},
+#             "constant": {"epochs": IntLineInput(100), "rate": LineInput(str(0.01))}
+#         }
+#
+#     def execute(self, cycle):
+#         dprint("training execution")
+#
+#         try:
+#             dprint("~~~", self.const["rate"])
+#             res = float(self.const["rate"])
+#         except ValueError:
+#             raise ModelExecutionRuntimeError(msg="", code=ModelExecutionRuntimeError.ERROR)
+#
+#         # self.inp["model"][0].train(self.inp["model"][1], self.inp["y"], self.const["epochs"], learning_rate=res)
+#         #
+#         # self.out["result"] = self.inp["model"][0].pred(self.inp["test"])
 
 
 class LinearRegressionMDL(NodeExec):
@@ -175,18 +177,12 @@ class LinearRegressionMDL(NodeExec):
         }
 
     def execute(self, cycle):
-        dprint("linear regression execution")
-        # dprint(len(self.inp["x"]), len(self.inp["x"][0]))
-        linreg = ModelLinearReg(4)
-        if cycle["first"]:
+        if not cycle["first"]:
+            # execute this for every other cycle other than the first cycle
+            self.out["result"] = tf.math.reduce_sum(self.inp["x"] * self.weights["coef"].value, axis=1) + self.weights["bias"].value
+        else:
             self.weights["coef"].format_value((4,))
             self.weights["bias"].format_value(None)
-        else:
-            # execute this for every other cycle other than the first cycle
-            pass
-
-        # linreg.train(self.inp["data"][0], self.inp["data"][1], 50)
-        self.out["result"] = (linreg, self.inp["x"])
 
 
 class LogisticRegressionMDL(NodeExec):
@@ -214,18 +210,20 @@ class AttributeSelectorTesting(NodeExec):
     ndtg = "ATTRS"
     name = "Logistic Regression"
     state = NodeState.MEDIUM
-    weights = NodeWeights(WeightRef("unknown"))
+    weights = NodeWeights()
 
     @staticmethod
     def _field_data(): return {
             "input": {"INP": CT.T_ANY},
             "output": {"OUT": CT.T_ANY},
-            "constant": {"test_var_selc": AttributeSelector(NodeState.INPUT)}
+            "constant": {"test_var_selc": AttributeSelector(NodeState.INPUT), "output_test": AttributeSelector(NodeState.OUTPUT)}
         }
 
     def execute(self, cycle):
         dprint("linear regression execution")
         linreg = ModelLogisticReg()  # TODO: add multiple independent variables
+
+        cycle["io-inp"]["constant"]
 
         # linreg.train(self.inp["data"][0], self.inp["data"][1], 50)
         # self.out["result"] = (linreg.bias, linreg.coef)
@@ -271,11 +269,11 @@ class AttributeSelectorTesting(NodeExec):
 
 export = {
     "core": {
-        "input data": InputDataND,
-        "output data": OutputDataND,
+        # "input data": InputDataND,
+        # "output data": OutputDataND,
         "Input CSV": InputCSV,
         "Output CSV": OutputCSV,
-        "T training model": TrainMDL,
+        # "T training model": TrainMDL,
         "Linear Regression": LinearRegressionMDL,
         "T variable selectors": AttributeSelectorTesting,
     },

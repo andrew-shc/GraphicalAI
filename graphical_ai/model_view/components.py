@@ -28,7 +28,7 @@ class InteractiveComponent(QGraphicsProxyWidget):
 
         self.setWidget(self.wx)
 
-    def value(self):  # values used in execution
+    def value(self):  # values used in execution to replace the constant classes with their value
         return self.wx.value()
 
     def serialize(self):
@@ -57,6 +57,7 @@ class IntLineInput(QLineEdit):
     def __init__(self, default: int, parent=None):
         super().__init__(parent=parent)
         self.setValidator(QIntValidator())
+        self.setStyleSheet("background-color: #CCFFFF")
 
         self.default_num: int = default
         self.setText(str(self.default_num))
@@ -150,7 +151,7 @@ class CheckBox(QCheckBox):
         if self.check: self.setChecked(Qt.Checked)
 
     def value(self):
-        return 0
+        return self.checkState() == Qt.Checked
 
     def serialize(self):
         return self.checkState() == Qt.Checked
@@ -176,9 +177,11 @@ class AttributeSelector(QComboBox):
     def __init__(self, type: NodeState, parent=None):
         super().__init__(parent=parent)
 
+        if type == NodeState.INPUT:
+            self.setStyleSheet("background-color: #CCFFCC")
+        elif type == NodeState.OUTPUT:
+            self.setStyleSheet("background-color: #FFFFCC")
         self.type = type
-
-        self.qcb_attr = QComboBox()
 
     def update_attr_lists(self, attrs: List[str]):
         self.clear()
@@ -186,21 +189,20 @@ class AttributeSelector(QComboBox):
             self.addItem(attr)
 
     def value(self):
-        return 0
+        return self.currentText()
 
     def serialize(self):
-        return "<None>"
+        return self.currentText()
 
     def deserialize(self, dt):
-        dprint(dt)
+        self.setCurrentText(dt)
 
     def bin_serialize(self):
-        return b"\x00Null"
+        return self.currentText().encode("ASCII")
 
     @staticmethod
     def bin_deserialize(bdt):
-        dprint(bdt)
-        return bdt
+        return bdt.decode("ASCII")
 
 
 class MultiComboBox(QComboBox):

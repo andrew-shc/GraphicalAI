@@ -17,7 +17,7 @@ class WeightRef:
         self.name = name
 
     def format_value(self, shape: Optional[Tuple[int, ...]]):
-        if self.shape is None:
+        if self.shape is None:  # TODO: None is a valid Tensorflow shape type: represents scalar values (fix this)
             self.shape = shape
         else:
             raise ModelTrainingError(msg="", code=ModelTrainingError.WEIGHT_VALUE_FORMATTED_TWICE)
@@ -28,8 +28,14 @@ class WeightRef:
         of the ModelTrainer class.
         """
         global_weights_vec.append(tf.Variable(tf.constant(0.0, shape=self.shape)))
-        dprint("GLOBAL W V", global_weights_vec)
         self.index = len(global_weights_vec)-1
+        self.__ref_global_weights_vec = global_weights_vec
+
+    def activate_set(self, global_weights_vec: Optional[List[tf.Variable]], index: int):
+        """
+        Connects the weight in the node to the global weights vector to be used (i.e. opposite of activate())
+        """
+        self.index = index
         self.__ref_global_weights_vec = global_weights_vec
 
     @property
@@ -37,6 +43,11 @@ class WeightRef:
         if self.__ref_global_weights_vec is None:
             raise ModelTrainingError(msg="", code=ModelTrainingError.WEIGHT_REF_NOT_ACTIVATED)
         return self.__ref_global_weights_vec[self.index]
+
+    def reset(self):
+        self.index = None
+        self.shape = None
+        self.__ref_global_weights_vec = None
 
 
 class NodeWeights:
@@ -69,3 +80,6 @@ class NodeWeights:
     def __len__(self):
         return len(self.collection)
 
+    def reset(self):
+        for w in self.collection:
+            w.reset()

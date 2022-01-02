@@ -1,0 +1,94 @@
+0:
+  connc:
+  - 2
+  - 1
+  const: []
+  pos:
+  - 45.0
+  - 63.0
+  tag: LRMDL
+1:
+  ct: 386
+  pc:
+  - 12
+  sc: []
+2:
+  ct: 385
+  pc: []
+  sc:
+  - 13
+3:
+  cdat: b
+  ctag: AttributeSelector
+4:
+  connc:
+  - 5
+  const:
+  - 3
+  pos:
+  - 277.0
+  - 102.0
+  tag: OutCV
+5:
+  ct: 385
+  pc: []
+  sc:
+  - 12
+6:
+  cdat: a
+  ctag: AttributeSelector
+7:
+  cdat: true
+  ctag: CheckBox
+8:
+  cdat: species
+  ctag: LineInput
+9:
+  connc:
+  - 11
+  - 10
+  const:
+  - 8
+  - 7
+  - 6
+  pos:
+  - -202.0
+  - 63.0
+  tag: InpCV
+10:
+  ct: 386
+  pc: []
+  sc: []
+11:
+  ct: 386
+  pc:
+  - 13
+  sc: []
+12:
+  connection: null
+13:
+  connection: null
+15:
+- train
+- a
+- INPUT
+- - file
+  - C:/Users/Andrew Shen/Desktop/GraphicalAI-II/Testing-XIII/resources/iris.csv
+17:
+- train
+- b
+- OUTPUT
+- - file
+  - C:/Users/Andrew Shen/Desktop/GraphicalAI-II/Testing-XIII/resources/pred.csv
+19:
+- pred
+- a
+- INPUT
+- - file
+  - C:/Users/Andrew Shen/Desktop/GraphicalAI-II/Testing-XIII/resources/test.csv
+21:
+- pred
+- b
+- OUTPUT
+- - file
+  - C:/Users/Andrew Shen/Desktop/GraphicalAI-II/Testing-XIII/resources/out.csv

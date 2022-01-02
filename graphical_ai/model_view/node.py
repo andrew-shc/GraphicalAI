@@ -5,6 +5,7 @@ from PySide6.QtGui import *
 
 from model_view.connection import TempConnection, Connection
 from model_view.components import InteractiveComponent
+from node_state import NodeState
 
 
 class CT:
@@ -56,7 +57,7 @@ class ConstantField:
 
 
 class FasterNode(QGraphicsItemGroup):
-    def __init__(self, scene: QGraphicsScene, ndtg: str, name: str, has_weights: bool, fld_dt: dict, pos=None):
+    def __init__(self, scene: QGraphicsScene, ndtg: str, name: str, state: NodeState, has_weights: bool, fld_dt: dict, pos=None):
         super().__init__(parent=None)
         self.setFlag(QGraphicsItem.ItemIsMovable, True)
 
@@ -66,6 +67,7 @@ class FasterNode(QGraphicsItemGroup):
         self.ndtg = ndtg
         self.title = name
         self.has_weights = has_weights
+        self.node_state = state
         self.fd_input = [InputField(name, ct) for (name, ct) in zip(self.fld_dt["input"].keys(), self.fld_dt["input"].values())]
         self.fd_output = [OutputField(name, ct) for (name, ct) in zip(self.fld_dt["output"].keys(), self.fld_dt["output"].values())]
         self.fd_constant = [ConstantField(name, wxo) for (name, wxo) in zip(self.fld_dt["constant"].keys(), self.fld_dt["constant"].values())]

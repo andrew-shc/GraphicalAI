@@ -7,8 +7,10 @@ from PySide6.QtCore import Slot, Signal
 from PySide6.QtGui import *
 
 from file_handler import ProjectFileHandler
+from model_view.node import FasterNode
+from node_state import NodeState
 from project import Model
-from project.sidemenu_components import ModelIOConfigurator, ConsoleIO
+from project.sidemenu_components import ModelIOConfigurator, ConsoleIO, IOField
 
 import requests
 
@@ -17,7 +19,7 @@ class DeploymentSideMenu(QWidget):
     sg_model_predict = Signal()
     sg_model_deploy = Signal()
 
-    def __init__(self, model_name, parent=None):
+    def __init__(self, model_name, io_config=None, parent=None):
         super().__init__(parent=parent)
 
         self.model_name = model_name
@@ -50,29 +52,32 @@ class DeploymentSideMenu(QWidget):
         qpb_deploy = QPushButton("Deploy")
         qpb_deploy.released.connect(lambda: self.sg_model_deploy.emit())
 
-        self.wx_io_config = ModelIOConfigurator()
+        self.wx_io_config = io_config if not None else ModelIOConfigurator()
 
         lyt_left_menu = QVBoxLayout()
         lyt_left_menu.addWidget(self.wl_mdl_name, 1)
+        lyt_left_menu.addWidget(qpb_predict, 1)
         lyt_left_menu.addWidget(qpb_deploy, 1)
         lyt_left_menu.addLayout(lyt_url, 1)
         lyt_left_menu.addLayout(lyt_id, 1)
         lyt_left_menu.addWidget(QLabel("Model I/O configurator"), 1)
-        lyt_left_menu.addWidget(self.wx_io_config, 7)
-        lyt_left_menu.addWidget(QLabel("Console I/O"), 1)
-        lyt_left_menu.addWidget(ConsoleIO(), 7)
+        lyt_left_menu.addWidget(self.wx_io_config, 14)
+        # lyt_left_menu.addWidget(QLabel("Console I/O"), 1)
+        # lyt_left_menu.addWidget(ConsoleIO(), 7)
 
         self.setLayout(lyt_left_menu)
 
 
 class DeploymentPage(QWidget):
-    def __init__(self, fhndl: ProjectFileHandler, models: List[Model], io_configs: List[ModelIOConfigurator], parent=None):
+    def __init__(self, fhndl: ProjectFileHandler, models: List[Model], io_configs_train: List[ModelIOConfigurator], io_configs_pred: List[ModelIOConfigurator], model_weights: list, parent=None):
         super().__init__(parent=parent)
 
         self.fhndl = fhndl
         self.deployment_sidemenus: List[DeploymentSideMenu] = []
         self.models = models
-        self.io_configs = io_configs
+        # self.io_configs_train = io_configs_train
+        self.io_configs_pred = io_configs_pred
+        self.model_weights = model_weights
         self.wtw_static_tabs = QTabWidget()
 
         lyt_main = QHBoxLayout()
@@ -85,8 +90,8 @@ class DeploymentPage(QWidget):
         self.wtw_static_tabs.clear()
         self.deployment_sidemenus.clear()
 
-        for ind, model in enumerate(self.models):
-            sidemenu = DeploymentSideMenu(model.name, parent=self)
+        for model, io_config in zip(self.models, self.io_configs_pred):
+            sidemenu = DeploymentSideMenu(model.name, io_config=io_config, parent=self)
             sidemenu.sg_model_predict.connect(self.sl_model_predict)
             sidemenu.sg_model_deploy.connect(self.sl_model_deploy)
 
@@ -98,16 +103,49 @@ class DeploymentPage(QWidget):
 
             wx_model.setLayout(lyt_model)
 
-            # syncs up between either io_configs in the same corresponding model
-            self.io_configs[ind].sg_sync.connect(sidemenu.wx_io_config.create_new_attr)
-            sidemenu.wx_io_config.sg_sync.connect(self.io_configs[ind].create_new_attr)
-
             self.deployment_sidemenus.append(sidemenu)
             self.wtw_static_tabs.addTab(wx_model, model.name)
+            self.io_configs_pred.append(sidemenu.wx_io_config)
 
     @Slot()
     def sl_model_predict(self):
         dprint("PREDICTING MODEL")
+
+        iof: IOField
+        inst = {
+            "inp": {iof.attr_name: iof.data
+                    for iof in self.deployment_sidemenus[self.wtw_static_tabs.currentIndex()].wx_io_config.attributes
+                    if iof.state == NodeState.INPUT},
+            "out": {iof.attr_name: iof.data
+                    for iof in self.deployment_sidemenus[self.wtw_static_tabs.currentIndex()].wx_io_config.attributes
+                    if iof.state == NodeState.OUTPUT},
+            "predicting?": True,
+        }
+
+        dprint(inst)
+
+        nodes_inp = 0
+        nodes_out = 0
+        for item in self.models[self.wtw_static_tabs.currentIndex()].items():
+            if isinstance(item, FasterNode):
+                if item.node_state == NodeState.INPUT:
+                    nodes_inp += 1
+                elif item.node_state == NodeState.OUTPUT:
+                    nodes_out += 1
+
+        dprint(nodes_inp, nodes_out)
+        #  TODO: temporary validation to check the model met a specific req for basic ai/ml
+        if nodes_inp == nodes_out == 1:
+            if self.model_weights[self.wtw_static_tabs.currentIndex()] is not None:
+                self.fhndl.predict_model(
+                    self.fhndl.get_mdl_id(self.models[self.wtw_static_tabs.currentIndex()].name),
+                    weights=self.model_weights[self.wtw_static_tabs.currentIndex()],
+                    inst_state=inst,
+                )
+            else:
+                dprint("MODEL PREDICTION REQUIRES WEIGHTS--WEIGHTS MUST BE CREATED AFTER MODEL TRAINING")
+        else:
+            dprint("PREDICTING REQUIREMENTS NOT FILLED")
 
 
     @Slot()
