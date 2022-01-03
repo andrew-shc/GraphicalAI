@@ -10,6 +10,10 @@ CORS(app)
 GLOBAL_INC = 0
 
 models = {}
+# each models should have following properties:
+# - project fpath TODO: somehow make the file handler handle models independently from the project context
+# - model name
+# - required inputs & outputs
 
 
 @app.route("/")
@@ -29,7 +33,7 @@ def create_model():
     }
 
 
-# saves any data through the json to the model's key value
+# saves (any possible) data through the json to the model's key value
 @app.route("/save_model/<model_id>", methods=["POST"])
 def save_model(model_id):
     print(model_id, type(model_id), models)
@@ -58,5 +62,13 @@ def predict_model(model_id):
 
 
 if __name__ == "__main__":
-    app.run()
+    # app.run()
+
+    from graphical_ai.file_handler import ModelFileHandler
+
+    mhndl = ModelFileHandler("C:\\Users\\Andrew Shen\\Desktop\\GraphicalAI-II\\Testing-XIII\\models", "LinReg")
+    mhndl.load_model()
+
+    print(mhndl.mdl_dt)
+
 

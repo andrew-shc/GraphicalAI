@@ -10,7 +10,7 @@ from model_view.components import AttributeSelector
 from model_view.node import FasterNode
 from node_graph.loss_funcs import LOSS_FUNCTIONS
 from node_state import NodeState
-from project import Model
+from project.model_component import Model
 from project.sidemenu_components import ModelIOConfigurator, ConsoleIO, IOField
 
 
@@ -73,14 +73,13 @@ class TrainingPage(QWidget):
     in-app console I/O if the model specifies it.
     """
 
-    def __init__(self, fhndl: ProjectFileHandler, models: List[Model], io_configs_train: List[ModelIOConfigurator], model_weights: list, parent=None):
+    def __init__(self, fhndl: ProjectFileHandler, models: List[Model], io_configs_train: List[ModelIOConfigurator], parent=None):
         super().__init__(parent=parent)
 
         self.fhndl = fhndl
         self.training_sidemenus: List[TrainingSideMenu] = []
         self.models = models
         self.io_configs_train = io_configs_train
-        self.model_weights = model_weights
 
         self.wtw_static_tabs = QTabWidget()
 
@@ -109,7 +108,6 @@ class TrainingPage(QWidget):
 
             self.training_sidemenus.append(sidemenu)
             self.io_configs_train.append(sidemenu.wx_io_config)
-            self.model_weights.append(None)
             self.wtw_static_tabs.addTab(wx_model, model.name)
 
     @Slot()
@@ -159,14 +157,12 @@ class TrainingPage(QWidget):
         dprint(nodes_inp, nodes_out)
         #  TODO: temporary validation to check the model met a specific req for basic ai/ml
         if nodes_inp == nodes_out == 1:
-            model_weight = self.fhndl.train_model(
+            self.fhndl.train_model(
                 self.fhndl.get_mdl_id(self.models[self.wtw_static_tabs.currentIndex()].name),
                 iters=int(self.training_sidemenus[self.wtw_static_tabs.currentIndex()].qle_iters.text()),
                 loss_name=self.training_sidemenus[self.wtw_static_tabs.currentIndex()].qcb_loss.currentText(),
                 rate=float(self.training_sidemenus[self.wtw_static_tabs.currentIndex()].qle_rate.text()),
                 inst_state=inst)
-
-            self.model_weights[self.wtw_static_tabs.currentIndex()] = model_weight
         else:
             dprint("TRAINING REQUIREMENTS NOT FILLED")
 

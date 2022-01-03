@@ -11,96 +11,120 @@ import math
 from node_state import NodeState
 
 
+class ComponentDescrp:
+    w: QWidget = None  # deferred initiation of the internal widget of the component
+
+    def activate_widget(self):
+        raise NotImplementedError()
+
+    def value(self):
+        raise NotImplementedError()
+
+    def serialize(self):
+        raise NotImplementedError()
+
+    def deserialize(self, dt):
+        raise NotImplementedError()
+
+    def bin_serialize(self):
+        raise NotImplementedError()
+
+    @staticmethod
+    def bin_deserialize(bdt):
+        raise NotImplementedError()
+
+
+# TODO: change how the (const) components work
 class InteractiveComponent(QGraphicsProxyWidget):
-    def __init__(self, wx: QWidget, size: tuple, parent=None):
+    def __init__(self, cc: ComponentDescrp, size: tuple, parent=None):
         super().__init__(parent=parent)
-        self.wx = wx
-        self.ctag = self.wx.__class__.__name__
+        self.cc = cc
+        self.ctag = self.cc.__class__.__name__
+
+        self.cc.activate_widget()
 
         try:
-            self.wx.setMinimumSize(QSize(size[0]-1, size[1]-1))
-            self.wx.setMaximumSize(QSize(size[0]-1, size[1]-1))
+            self.cc.w.setMinimumSize(QSize(size[0]-1, size[1]-1))
+            self.cc.w.setMaximumSize(QSize(size[0]-1, size[1]-1))
         except Exception as e:
-            dprint(f"debug: self.wx is {self.wx} with type of {type(self.wx)}")
-            dprint("suggestion: if the type of the self.wx is some internal type, "
+            dprint(f"debug: self.cc is {self.cc} with type of {type(self.cc)}")
+            dprint("suggestion: if the type of the self.cc is some internal type, "
                   "check nodes.py file which node is causing this")
             raise e
 
-        self.setWidget(self.wx)
+        self.setWidget(self.cc.w)
 
     def value(self):  # values used in execution to replace the constant classes with their value
-        return self.wx.value()
+        return self.cc.value()
 
     def serialize(self):
-        return self.wx.serialize()
+        return self.cc.serialize()
 
     def deserialize(self, dt):
-        self.wx.deserialize(dt)
+        self.cc.deserialize(dt)
 
     def bin_serialize(self) -> bytes:
-        sdt = self.wx.bin_serialize()
+        sdt = self.cc.bin_serialize()
         if type(sdt) == bytes: return sdt
         else:
-            dprint("debug:", self.wx)
+            dprint("debug:", self.cc)
             raise TypeError("debug: binary serialization expected to return bytes")
 
 
-# def boundingRect(self) -> QRectF:
-# 	return QRectF()
-
-
-class IntLineInput(QLineEdit):
+class IntLineInput(ComponentDescrp):
     """
     A single line input where the user can type in arbitrary numbers (integer only line input)
     """
 
-    def __init__(self, default: int, parent=None):
-        super().__init__(parent=parent)
-        self.setValidator(QIntValidator())
-        self.setStyleSheet("background-color: #CCFFFF")
-
+    def __init__(self, default: int):
         self.default_num: int = default
-        self.setText(str(self.default_num))
+
+    def activate_widget(self):
+        self.w = QLineEdit()
+        self.w.setValidator(QIntValidator())
+        self.w.setStyleSheet("background-color: #CCFFFF")
+        self.w.setText(str(self.default_num))
 
     def value(self):
-        return int(self.text())
+        return int(self.w.text())
 
     def serialize(self):
-        return self.text()
+        return self.w.text()
 
     def deserialize(self, dt):
-        self.setText(dt)
+        self.w.setText(dt)
 
     def bin_serialize(self):
-        return int(self.text()).to_bytes(int(math.log2(int(self.text()))//8 + 1), "big")
+        return int(self.w.text()).to_bytes(int(math.log2(int(self.w.text()))//8 + 1), "big")
 
     @staticmethod
     def bin_deserialize(bdt):
         return int.from_bytes(bdt, "big")
 
 
-class LineInput(QLineEdit):
+class LineInput(ComponentDescrp):
     """
     A single line input where the user can type in anything
     """
 
     def __init__(self, default: str, parent=None):
-        super().__init__(parent=parent)
-
         self.default: str = default
-        self.setText(self.default)
+
+    def activate_widget(self):
+        self.w = QLineEdit()
+        self.w.setText(self.default)
 
     def value(self):
-        return self.text()
+        return self.w.text()
 
     def serialize(self):
-        return self.text()
+        return self.w.text()
 
     def deserialize(self, dt):
-        self.setText(dt)
+        self.w.setText(dt)
 
     def bin_serialize(self):
-        if len(self.text()) != 0: return self.text().encode("ASCII")
+        if len(self.w.text()) != 0: return self.w.text().encode("ASCII")
         else: return b"\x05"  # to signify the input field is empty
 
     @staticmethod
@@ -109,59 +133,61 @@ class LineInput(QLineEdit):
         else: return ""
 
 
-class ComboBox(QComboBox):
+class ComboBox(ComponentDescrp):
     """
     A combo box where the users can select the pre-defined items of the drop-down list
     """
 
-    def __init__(self, selc: list, parent=None):
-        super().__init__(parent=parent)
-
+    def __init__(self, selc: list):
         self.selc = selc  # selections
+
+    def activate_widget(self):
+        self.w = QComboBox()
         for s in self.selc:
-            self.addItem(s)
+            self.w.addItem(s)
 
     def value(self):  # just useless
         return 0
 
     def serialize(self):
-        return self.currentText()
+        return self.w.currentText()
 
     def deserialize(self, dt):
-        self.setCurrentText(dt)
+        self.w.setCurrentText(dt)
 
     def bin_serialize(self):
-        return self.currentText().encode("ASCII")
+        return self.w.currentText().encode("ASCII")
 
     @staticmethod
     def bin_deserialize(bdt):
         return bdt.decode("ASCII")
 
 
-class CheckBox(QCheckBox):
+class CheckBox(ComponentDescrp):
     """
     A check box where the users can check/toggle
     """
 
     def __init__(self, default=False, parent=None):
-        super().__init__(parent=parent)
-        self.setStyleSheet("background-color: transparent")
-
         self.check = default
-        if self.check: self.setChecked(Qt.Checked)
+
+    def activate_widget(self):
+        self.w = QCheckBox()
+        self.w.setStyleSheet("background-color: transparent")
+        if self.check: self.w.setChecked(Qt.Checked)
 
     def value(self):
-        return self.checkState() == Qt.Checked
+        return self.w.checkState() == Qt.Checked
 
     def serialize(self):
-        return self.checkState() == Qt.Checked
+        return self.w.checkState() == Qt.Checked
 
     def deserialize(self, dt):
-        if dt: self.setCheckState(Qt.Checked)
-        else: self.setCheckState(Qt.Unchecked)
+        if dt: self.w.setCheckState(Qt.Checked)
+        else: self.w.setCheckState(Qt.Unchecked)
 
     def bin_serialize(self):
-        return b"\xff" if self.checkState() == Qt.Checked else b"\x00"
+        return b"\xff" if self.w.checkState() == Qt.Checked else b"\x00"
 
     @staticmethod
     def bin_deserialize(bdt):
@@ -169,49 +195,53 @@ class CheckBox(QCheckBox):
         else: return False
 
 
-class AttributeSelector(QComboBox):
+class AttributeSelector(ComponentDescrp):
     """
     A specific type of widget that allows the users to select variables from where variables are defined separately
     """
 
-    def __init__(self, type: NodeState, parent=None):
-        super().__init__(parent=parent)
-
-        if type == NodeState.INPUT:
-            self.setStyleSheet("background-color: #CCFFCC")
-        elif type == NodeState.OUTPUT:
-            self.setStyleSheet("background-color: #FFFFCC")
+    def __init__(self, type: NodeState):
         self.type = type
 
+    def activate_widget(self):
+        self.w = QComboBox()
+        if self.type == NodeState.INPUT:
+            self.w.setStyleSheet("background-color: #CCFFCC")
+        elif self.type == NodeState.OUTPUT:
+            self.w.setStyleSheet("background-color: #FFFFCC")
+
     def update_attr_lists(self, attrs: List[str]):
-        self.clear()
+        self.w.clear()
         for attr in attrs:
-            self.addItem(attr)
+            self.w.addItem(attr)
 
     def value(self):
-        return self.currentText()
+        return self.w.currentText()
 
     def serialize(self):
-        return self.currentText()
+        return self.w.currentText()
 
     def deserialize(self, dt):
-        self.setCurrentText(dt)
+        self.w.setCurrentText(dt)
 
     def bin_serialize(self):
-        return self.currentText().encode("ASCII")
+        return self.w.currentText().encode("ASCII")
 
     @staticmethod
     def bin_deserialize(bdt):
         return bdt.decode("ASCII")
 
 
-class MultiComboBox(QComboBox):
+class MultiComboBox(ComponentDescrp):
     """
     A combo box that allows users to select multiple options under the combo box
     """
 
-    def __init__(self, parent=None):
-        super().__init__(parent=parent)
+    def __init__(self):
+        pass
+
+    def activate_widget(self):
+        self.w = QComboBox()
 
     def value(self):
         return 0

@@ -4,7 +4,7 @@ from PySide6.QtWidgets import *
 from PySide6.QtCore import Signal, Slot
 
 from homepage import Homepage
-from file_handler import ReferencedFileHandler
+from file_handler import ReferencedProjectHandler
 
 
 class MainWindow(QMainWindow):
@@ -30,7 +30,7 @@ class MainWindow(QMainWindow):
         ws_statbar = QStatusBar()
         ws_statbar.addWidget(QLabel(version))
 
-        lfhdnl = ReferencedFileHandler()
+        lfhdnl = ReferencedProjectHandler()
         wx_homepage = Homepage(lfhdnl)
         wx_homepage.sg_proj_submit.connect(self.change_page)
 

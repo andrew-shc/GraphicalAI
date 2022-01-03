@@ -4,14 +4,14 @@ from PySide6.QtCore import Qt, Signal, Slot, QMargins
 from PySide6.QtGui import QPalette, QColor, QFont
 
 from project import Project
-from file_handler import ProjectFileHandler, ReferencedFileHandler
+from file_handler import ProjectFileHandler, ReferencedProjectHandler
 from errors import *
 
 
 class Homepage(QWidget):
     sg_proj_submit = Signal(object)  # object: the next page (through python object)
 
-    def __init__(self, lfhndl: ReferencedFileHandler, parent=None):
+    def __init__(self, lfhndl: ReferencedProjectHandler, parent=None):
         super().__init__(parent=parent)
 
         self.lfhndl = lfhndl
@@ -82,7 +82,7 @@ class ReferenceListItem(QWidget):
 class LoadProject(QWidget):
     sg_lp_submitted = Signal(object)  # object: the file handler created
 
-    def __init__(self, lfhndl: ReferencedFileHandler, parent=None):
+    def __init__(self, lfhndl: ReferencedProjectHandler, parent=None):
         super().__init__(parent=parent)
         pal: QPalette = self.palette()
         pal.setColor(QPalette.Window, QColor(240, 240, 240))
@@ -197,7 +197,7 @@ class NewProject(QWidget):
 
 
 class LoadExecProject(QWidget):
-    def __init__(self, lfhndl: ReferencedFileHandler, parent=None):
+    def __init__(self, lfhndl: ReferencedProjectHandler, parent=None):
         super().__init__(parent=parent)
         pal: QPalette = self.palette()
         pal.setColor(QPalette.Window, QColor(240, 240, 240))

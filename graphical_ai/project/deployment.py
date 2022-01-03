@@ -9,7 +9,7 @@ from PySide6.QtGui import *
 from file_handler import ProjectFileHandler
 from model_view.node import FasterNode
 from node_state import NodeState
-from project import Model
+from project.model_component import Model
 from project.sidemenu_components import ModelIOConfigurator, ConsoleIO, IOField
 
 import requests
@@ -69,7 +69,7 @@ class DeploymentSideMenu(QWidget):
 
 
 class DeploymentPage(QWidget):
-    def __init__(self, fhndl: ProjectFileHandler, models: List[Model], io_configs_train: List[ModelIOConfigurator], io_configs_pred: List[ModelIOConfigurator], model_weights: list, parent=None):
+    def __init__(self, fhndl: ProjectFileHandler, models: List[Model], io_configs_train: List[ModelIOConfigurator], io_configs_pred: List[ModelIOConfigurator], parent=None):
         super().__init__(parent=parent)
 
         self.fhndl = fhndl
@@ -77,7 +77,6 @@ class DeploymentPage(QWidget):
         self.models = models
         # self.io_configs_train = io_configs_train
         self.io_configs_pred = io_configs_pred
-        self.model_weights = model_weights
         self.wtw_static_tabs = QTabWidget()
 
         lyt_main = QHBoxLayout()
@@ -136,14 +135,10 @@ class DeploymentPage(QWidget):
         dprint(nodes_inp, nodes_out)
         #  TODO: temporary validation to check the model met a specific req for basic ai/ml
         if nodes_inp == nodes_out == 1:
-            if self.model_weights[self.wtw_static_tabs.currentIndex()] is not None:
-                self.fhndl.predict_model(
-                    self.fhndl.get_mdl_id(self.models[self.wtw_static_tabs.currentIndex()].name),
-                    weights=self.model_weights[self.wtw_static_tabs.currentIndex()],
-                    inst_state=inst,
-                )
-            else:
-                dprint("MODEL PREDICTION REQUIRES WEIGHTS--WEIGHTS MUST BE CREATED AFTER MODEL TRAINING")
+            self.fhndl.predict_model(
+                self.fhndl.get_mdl_id(self.models[self.wtw_static_tabs.currentIndex()].name),
+                inst_state=inst,
+            )
         else:
             dprint("PREDICTING REQUIREMENTS NOT FILLED")
 

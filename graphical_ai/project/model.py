@@ -9,7 +9,7 @@ from PySide6.QtGui import *
 from file_handler import ProjectFileHandler
 from model_view.components import *
 from node_graph.nodes import export
-from project import ModelIOConfigurator
+from project.sidemenu_components import ModelIOConfigurator
 from project.model_component import Model
 import errors
 
