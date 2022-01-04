@@ -69,6 +69,19 @@ if __name__ == "__main__":
     mhndl = ModelFileHandler("C:\\Users\\Andrew Shen\\Desktop\\GraphicalAI-II\\Testing-XIII\\models", "LinReg")
     mhndl.load_model()
 
-    print(mhndl.mdl_dt)
+    print(mhndl.required_attrs())
 
+    #   inp: {attr_name:(datatype,data)}
+    #   out: {attr_name:(datatype,data)}
+    #   predicting?: bool
+
+    # attribute data-type options:
+    #   ~ file
+    #   ~ file-content
+
+    mhndl.predict_model({
+        "inp": {"a": ("file", "C:\\Users\\Andrew Shen\\Desktop\\GraphicalAI-II\\Testing-XIII\\resources\\test.csv")},
+        "out": {"b": ("file", "C:\\Users\\Andrew Shen\\Desktop\\GraphicalAI-II\\Testing-XIII\\resources\\out.csv")},
+        "predicting?": True,
+    })
 

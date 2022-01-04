@@ -53,6 +53,10 @@ class ModelPredictor:
         self.cycle_exec(inst_state, init_setup=True)
         self.cycle_exec(inst_state)
 
+        # resets the weights in-preparation for the next execution
+        for nd in self.mdl_ref_dt:
+            nd["%%class"].weights.reset()
+
         dprint("Model Prediction Finished")
 
     def cycle_exec(self, cycle_state, init_setup=False):

@@ -58,9 +58,14 @@ class _ModelEntryState extends State<ModelEntry> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text("Processing input...")),
                         );
+
+                        ModelExecute modelExec = ModelExecute();
+                        modelExec.state.addAttr("Input Attr", AttributeLocation.input, AttributeDataType.fileContentInp);
+                        modelExec.state.addAttr("Output Attr", AttributeLocation.output, AttributeDataType.fileContentOut);
+
                         Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => const ModelExecute())
+                            MaterialPageRoute(builder: (context) => modelExec)
                         );
                       }
                     },
