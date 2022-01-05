@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart';
-import 'dart:convert';
+import 'package:file_picker_cross/file_picker_cross.dart';
+import 'dart:typed_data';
 
 
 enum AttributeLocation {
@@ -24,7 +24,7 @@ class AttrDescriptor {
   String name;
   AttributeLocation location;
   AttributeDataType dtype;
-  var attrData;  // defined later
+  var attrData = "";  // defined later
   var fileName = "Empty File";  // optional
 }
 
@@ -85,9 +85,10 @@ class _ModelExecuteState extends State<ModelExecute> {
                               width: 3,
                             ),
                           ),
-                          child: ListView.builder(
+                          child: ListView.separated(
                             scrollDirection: Axis.vertical,
                             padding: const EdgeInsets.all(7.0),
+
                             itemCount: modelInpAttrData.length,
                             itemBuilder: (BuildContext context, int index) {
                               if(modelInpAttrData[index].dtype == AttributeDataType.fileContentInp) {
@@ -96,7 +97,12 @@ class _ModelExecuteState extends State<ModelExecute> {
                                 return constructAttrFileOut(modelInpAttrData[index]);
                               }
                               return const Text("None");
-                            }
+                            },
+                            separatorBuilder: (BuildContext context, int index) {
+                              return const SizedBox(
+                                height: 7,
+                              );
+                            },
                           ),
                         ),
                       ],
@@ -131,18 +137,23 @@ class _ModelExecuteState extends State<ModelExecute> {
                               width: 3,
                             ),
                           ),
-                          child: ListView.builder(
-                              scrollDirection: Axis.vertical,
-                              padding: const EdgeInsets.all(7.0),
-                              itemCount: modelOutAttrData.length,
-                              itemBuilder: (BuildContext context, int index) {
-                                if(modelOutAttrData[index].dtype == AttributeDataType.fileContentInp) {
-                                  return constructAttrFileInp(modelOutAttrData[index]);
-                                } else if(modelOutAttrData[index].dtype == AttributeDataType.fileContentOut) {
-                                  return constructAttrFileOut(modelOutAttrData[index]);
-                                }
-                                return const Text("None");
+                          child: ListView.separated(
+                            scrollDirection: Axis.vertical,
+                            padding: const EdgeInsets.all(7.0),
+                            itemCount: modelOutAttrData.length,
+                            itemBuilder: (BuildContext context, int index) {
+                              if(modelOutAttrData[index].dtype == AttributeDataType.fileContentInp) {
+                                return constructAttrFileInp(modelOutAttrData[index]);
+                              } else if(modelOutAttrData[index].dtype == AttributeDataType.fileContentOut) {
+                                return constructAttrFileOut(modelOutAttrData[index]);
                               }
+                              return const Text("None");
+                            },
+                            separatorBuilder: (BuildContext context, int index) {
+                              return const SizedBox(
+                                height: 7,
+                              );
+                            },
                           ),
                         ),
                       ],
@@ -152,25 +163,28 @@ class _ModelExecuteState extends State<ModelExecute> {
               ],
             ),
             Container(
-              padding: EdgeInsets.all(5.0),
+              padding: const EdgeInsets.all(5.0),
               child: ElevatedButton(
                   onPressed: () {
                     if (_formKey.currentState!.validate()) {
+                      // execute the model and sets data to the output attributes
+
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text("Executing model...")),
                       );
+
                     }
                   },
-                  child: Text("Execute")
+                  child: const Text("Execute")
               ),
             ),
             Container(
-              padding: EdgeInsets.all(5.0),
+              padding: const EdgeInsets.all(5.0),
               child: ElevatedButton(
                   onPressed: () {
                     Navigator.pop(context);
                   },
-                  child: Text("Find new model")
+                  child: const Text("Find new model")
               ),
             ),
           ],
@@ -199,25 +213,21 @@ class _ModelExecuteState extends State<ModelExecute> {
           const SizedBox(width: 20),
           ElevatedButton(
               onPressed: () async {
-                FilePickerResult? result = await FilePicker.platform.pickFiles();
-
-                if (result != null) {
-                  debugPrint(utf8.decode(result.files.single.bytes ?? <int>[]));
-                  debugPrint(result.files.single.name);
-
+                await FilePickerCross.importFromStorage(
+                  type: FileTypeCross.any
+                ).then((file) {
+                  debugPrint(file.fileName);
                   setState(() {
-                    attrDescrp.fileName = result.files.single.name;
-                    attrDescrp.attrData = utf8.decode(result.files.single.bytes ?? <int>[]);
+                    attrDescrp.fileName = file.fileName!;
+                    attrDescrp.attrData = file.toString();
                   });
-                } else {
-                  // User canceled the picker
-                }
+                });
               },
               child: const Text("Open File")
           ),
           const SizedBox(width: 20),
           Text(
-            "${attrDescrp.fileName}",
+            attrDescrp.fileName,
             style: const TextStyle(
               fontStyle: FontStyle.italic,
             ),
@@ -247,22 +257,23 @@ class _ModelExecuteState extends State<ModelExecute> {
           const SizedBox(width: 20),
           ElevatedButton(
               onPressed: () async {
-                String? outputFile = await FilePicker.platform.saveFile(
-                  dialogTitle: 'Please select an output file:',
-                  fileName: 'output_${attrDescrp.name}.pdf',
-                );
+                // for attr file out, the attribute description would be already filled if the execution has finished
+                //  by the time the user presses this button
+                // TODO: maybe a mechanism to notify the user when this attribute gets updated
 
-                if (outputFile != null) {
-                  debugPrint(outputFile);
-                } else {
-                  // User canceled the picker
+                if(attrDescrp.attrData != "" && attrDescrp.fileName != "") {
+                  FilePickerCross(Uint8List.fromList(attrDescrp.attrData.codeUnits)).exportToStorage(
+                    subject: "subject",
+                    text: "text",
+                    fileName: attrDescrp.fileName,
+                  );
                 }
               },
-              child: const Text("Open File")
+              child: const Text("Download File")
           ),
           const SizedBox(width: 20),
           Text(
-            "${attrDescrp.fileName}",
+            attrDescrp.fileName,
             style: const TextStyle(
               fontStyle: FontStyle.italic,
             ),

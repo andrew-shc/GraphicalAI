@@ -22,7 +22,7 @@ class _ModelEntryState extends State<ModelEntry> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Model Entry"),
+        title: const Text("Model Entry"),
       ),
       body: Column(
         children: <Widget>[
@@ -41,7 +41,7 @@ class _ModelEntryState extends State<ModelEntry> {
                   margin: const EdgeInsets.symmetric(horizontal: 200.0),
                   padding: const EdgeInsets.all(10.0),
                   child: TextFormField(
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       hintText: "Model ID",
                     ),
                     validator: (String? value) {
@@ -55,12 +55,16 @@ class _ModelEntryState extends State<ModelEntry> {
                 ElevatedButton(
                     onPressed: () {
                       if (_formKey.currentState!.validate()) {
+                        // loads the model and specify the required attributes for the next page
+
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text("Processing input...")),
                         );
 
                         ModelExecute modelExec = ModelExecute();
                         modelExec.state.addAttr("Input Attr", AttributeLocation.input, AttributeDataType.fileContentInp);
+                        modelExec.state.addAttr("Input Attr", AttributeLocation.input, AttributeDataType.fileContentInp);
+                        modelExec.state.addAttr("Output Attr", AttributeLocation.output, AttributeDataType.fileContentOut);
                         modelExec.state.addAttr("Output Attr", AttributeLocation.output, AttributeDataType.fileContentOut);
 
                         Navigator.push(
@@ -69,13 +73,14 @@ class _ModelEntryState extends State<ModelEntry> {
                         );
                       }
                     },
-                    child: Text("Submit"),
+                    child: const Text("Submit"),
                 ),
                 Text(
-                  "$testMessage"
+                  testMessage
                 ),
                 ElevatedButton(
                   onPressed: () async {
+
                     http.Response resp = await http.get(
                         Uri.parse('http://127.0.0.1:5000/'),
                         headers: {
@@ -88,7 +93,7 @@ class _ModelEntryState extends State<ModelEntry> {
                     });
                     print(testMessage);
                   },
-                  child: Text("Submit"),
+                  child: const Text("Submit"),
                 ),
               ]
             ),

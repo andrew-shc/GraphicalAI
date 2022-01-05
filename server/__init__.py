@@ -76,8 +76,8 @@ if __name__ == "__main__":
     #   predicting?: bool
 
     # attribute data-type options:
-    #   ~ file
-    #   ~ file-content
+    #   ~ file, str:path
+    #   ~ file-content, str:file_data, str:ext
 
     mhndl.predict_model({
         "inp": {"a": ("file", "C:\\Users\\Andrew Shen\\Desktop\\GraphicalAI-II\\Testing-XIII\\resources\\test.csv")},
