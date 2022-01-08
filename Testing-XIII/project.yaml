@@ -2,6 +2,6 @@ mdl_id_counter: 1
 mdl_ids:
   0: LinReg
 name: Testing-XIII
-reads: 30
+reads: 36
 version: 0
-writes: 35
+writes: 41

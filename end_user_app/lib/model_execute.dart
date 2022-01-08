@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:file_picker_cross/file_picker_cross.dart';
 import 'dart:typed_data';
+import 'package:http/http.dart' as http;
 
 
 enum AttributeLocation {
@@ -25,13 +28,15 @@ class AttrDescriptor {
   AttributeLocation location;
   AttributeDataType dtype;
   var attrData = "";  // defined later
-  var fileName = "Empty File";  // optional
+  var fileName = "Empty File";  // optional, TODO: make this nullable to clarify from the empty file string counterpart
+  String? fileExt;  // optional
 }
 
 
 class ModelExecute extends StatefulWidget {
-  ModelExecute({Key? key}) : this.state = _ModelExecuteState(), super(key: key);
+  ModelExecute({required this.modelKey, Key? key}) : this.state = _ModelExecuteState(modelKey: modelKey), super(key: key);
 
+  final String modelKey;
   _ModelExecuteState state;
 
   @override
@@ -41,6 +46,10 @@ class ModelExecute extends StatefulWidget {
 }
 
 class _ModelExecuteState extends State<ModelExecute> {
+  _ModelExecuteState({required this.modelKey}) : super();
+
+  // TODO: add modelName attribute to identify model name
+  final String modelKey;
   final _formKey = GlobalKey<FormState>();
 
   List<AttrDescriptor> modelInpAttrData = [];
@@ -165,14 +174,85 @@ class _ModelExecuteState extends State<ModelExecute> {
             Container(
               padding: const EdgeInsets.all(5.0),
               child: ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     if (_formKey.currentState!.validate()) {
-                      // execute the model and sets data to the output attributes
-
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text("Executing model...")),
                       );
 
+                      // preparing inp/out attribute description to be sent to the executor
+                      Map<String, List<dynamic>> inp = {};
+                      Map<String, List<dynamic>> out = {};
+
+                      // TODO: temp solution, we are assuming the only data type is the file-content
+                      for(AttrDescriptor attr in modelInpAttrData) {
+                        switch (attr.dtype) {
+                          case AttributeDataType.fileContentInp: {
+                            inp[attr.name] = ["file-content", attr.attrData, attr.fileName.split(".").last];
+                          } break;
+                          case AttributeDataType.fileContentOut: {
+                            // none
+                          } break;
+                        }
+                      }
+
+                      for(AttrDescriptor attr in modelOutAttrData) {
+                        switch (attr.dtype) {
+                          case AttributeDataType.fileContentInp: {
+                            // none
+                          } break;
+                          case AttributeDataType.fileContentOut: {
+                            out[attr.name] = ["file-content", "", ""];
+                          } break;
+                        }
+                      }
+
+                      // execute the model and sets data to the output attributes
+
+                      debugPrint("model key $modelKey");
+                      await http.post(
+                        Uri.parse('http://127.0.0.1:5000/predict_model/$modelKey'),
+                        headers: {
+                          "Access-Control-Allow-Origin": "*",
+                          "Content-Type": "application/json",
+                        },
+                        body: json.encode({
+                          "inp": inp,
+                          "out": out,
+                        }),
+                      ).then((resp) {
+                        print("EXEC SUCCESS");
+                        switch(resp.statusCode) {
+                          case 500: {
+                            print("Model execution encountered error. Please check the server error log for further info.");
+                            // TODO: maybe in the future, return the error from server to the flutter ui
+                          } break;
+                          case 200: {
+                            print("Model successfully executed.");
+
+                            Map<String, dynamic> data = json.decode(resp.body);
+
+                            print("Body data: $data");
+
+                            modelOutAttrData.asMap().forEach((ind, el) {
+                              if(data.containsKey(el.name)) {
+                                setState(() {
+                                  if(modelOutAttrData[ind].dtype == AttributeDataType.fileContentOut) {
+                                    modelOutAttrData[ind].fileName = "Content Updated";
+                                    modelOutAttrData[ind].attrData = data[el.name][1];
+                                    modelOutAttrData[ind].fileExt = data[el.name][2];
+                                  }
+                                });
+                              }
+                            });
+                          } break;
+                          default: {
+                            print("Status code <${resp.statusCode}> not handled.");
+                          } break;
+                        }
+                      }).onError((error, _stackTrace) {
+                        print("EXEC ERROR: ${error}");
+                      });
                     }
                   },
                   child: const Text("Execute")
@@ -265,7 +345,7 @@ class _ModelExecuteState extends State<ModelExecute> {
                   FilePickerCross(Uint8List.fromList(attrDescrp.attrData.codeUnits)).exportToStorage(
                     subject: "subject",
                     text: "text",
-                    fileName: attrDescrp.fileName,
+                    fileName: attrDescrp.name+(attrDescrp.fileExt ?? ".attribute"),
                   );
                 }
               },

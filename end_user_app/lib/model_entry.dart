@@ -1,6 +1,8 @@
-import 'package:end_user_app/model_execute.dart';
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import 'package:http/http.dart' as http;
+
+import 'package:end_user_app/model_execute.dart';
 
 
 class ModelEntry extends StatefulWidget {
@@ -13,9 +15,17 @@ class ModelEntry extends StatefulWidget {
 class _ModelEntryState extends State<ModelEntry> {
   final _formKey = GlobalKey<FormState>();
   String testMessage = "Empty Data";
+  final mdlIdTxtController = TextEditingController();
 
   Future<http.Response> fetchExampleData() {
     return http.get(Uri.parse('http://127.0.0.1:5000/'));
+  }
+
+  @override
+  void dispose() {
+    // Clean up the controller when the widget is disposed.
+    mdlIdTxtController.dispose();
+    super.dispose();
   }
 
   @override
@@ -41,6 +51,7 @@ class _ModelEntryState extends State<ModelEntry> {
                   margin: const EdgeInsets.symmetric(horizontal: 200.0),
                   padding: const EdgeInsets.all(10.0),
                   child: TextFormField(
+                    controller: mdlIdTxtController,
                     decoration: const InputDecoration(
                       hintText: "Model ID",
                     ),
@@ -53,7 +64,7 @@ class _ModelEntryState extends State<ModelEntry> {
                   )
                 ),
                 ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       if (_formKey.currentState!.validate()) {
                         // loads the model and specify the required attributes for the next page
 
@@ -61,39 +72,53 @@ class _ModelEntryState extends State<ModelEntry> {
                           const SnackBar(content: Text("Processing input...")),
                         );
 
-                        ModelExecute modelExec = ModelExecute();
-                        modelExec.state.addAttr("Input Attr", AttributeLocation.input, AttributeDataType.fileContentInp);
-                        modelExec.state.addAttr("Input Attr", AttributeLocation.input, AttributeDataType.fileContentInp);
-                        modelExec.state.addAttr("Output Attr", AttributeLocation.output, AttributeDataType.fileContentOut);
-                        modelExec.state.addAttr("Output Attr", AttributeLocation.output, AttributeDataType.fileContentOut);
+                        await http.get(
+                            Uri.parse('http://127.0.0.1:5000/load_model/${mdlIdTxtController.text}'),
+                            headers: {
+                              "Access-Control-Allow-Origin": "*"
+                            }
+                        ).then((resp) {
+                          print("NO ERROR!");
+                          print(resp.statusCode);
+                          switch(resp.statusCode) {
+                            case 404: {
+                              print("ERROR: Model Key <${mdlIdTxtController.text}> not found.");
+                            } break;
+                            case 200: {
+                              Map<String, dynamic> data = jsonDecode(resp.body);
 
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => modelExec)
-                        );
+                              debugPrint(resp.body);
+
+                              ModelExecute modelExec = ModelExecute(
+                                modelKey: mdlIdTxtController.text,
+                              );
+
+                              data["req-inp"].forEach((key, value) {
+                                if(value == "file") {  // TODO: should techn. be file-content
+                                  modelExec.state.addAttr(key, AttributeLocation.input, AttributeDataType.fileContentInp);
+                                }
+                              });
+                              data["req-out"].forEach((key, value) {
+                                if(value == "file") {  // TODO: should techn. be file-content
+                                  modelExec.state.addAttr(key, AttributeLocation.output, AttributeDataType.fileContentOut);
+                                }
+                              });
+
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => modelExec)
+                              );
+                            } break;
+                            default: {
+                              print("Status code <${resp.statusCode}> not handled.");
+                            } break;
+                          }
+                        }).onError((error, _stackTrace) {
+                          print("ERROR: ${error}");
+                        });
                       }
                     },
                     child: const Text("Submit"),
-                ),
-                Text(
-                  testMessage
-                ),
-                ElevatedButton(
-                  onPressed: () async {
-
-                    http.Response resp = await http.get(
-                        Uri.parse('http://127.0.0.1:5000/'),
-                        headers: {
-                          "Access-Control-Allow-Origin": "*"
-                        }
-                    );
-
-                    setState(() {
-                      testMessage = resp.body;
-                    });
-                    print(testMessage);
-                  },
-                  child: const Text("Submit"),
                 ),
               ]
             ),
